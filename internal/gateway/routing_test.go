@@ -163,6 +163,9 @@ func TestVisionAwareFailover(t *testing.T) {
 	if got := resp.Header.Get("x-zen-gate-served-by"); got != "space-bunny-free" {
 		t.Fatalf("smart routing served-by = %q, want space-bunny-free", got)
 	}
+	if got := resp.Header.Get("x-zen-gate-exit"); got != "direct" {
+		t.Fatalf("exit header = %q, want direct", got)
+	}
 }
 
 func TestSmartRoutingOffDropsModalityFilter(t *testing.T) {

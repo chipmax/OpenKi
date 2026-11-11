@@ -113,7 +113,7 @@ func probeModelInner(ctx context.Context, m ModelInfo) ProbeResult {
 		wire = "chat"
 		body["messages"] = []map[string]any{{"role": "user", "content": "ping"}}
 	}
-	ApplyFingerprint(body, wire)
+	ApplyFingerprintIfEnabled(body, wire)
 
 	start := time.Now()
 	session := SessionForConversation("probe:" + m.ID)

@@ -34,9 +34,10 @@ func corsAPI(w http.ResponseWriter, r *http.Request) bool {
 	}
 	// The gateway's own markers must survive the cross-origin wall: the
 	// served-by header is how a client learns which model actually answered
-	// after a throttle switch, and the request id ties a reply to the access
-	// log. Without this list a browser reads both as absent.
-	w.Header().Set("Access-Control-Expose-Headers", "x-zen-gate-served-by, x-zen-gate-request-id, content-type")
+	// after a throttle switch, the exit header names the egress a turn left
+	// through, and the request id ties a reply to the access log. Without this
+	// list a browser reads all three as absent.
+	w.Header().Set("Access-Control-Expose-Headers", "x-zen-gate-served-by, x-zen-gate-exit, x-zen-gate-request-id, content-type")
 	if r.Method != http.MethodOptions {
 		return false
 	}

@@ -14,10 +14,37 @@ import (
 
 const DefaultPoolSize = 2
 
-// egressCooldown keeps a public /64 (or IPv4 /32) that the upstream has
-// rejected out of the pool for this long. The free tier scopes its quota to
-// that block, so a new tunnel inside it would only repeat the same answer.
-const egressCooldown = 30 * time.Minute
+// Egress penalty policy.
+//
+// A 429 used to bench a public /64 (or IPv4 /32) for 30 minutes, or for
+// whatever Retry-After claimed — and the upstream always claims the next UTC
+// midnight (observed: 54,282 s). That turned a transient, per-IP crowd signal
+// into an afternoon-long outage for a pool whose whole purpose is rotating
+// away from it. The policy now ramps instead:
+//
+//	90 s → 180 s → 360 s → 900 s (cap)
+//
+// A hint is advisory only: values beyond the cap are ignored, values inside it
+// are respected when they are longer than the ramp. Three failures spanning at
+// least twice egressRetireSpacing are treated as a persistent block and take
+// the cap; the lane's probe path is what confirms that verdict before parking a
+// model.
+const (
+	egressCooldownBase   = 90 * time.Second
+	egressCooldownMax    = 15 * time.Minute
+	egressFailMemory     = 30 * time.Minute
+	egressRetireSpacing  = 10 * time.Minute
+	egressRetireFailures = 3
+)
+
+// egressPenalty is the ramp state for one public egress block. It is kept apart
+// from cooling: cooling says when the block is usable again, this says how many
+// times it has failed and when.
+type egressPenalty struct {
+	fails int
+	first time.Time
+	last  time.Time
+}
 
 // refillRetryDelay spaces out a failed registration attempt. Successful
 // registrations run back to back in the background.
@@ -98,6 +125,7 @@ type Pool struct {
 	next      int
 	reserved  map[string]bool
 	cooling   map[string]time.Time
+	penalties map[string]*egressPenalty
 	changed   chan struct{}
 	closed    bool
 	refilling bool
@@ -227,15 +255,16 @@ func newPool(ctx context.Context, log logger, size int, create func(context.Cont
 	// leaving the pool stuck on its first egress forever.
 	poolCtx, cancel := context.WithCancel(context.WithoutCancel(ctx))
 	p := &Pool{
-		ctx:      poolCtx,
-		cancel:   cancel,
-		logger:   log,
-		size:     size,
-		preload:  preload,
-		newExit:  create,
-		reserved: make(map[string]bool),
-		cooling:  make(map[string]time.Time),
-		changed:  make(chan struct{}),
+		ctx:       poolCtx,
+		cancel:    cancel,
+		logger:    log,
+		size:      size,
+		preload:   preload,
+		newExit:   create,
+		reserved:  map[string]bool{},
+		cooling:   make(map[string]time.Time),
+		penalties: make(map[string]*egressPenalty),
+		changed:   make(chan struct{}),
 	}
 	// The first registration gates readiness. Cloudflare can answer it with a
 	// rate limit even when this process has just started (the limit follows the
@@ -337,8 +366,26 @@ func (p *Pool) Report(lease *Lease, status int, body []byte) {
 	p.ReportWithRetryAfter(lease, status, body, 0)
 }
 
-// ReportWithRetryAfter is Report with the upstream's Retry-After hint. A hint
-// longer than egressCooldown keeps the rejected egress cooling for that long.
+// Success clears the failure ramp for an egress that just served a real
+// request. A working exit is the strongest evidence that the previous run of
+// refusals was transient, so the next refusal starts again at the base step.
+func (p *Pool) Success(lease *Lease) {
+	if lease == nil || lease.exit == nil {
+		return
+	}
+	key := lease.exit.egressKey()
+	if key == "" {
+		return
+	}
+	p.mu.Lock()
+	delete(p.penalties, key)
+	p.mu.Unlock()
+}
+
+// ReportWithRetryAfter is Report with the upstream's Retry-After hint. The
+// hint is clamped to the egress ramp: a value longer than egressCooldownMax is
+// treated as noise (the upstream reports "next midnight", not a real recovery
+// time), and a value inside the cap only extends the ramp, never shortens it.
 func (p *Pool) ReportWithRetryAfter(lease *Lease, status int, body []byte, retryAfter time.Duration) {
 	if lease == nil || lease.exit == nil {
 		return
@@ -347,7 +394,10 @@ func (p *Pool) ReportWithRetryAfter(lease *Lease, status int, body []byte, retry
 	if !rotate {
 		return
 	}
-	p.penalizeFor(lease.exit, reason, max(retryAfter, egressCooldown))
+	if retryAfter < 0 || retryAfter > egressCooldownMax {
+		retryAfter = 0
+	}
+	p.penalizeFor(lease.exit, reason, retryAfter)
 }
 
 // HasUntriedActive reports whether an active, unpenalized exit sits on an
@@ -397,10 +447,11 @@ func (p *Pool) Snapshot() Snapshot {
 }
 
 func (p *Pool) penalize(bad *exit, reason string) {
-	p.penalizeFor(bad, reason, egressCooldown)
+	p.penalizeFor(bad, reason, 0)
 }
 
-func (p *Pool) penalizeFor(bad *exit, reason string, cooldown time.Duration) {
+func (p *Pool) penalizeFor(bad *exit, reason string, hint time.Duration) {
+	now := time.Now()
 	p.mu.Lock()
 	if p.closed {
 		p.mu.Unlock()
@@ -415,8 +466,40 @@ func (p *Pool) penalizeFor(bad *exit, reason string, cooldown time.Duration) {
 		p.mu.Unlock()
 		return
 	}
-	if key := bad.egressKey(); key != "" {
-		p.cooling[key] = time.Now().Add(cooldown)
+	key := bad.egressKey()
+	cooldown := egressCooldownBase
+	if key != "" {
+		penalty := p.penalties[key]
+		if penalty == nil || now.Sub(penalty.last) > egressFailMemory {
+			penalty = &egressPenalty{first: now}
+			p.penalties[key] = penalty
+		}
+		previous := penalty.last
+		penalty.fails++
+		penalty.last = now
+		cooldown = egressCooldownBase
+		for i := 1; i < penalty.fails && cooldown < egressCooldownMax; i++ {
+			cooldown *= 2
+		}
+		if cooldown > egressCooldownMax {
+			cooldown = egressCooldownMax
+		}
+		if penalty.fails >= egressRetireFailures && !previous.IsZero() &&
+			now.Sub(penalty.first) >= 2*egressRetireSpacing {
+			cooldown = egressCooldownMax
+		}
+		if hint > 0 && hint < cooldown && penalty.fails == 1 {
+			cooldown = hint
+		}
+	}
+	if hint > cooldown {
+		cooldown = hint
+	}
+	if cooldown > egressCooldownMax {
+		cooldown = egressCooldownMax
+	}
+	if key != "" {
+		p.cooling[key] = now.Add(cooldown)
 		delete(p.reserved, key)
 	}
 	p.active = append(p.active[:index], p.active[index+1:]...)
@@ -428,7 +511,7 @@ func (p *Pool) penalizeFor(bad *exit, reason string, cooldown time.Duration) {
 	p.mu.Unlock()
 
 	if p.logger != nil {
-		p.logger.Warnf("Rotating OpenCode WARP egress %s (%s)", bad.id, reason)
+		p.logger.Warnf("Rotating OpenCode WARP egress %s (%s), cooling for %s", bad.id, reason, cooldown.Round(time.Second))
 	}
 	// Re-register immediately: the retired exit is replaced in the background
 	// and the retry draws whichever active exit is ready first.
@@ -457,6 +540,7 @@ func (p *Pool) replace(old *exit, reason string) {
 			if key := old.egressKey(); key != "" {
 				p.reserved[key] = true
 				delete(p.cooling, key)
+				delete(p.penalties, key)
 			}
 			p.active = append(p.active, old)
 			p.notifyLocked()

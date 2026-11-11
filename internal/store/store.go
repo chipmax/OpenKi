@@ -176,6 +176,17 @@ type Config struct {
 	// omitempty so pre-WARP configs keep loading unchanged.
 	WarpEnabled  bool `json:"warpEnabled,omitempty"`
 	WarpPoolSize int  `json:"warpPoolSize,omitempty"`
+	// ExitTokensPerMinute caps token spend per egress identity (tokens per
+	// minute, 0 = off). The upstream meters quota per IP, so spreading one
+	// busy model across exits still shares that IP's window; the governor
+	// waits before spending instead of discovering the limit with a 429.
+	ExitTokensPerMinute int `json:"exitTokensPerMinute,omitempty"`
+	// FingerprintMode controls the OpenCode tool fingerprint: "" or "auto"
+	// keeps today's behaviour (inject on the Zen lane only), "off" stops the
+	// injection everywhere, and "force" injects on every channel. It exists so
+	// a live gate change can be handled without a rebuild — and so the
+	// dashboard can run an A/B check before choosing.
+	FingerprintMode string `json:"fingerprintMode,omitempty"`
 	// SubsEnabled turns on the sing-box sidecar + per-request egress rotation
 	// over the subscription nodes; SingBoxPath optionally points at a
 	// user-provided sing-box.exe (empty = the auto-downloaded one).

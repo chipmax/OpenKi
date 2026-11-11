@@ -149,8 +149,8 @@ func (s *Server) adminWorkBuddyStatus(w http.ResponseWriter, r *http.Request) {
 			// than waiting (stop sending that traffic on this account).
 			"sanitizeUntil": v.SanitizeUntil,
 			"inFlight":      v.InFlight,
-			"lastError":        v.LastError,
-			"noCheckin":        v.NoCheckin,
+			"lastError":     v.LastError,
+			"noCheckin":     v.NoCheckin,
 		}
 		for k, val := range wbCreditsJSON(credits, ok, detail) {
 			row[k] = val

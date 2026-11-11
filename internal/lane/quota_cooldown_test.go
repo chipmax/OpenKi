@@ -7,17 +7,15 @@ import (
 
 // A 429 on this lane normally arrives WITHOUT a Retry-After header, so the
 // default is not a rare fallback — it is the value that actually parks the
-// model. It has to stay short.
+// model. The ramp starts at 90 seconds and grows from there; a single crowded
+// second must not park a model for an hour, and the old 30-second park was too
+// short to keep a genuinely exhausted window quiet.
 //
 // The free pool is one globally shared credential ("Bearer public"), so a 429
 // reports momentary crowding rather than a durable property of the model, and
-// nextCandidate() skips a throttled model. An over-long park therefore shows
-// the client "unavailable" for a model that answers again seconds later.
-//
-// Measured 2026-10-11: space-bunny-free and longcat-2.5-preview-free both
-// answered 429, and both answered 200 again within two minutes; of 92 recorded
-// throttle episodes the shortest was 0.6s.
-func TestQuotaWithoutRetryAfterParksBriefly(t *testing.T) {
+// nextCandidate() skips a throttled model. Repeat refusals are what separate
+// crowding from exhaustion.
+func TestQuotaWithoutRetryAfterParksNinetySeconds(t *testing.T) {
 	e := ClassifyFailure(429, `{"error":{"type":"FreeUsageLimitError","message":"Rate limit exceeded. Please try again later."}}`, 0)
 	if e.Code != CodeQuota {
 		t.Fatalf("code = %q, want %q", e.Code, CodeQuota)
@@ -25,8 +23,8 @@ func TestQuotaWithoutRetryAfterParksBriefly(t *testing.T) {
 	if e.RetryAfter != quotaCooldownNoHeaderSec {
 		t.Errorf("RetryAfter = %d, want %d (the no-header default)", e.RetryAfter, quotaCooldownNoHeaderSec)
 	}
-	if quotaCooldownNoHeaderSec >= 60 {
-		t.Errorf("quotaCooldownNoHeaderSec = %d: that is the old one-minute park again", quotaCooldownNoHeaderSec)
+	if quotaCooldownNoHeaderSec != 90 {
+		t.Errorf("quotaCooldownNoHeaderSec = %d, want the 90s ramp start", quotaCooldownNoHeaderSec)
 	}
 }
 
@@ -35,6 +33,13 @@ func TestQuotaHonoursAnUpstreamRetryAfter(t *testing.T) {
 	e := ClassifyFailure(429, `{"error":{"type":"FreeUsageLimitError"}}`, 120)
 	if e.RetryAfter != 120 {
 		t.Errorf("RetryAfter = %d, want the upstream value 120", e.RetryAfter)
+	}
+}
+
+func TestQuotaIgnoresNextMidnightRetryAfter(t *testing.T) {
+	e := ClassifyFailure(429, `{"error":{"type":"FreeUsageLimitError"}}`, 24*3600)
+	if e.RetryAfter != quotaCooldownNoHeaderSec {
+		t.Errorf("RetryAfter = %d, want the 90s default for an unusable hint", e.RetryAfter)
 	}
 }
 

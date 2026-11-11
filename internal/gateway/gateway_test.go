@@ -125,6 +125,7 @@ func TestChatCompletionsStreamShape(t *testing.T) {
 				FinishReason *string `json:"finish_reason"`
 			} `json:"choices"`
 			Usage map[string]int `json:"usage"`
+			Exit  string         `json:"x_zen_gate_exit"`
 		}
 		if json.Unmarshal([]byte(payload), &chunk) != nil {
 			continue
@@ -133,6 +134,9 @@ func TestChatCompletionsStreamShape(t *testing.T) {
 			text.WriteString(chunk.Choices[0].Delta.Content)
 			if chunk.Choices[0].FinishReason != nil && *chunk.Choices[0].FinishReason != "" {
 				gotFinish = true
+				if chunk.Exit != "direct" {
+					t.Errorf("finish chunk exit = %q, want direct", chunk.Exit)
+				}
 			}
 		}
 		if chunk.Usage != nil {

@@ -28,9 +28,9 @@ func (s *Server) adminExtStatus(w http.ResponseWriter) {
 				loggedIn++
 			}
 			rows = append(rows, map[string]any{
-				"id":      a.ID,
-				"label":   a.Label,
-				"enabled": a.Enabled,
+				"id":        a.ID,
+				"label":     a.Label,
+				"enabled":   a.Enabled,
 				"hasSecret": strings.TrimSpace(a.Secret) != "",
 				// The extra identity fields are not secret, but one of them
 				// (officeIdentity, uuid) can identify a person — the card only

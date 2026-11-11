@@ -2,9 +2,78 @@ package lane
 
 import (
 	"context"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
+
+// fingerprintMode is process-wide because probes and request construction both
+// consult it, and there is exactly one lane per process. auto preserves the
+// historic behaviour; off/force exist for a live gate change and for the A/B
+// check.
+const (
+	fingerprintAuto int32 = iota
+	fingerprintOff
+	fingerprintForce
+)
+
+var fingerprintGate atomic.Int32
+
+// NormalizeFingerprintMode accepts the three spellings the API, config and UI
+// may send. An unknown value falls back to auto rather than silently turning
+// the gate off.
+func NormalizeFingerprintMode(mode string) string {
+	switch strings.ToLower(strings.TrimSpace(mode)) {
+	case "off", "none", "never", "disabled":
+		return "off"
+	case "force", "on", "always", "required":
+		return "force"
+	default:
+		return "auto"
+	}
+}
+
+// SetFingerprintMode applies a normalized mode. It returns the normalized
+// value so callers can persist exactly what the process uses.
+func SetFingerprintMode(mode string) string {
+	mode = NormalizeFingerprintMode(mode)
+	switch mode {
+	case "off":
+		fingerprintGate.Store(fingerprintOff)
+	case "force":
+		fingerprintGate.Store(fingerprintForce)
+	default:
+		fingerprintGate.Store(fingerprintAuto)
+	}
+	return mode
+}
+
+// FingerprintMode reports the active mode as a config string.
+func FingerprintMode() string {
+	switch fingerprintGate.Load() {
+	case fingerprintOff:
+		return "off"
+	case fingerprintForce:
+		return "force"
+	default:
+		return "auto"
+	}
+}
+
+// FingerprintEnabledFor reports whether this channel should get the injected
+// OpenCode read/shell definitions. auto is the historical channel split: the
+// Zen lane is fingerprinted, Kilo and CodeArts are not.
+func FingerprintEnabledFor(channel string) bool {
+	switch fingerprintGate.Load() {
+	case fingerprintOff:
+		return false
+	case fingerprintForce:
+		return true
+	default:
+		return channel != ChannelKilo && channel != ChannelCodeArts
+	}
+}
 
 // Recovery policy: how a turn that ended without its answer gets one.
 //
@@ -120,6 +189,12 @@ type Lane struct {
 	strategy         string
 	ttft             TTFTSource
 	throttle         *ThrottleBook
+	// quotaFails records live 429 timestamps per model. It is deliberately
+	// in-memory: a restart is a fresh chance for the egress, and a probe must
+	// confirm any retirement before it can last. Guarded by mu.
+	quotaFails map[string][]int64
+	// exitBudget spaces token spend per egress identity (nil = disabled).
+	exitBudget atomic.Pointer[exitBudget]
 
 	// wbCacheKey asks the WorkBuddy gateways to bucket their prefix cache by
 	// our conversation id (prompt_cache_key). Off by default: the field is
@@ -234,6 +309,7 @@ func NewLane() *Lane {
 		smartRouting:     true,
 		strategy:         StrategyCatalog,
 		throttle:         NewThrottleBook(),
+		quotaFails:       map[string][]int64{},
 	}
 }
 
@@ -323,6 +399,84 @@ func (l *Lane) MarkThrottled(model string, retryAfterSec int) {
 	l.fireChange()
 }
 
+// quotaFailureSpacing is the minimum distance between the first and last of
+// the three strikes that make a probe-confirmed retirement meaningful. A burst
+// of 429s inside one congestion window is one event, not three.
+const (
+	quotaFailureStrikes = 3
+	quotaFailureSpacing = 20 * time.Minute
+	quotaFailureMemory  = 24 * time.Hour
+)
+
+// NoteQuotaFailure records a live 429 for a model. The ledger only gates the
+// stronger, probe-confirmed park; the ordinary 90-second ramp applies to every
+// refusal regardless.
+func (l *Lane) NoteQuotaFailure(model string) {
+	if model == "" {
+		return
+	}
+	now := time.Now()
+	cutoff := now.Add(-quotaFailureMemory).UnixMilli()
+	l.mu.Lock()
+	times := l.quotaFails[model]
+	kept := times[:0]
+	for _, at := range times {
+		if at >= cutoff {
+			kept = append(kept, at)
+		}
+	}
+	l.quotaFails[model] = append(kept, now.UnixMilli())
+	l.mu.Unlock()
+}
+
+// NoteQuotaSuccess clears the live-failure ledger after a served request. A
+// model that answered is not a retirement candidate, whatever the previous
+// burst looked like.
+func (l *Lane) NoteQuotaSuccess(model string) {
+	if model == "" {
+		return
+	}
+	l.mu.Lock()
+	delete(l.quotaFails, model)
+	l.mu.Unlock()
+}
+
+// quotaRetireReady reports whether live traffic produced three refusals far
+// enough apart to be separate episodes. The caller still needs a probe verdict
+// before parking the model for the confirmed window.
+func (l *Lane) quotaRetireReady(model string) bool {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	times := l.quotaFails[model]
+	if len(times) < quotaFailureStrikes {
+		return false
+	}
+	first, last := times[0], times[0]
+	for _, at := range times[1:] {
+		if at < first {
+			first = at
+		}
+		if at > last {
+			last = at
+		}
+	}
+	return last-first >= int64(quotaFailureSpacing/time.Millisecond)
+}
+
+// confirmThrottleFromProbe upgrades a throttled probe verdict to a confirmed
+// park when live traffic already produced three spaced refusals. A probe that
+// answers clears both ledgers instead.
+func (l *Lane) confirmThrottleFromProbe(model, state string) {
+	switch state {
+	case StateAvailable:
+		l.NoteQuotaSuccess(model)
+	case StateThrottled:
+		if l.quotaRetireReady(model) {
+			l.throttle.RetireConfirmed(model, time.Now().Add(throttleConfirmedPark))
+		}
+	}
+}
+
 // realSuccessProtect is how long live traffic outranks the probe scheduler.
 const realSuccessProtect = 10 * time.Minute
 
@@ -347,6 +501,7 @@ func (l *Lane) NoteRealSuccess(model string) {
 		At: now.UnixMilli(), Detail: "Yêu cầu thật thành công (đo thực tế khả dụng)"}
 	l.mu.Unlock()
 	l.throttle.MarkOK(model)
+	l.NoteQuotaSuccess(model)
 	l.fireChange()
 }
 
@@ -820,8 +975,10 @@ func (l *Lane) ProbeRound(ctx context.Context, manual bool) {
 		switch effective.State {
 		case StateThrottled:
 			l.throttle.MarkThrottled(m.ID, 0)
+			l.confirmThrottleFromProbe(m.ID, effective.State)
 		case StateAvailable:
 			l.throttle.MarkOK(m.ID)
+			l.confirmThrottleFromProbe(m.ID, effective.State)
 		}
 		if l.OnProbeResult != nil && r.TTFTMs > 0 {
 			l.OnProbeResult(r)
@@ -901,8 +1058,10 @@ func (l *Lane) ProbeOneCtx(ctx context.Context, model string) ProbeResult {
 	switch r.State {
 	case StateThrottled:
 		l.throttle.MarkThrottled(model, 0)
+		l.confirmThrottleFromProbe(model, r.State)
 	case StateAvailable:
 		l.throttle.MarkOK(model)
+		l.confirmThrottleFromProbe(model, r.State)
 	}
 	if l.OnProbeResult != nil && r.TTFTMs > 0 {
 		l.OnProbeResult(r)
@@ -1016,6 +1175,12 @@ const quotaEgressTotalMS = 40000
 // retry, or the retry never runs.
 const slowEgressTotalMS = 210000
 
+// overloadedRetryDelay is a seam for tests; production jitters between one and
+// three seconds so concurrent clients do not retry in lockstep.
+var overloadedRetryDelay = func() time.Duration {
+	return time.Second + time.Duration(time.Now().UnixNano()%2_000_000_000)
+}
+
 // Complete runs one logical turn: effort budgeting, wire encoding, the
 // fingerprint gate, streaming decode, and — for a cut pure-reasoning turn —
 // one bounded checkpoint recovery request.
@@ -1047,6 +1212,7 @@ func (l *Lane) Complete(ctx context.Context, req Request, emit func(Chunk)) (Out
 	model := requested
 	failovers := 0
 	egressTries := 0
+	overloadedTries := 0
 	// The deadline is per attempt: each round gets the budget its own failure
 	// class deserves, rather than one bound fixed before we knew what failed.
 	egressDeadline := time.Now().Add(quotaEgressTotalMS * time.Millisecond)
@@ -1057,6 +1223,19 @@ func (l *Lane) Complete(ctx context.Context, req Request, emit func(Chunk)) (Out
 		out.Failovers = failovers
 		if uerr == nil {
 			return out, nil
+		}
+		// A capacity refusal is not a model verdict: ask the same model again
+		// after a short jittered pause before spending a failover slot. Nothing
+		// is marked throttled, so a busy minute cannot park a healthy model.
+		if uerr.Code == CodeOverloaded && !sawAny && overloadedTries < 2 {
+			overloadedTries++
+			delay := overloadedRetryDelay()
+			select {
+			case <-ctx.Done():
+				return out, &UpstreamError{Code: CodeAborted, Message: "cancelled"}
+			case <-time.After(delay):
+			}
+			continue
 		}
 		// Under rotation a 429 is one exit's answer, not the model's: quota is
 		// counted per egress IP and a funded exit may be two hops away, so ask
@@ -1070,6 +1249,7 @@ func (l *Lane) Complete(ctx context.Context, req Request, emit func(Chunk)) (Out
 			continue
 		}
 		if uerr.Code == CodeQuota {
+			l.NoteQuotaFailure(model)
 			l.MarkThrottled(model, uerr.RetryAfter)
 		}
 		// No switch after content reached the caller (it would duplicate
@@ -1127,7 +1307,7 @@ func (l *Lane) Complete(ctx context.Context, req Request, emit func(Chunk)) (Out
 // attempt's worth, because their per-attempt cost IS the reason they failed.
 func egressBudgetFor(code string) time.Duration {
 	switch code {
-	case CodeQuota:
+	case CodeQuota, CodeOverloaded:
 		return 0
 	}
 	return slowEgressTotalMS * time.Millisecond
@@ -1135,7 +1315,7 @@ func egressBudgetFor(code string) time.Duration {
 
 func egressRetryable(code string) bool {
 	switch code {
-	case CodeQuota, CodeRegion, CodeTransport, CodeServer, CodeTimeout, CodeReset:
+	case CodeQuota, CodeRegion, CodeTransport, CodeServer, CodeTimeout, CodeReset, CodeOverloaded, CodeEgressRefused:
 		return true
 	}
 	return false
@@ -1148,7 +1328,7 @@ func egressRetryable(code string) bool {
 // waiting for one request, attempts=1.
 func switchableFailure(uerr *UpstreamError) bool {
 	switch uerr.Code {
-	case CodeQuota, CodeRegion, CodeFreeTier, CodeServer, CodeTimeout, CodeEmpty, CodeTransport, CodeReset:
+	case CodeQuota, CodeRegion, CodeFreeTier, CodeServer, CodeTimeout, CodeEmpty, CodeTransport, CodeReset, CodeOverloaded, CodeEgressRefused:
 		return true
 	}
 	return false
@@ -1355,6 +1535,14 @@ func (l *Lane) attemptModel(ctx context.Context, req Request, model, effort stri
 		plan.ExitKey = r.ExitKey(plan.NodeID)
 	}
 	ctx = WithExitPlan(ctx, plan)
+	// Space token spend out per egress before holding a lease or opening a
+	// connection. Waiting here keeps a burst from burning one IP's window
+	// while other exits sit idle.
+	if b := l.exitBudget.Load(); b != nil {
+		if err := b.Wait(ctx, plan.ExitKey, estimateRequestTokens(messages, req.Tools, budget)); err != nil {
+			return Outcome{}, &UpstreamError{Code: CodeAborted, Message: "cancelled"}, false
+		}
+	}
 
 	// The Zen lane fingerprints tools and mints session/request ids; the Kilo
 	// pool has no tool-name gate and no session concept — its models see the
@@ -1460,9 +1648,10 @@ func (l *Lane) attemptModel(ctx context.Context, req Request, model, effort stri
 		return PostStreamed(cctx, EndpointFor(base), body, session, requestID, onData)
 	}
 
+	applyFingerprint := FingerprintEnabledFor(entry.Channel)
 	body := buildBody(messages, req.Tools, budget)
 	rename := map[string]string{}
-	if !kilo && !ca {
+	if applyFingerprint {
 		rename = ApplyFingerprint(body, style)
 	}
 	// Prompt-cache hints ride only the channels whose request shape we control
@@ -1511,6 +1700,8 @@ func (l *Lane) attemptModel(ctx context.Context, req Request, model, effort stri
 			ReportExit(plan.NodeID, base, "region")
 		case CodeQuota:
 			ReportExit(plan.NodeID, base, "limited")
+		case CodeEgressRefused:
+			ReportExit(plan.NodeID, base, "limited")
 		case CodeTransport, CodeTimeout, CodeReset:
 			ReportExit(plan.NodeID, base, "other")
 			// The tunnel itself died: book the node, not just the pair, so a
@@ -1542,7 +1733,7 @@ func (l *Lane) attemptModel(ctx context.Context, req Request, model, effort stri
 			r.Revive(plan.NodeID, base)
 		}
 		l.record(ctx, CallRecord{Model: base, Ok: true, Exit: plan.NodeID, Effort: effort, Agent: req.Agent, At: time.Now().UnixMilli()}, result, nil, firstAt)
-		return Outcome{Usage: result.Usage, Finish: result.Finish}, nil, true
+		return Outcome{Usage: result.Usage, Finish: result.Finish, ServedExit: plan.NodeID}, nil, true
 	}
 
 	// Ending without its answer. Three shapes get one continuation each —
@@ -1576,7 +1767,7 @@ func (l *Lane) attemptModel(ctx context.Context, req Request, model, effort stri
 			return Outcome{Usage: result.Usage}, &UpstreamError{Code: CodeTransport, Message: "upstream cut a turn short; the continuation does not fit the context"}, sawAny
 		}
 		recBody := buildBody(recMsgs, nil, recovBudget)
-		if !kilo {
+		if applyFingerprint {
 			ApplyFingerprint(recBody, style)
 		}
 		recDecoder := NewDecoder(wire, rename, emit)
@@ -1606,7 +1797,7 @@ func (l *Lane) attemptModel(ctx context.Context, req Request, model, effort stri
 				r.Revive(plan.NodeID, base)
 			}
 			l.record(ctx, CallRecord{Model: base, Ok: true, Recovered: true, Exit: plan.NodeID, Effort: effort, Agent: req.Agent, At: time.Now().UnixMilli()}, recResult, nil, firstAt)
-			return Outcome{Usage: recResult.Usage, Finish: recResult.Finish, Recovered: true}, nil, true
+			return Outcome{Usage: recResult.Usage, Finish: recResult.Finish, Recovered: true, ServedExit: plan.NodeID}, nil, true
 		}
 		recResult.Usage.Merge(&result.Usage)
 		l.record(ctx, CallRecord{Model: base, Ok: false, Truncated: true, Exit: plan.NodeID, Effort: effort, Agent: req.Agent, At: time.Now().UnixMilli()}, recResult, rerr, firstAt)

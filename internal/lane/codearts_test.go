@@ -19,13 +19,13 @@ import (
 // drive the real request chain — signatures, DPoP, form encoding and all —
 // against a recording stub.
 type caStub struct {
-	t        *testing.T
+	t          *testing.T
 	mu         sync.Mutex
 	chats      []http.Header // headers of every chat attempt
 	chatsN     int
 	tokens     int // oauth2/tokens hits
 	refreshes  int
-	expired    bool // hand out an expired STS first, a fresh one on refresh
+	expired    bool   // hand out an expired STS first, a fresh one on refresh
 	staleToken string // chat answers 401 while x-auth-token equals this
 }
 
@@ -55,10 +55,10 @@ func newCAStub(t *testing.T) (*caStub, *httptest.Server) {
 				"user_id": "u-1", "user_name": "tester", "domain_id": "d-1",
 				"refresh_token": "rt-2",
 				"credentials": map[string]any{
-					"access_key_id": "ak-" + fmt.Sprint(st.tokens),
+					"access_key_id":     "ak-" + fmt.Sprint(st.tokens),
 					"secret_access_key": "sk-" + fmt.Sprint(st.tokens),
-					"security_token":  fmt.Sprintf("tok-%d", st.tokens),
-					"expiration":      exp,
+					"security_token":    fmt.Sprintf("tok-%d", st.tokens),
+					"expiration":        exp,
 				},
 			})
 		case strings.HasSuffix(r.URL.Path, upstream.EpLoginTicket):

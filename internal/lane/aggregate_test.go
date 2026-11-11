@@ -110,13 +110,13 @@ func TestAggregateCompatible(t *testing.T) {
 		a, b int
 		want bool
 	}{
-		{1000000, 1048576, true},  // the real twin pair
-		{128000, 1000000, false},  // lightning
-		{131072, 1048576, false},  // beam
-		{128000, 128000, true},    // exact
-		{0, 0, true},              // both unknown
-		{0, 128000, false},        // unknown never proves sameness
-		{128000, 131072, true},    // 1.024x
+		{1000000, 1048576, true}, // the real twin pair
+		{128000, 1000000, false}, // lightning
+		{131072, 1048576, false}, // beam
+		{128000, 128000, true},   // exact
+		{0, 0, true},             // both unknown
+		{0, 128000, false},       // unknown never proves sameness
+		{128000, 131072, true},   // 1.024x
 	}
 	for _, tt := range tests {
 		if got := aggregateCompatible(tt.a, tt.b); got != tt.want {

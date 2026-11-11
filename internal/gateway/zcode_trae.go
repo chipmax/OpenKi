@@ -24,10 +24,10 @@ func (s *Server) adminZCodeStatus(w http.ResponseWriter) {
 			loggedIn++
 		}
 		rows = append(rows, map[string]any{
-			"id":       a.ID,
-			"userId":   a.UserID,
-			"label":    a.Label,
-			"enabled":  a.Enabled,
+			"id":      a.ID,
+			"userId":  a.UserID,
+			"label":   a.Label,
+			"enabled": a.Enabled,
 			// Never echo the JWT itself: the card only needs to know it exists.
 			"hasToken": strings.TrimSpace(a.JWT) != "",
 			"hasZai":   strings.TrimSpace(a.ZaiToken) != "",
@@ -110,12 +110,12 @@ func (s *Server) adminTraeStatus(w http.ResponseWriter) {
 			loggedIn++
 		}
 		rows = append(rows, map[string]any{
-			"id":       a.ID,
-			"uid":      a.UID,
-			"nickname": a.Nickname,
-			"enabled":  a.Enabled,
-			"hasToken": strings.TrimSpace(a.AccessToken) != "",
-			"hasRefresh": strings.TrimSpace(a.RefreshToken) != "",
+			"id":          a.ID,
+			"uid":         a.UID,
+			"nickname":    a.Nickname,
+			"enabled":     a.Enabled,
+			"hasToken":    strings.TrimSpace(a.AccessToken) != "",
+			"hasRefresh":  strings.TrimSpace(a.RefreshToken) != "",
 			"expiresAtMs": a.ExpiresAtMS,
 		})
 	}

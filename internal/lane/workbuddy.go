@@ -310,7 +310,7 @@ func buildWorkBuddyCatalog() []ModelInfo {
 		roster = append(roster, ModelInfo{
 			ID: "step-5-preview", Name: "Step-5 Preview",
 			Blurb: "Mô hình miễn phí tài khoản WorkBuddy (giai đoạn hợp tác chính thức 12/10–25/10 không giới hạn), giới hạn theo cửa sổ 24h; prompt có thể bị upstream ghi lại, đừng gửi nội dung mật",
-			Wire: "chat", Channel: ChannelWorkBuddy,
+			Wire:  "chat", Channel: ChannelWorkBuddy,
 			Vision: true, Reasoning: true,
 			ContextWindow: 1000000, MaxOutput: 64000, CanDisableThinking: false})
 	}
@@ -322,7 +322,6 @@ func buildWorkBuddyCatalog() []ModelInfo {
 // 2026-10-12T00:00+08:00 through 2026-10-26T00:00+08:00, so the last free
 // day is the 25th.
 var wbStep5FreeUntil = time.Date(2026, 10, 26, 0, 0, 0, 0, time.FixedZone("CST", 8*3600))
-
 
 // workBuddyHeaders assembles the full desktop-client header set for one chat
 // request: the base web layer, the identity layer, and the uid-derived

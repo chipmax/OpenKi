@@ -4,7 +4,7 @@
 //   - onAnswer:  {"text":"增量","custom_extra_info":...}
 //   - reasoning / thinking: 思考链增量
 //   - done:      {"error_code":"0","error_msg":"","related_question_answer":[...],"response_message_id":"..."}
-//                 related_question_answer 是「相关追问」建议，不是正文，解析时忽略。
+//     related_question_answer 是「相关追问」建议，不是正文，解析时忽略。
 //   - error / heartbeat 等
 //
 // 另：部分帧可能直接给出 structured QA 对象 {question,options,answer}（无 text 字段）。

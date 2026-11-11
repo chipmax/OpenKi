@@ -2,9 +2,9 @@ package store
 
 import (
 	"os"
-	"time"
 	"path/filepath"
 	"sort"
+	"time"
 
 	"zen-gate/internal/lane"
 )
@@ -45,7 +45,7 @@ type ChannelModel struct {
 
 // ChannelFile is one channel's on-disk state.
 type ChannelFile struct {
-	Enabled bool `json:"enabled"`
+	Enabled bool           `json:"enabled"`
 	Models  []ChannelModel `json:"models,omitempty"`
 	// RefreshedAt is when the lane last rewrote this roster (unix seconds).
 	// A disabled channel deliberately keeps its last roster and timestamp:

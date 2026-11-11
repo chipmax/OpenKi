@@ -29,14 +29,14 @@ func (s *Server) adminCodeartsStatus(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeJSON(w, 200, map[string]any{
-		"loggedIn":          acct.SecurityToken != "",
-		"enabled":           acct.Enabled,
-		"uid":               acct.UserID,
-		"nickname":          acct.UserName,
-		"expiresAtMs":       acct.ExpirationMS,
-		"lastCheckinDate":   acct.LastCheckinDate,
-		"models":            models,
-		"canRefresh":        acct.RefreshToken != "" && acct.CodeVerifier != "",
+		"loggedIn":        acct.SecurityToken != "",
+		"enabled":         acct.Enabled,
+		"uid":             acct.UserID,
+		"nickname":        acct.UserName,
+		"expiresAtMs":     acct.ExpirationMS,
+		"lastCheckinDate": acct.LastCheckinDate,
+		"models":          models,
+		"canRefresh":      acct.RefreshToken != "" && acct.CodeVerifier != "",
 	})
 }
 

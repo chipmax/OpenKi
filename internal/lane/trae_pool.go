@@ -129,14 +129,14 @@ func (l *Lane) traeSpendable() []TraeAccount {
 // rows in every picker.
 func traeFetchModels(ctx context.Context, acct TraeAccount) ([]ModelInfo, map[string]traeRoute, error) {
 	body, _ := json.Marshal(map[string]any{
-		"functions":                append([]string{}, traeChannels...),
-		"agent_type":               "",
-		"current_config_info":      map[string]any{"config_name": "", "is_custom_model": false},
-		"mode_type":                0,
-		"access_type":              0,
-		"ab_force_vids":            "",
+		"functions":                 append([]string{}, traeChannels...),
+		"agent_type":                "",
+		"current_config_info":       map[string]any{"config_name": "", "is_custom_model": false},
+		"mode_type":                 0,
+		"access_type":               0,
+		"ab_force_vids":             "",
 		"ab_autotest_advanced_mode": 0,
-		"show_custom_model":        true,
+		"show_custom_model":         true,
 	})
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		TraeAgentBase+traeBatchModelsPath, strings.NewReader(string(body)))

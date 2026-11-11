@@ -100,6 +100,7 @@ func Fetch(ctx context.Context, client *http.Client) (map[string]ModelMeta, erro
 // only the markers: "preview" is model-name content (longcat-2.5-preview),
 // stripping it would collide a preview build with its stable sibling.
 var freeLaneSuffixRe = regexp.MustCompile(`(?:-(?:free|contributor))+$`)
+
 // versionSepRe unifies underscore spelling with the dominant dash form;
 // dots stay — version numbers ("1.3") must survive to match on both sides.
 var versionSepRe = regexp.MustCompile(`_+`)
@@ -121,9 +122,9 @@ func Normalize(id string) string {
 
 // mergeLog is one applied model for the summary line.
 type mergeLog struct {
-	ID    string
-	Ctx   int
-	Out   int
+	ID  string
+	Ctx int
+	Out int
 }
 
 // Apply fills capacities into the tag store for lane models nothing else

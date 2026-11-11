@@ -364,6 +364,7 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 		}
 		served := servedModel(outcome, base)
 		w.Header().Set("x-zen-gate-served-by", served)
+		w.Header().Set("x-zen-gate-exit", servedExit(outcome))
 		msg := map[string]any{"role": "assistant", "content": text.String()}
 		if reasoning.Len() > 0 {
 			msg["reasoning_content"] = reasoning.String()
@@ -404,6 +405,17 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 		}
 		sse.event(chunkPayload(id, created, base, delta, finish, usage))
 	}
+	// The finish chunk always names the egress, even when the client did not ask
+	// for a usage chunk. Once the first content byte is out the HTTP header can
+	// no longer be changed, so this field is the only per-turn signal left.
+	sendFinish := func(finish any, exit string) {
+		if !sse.flushed {
+			sse.event(chunkPayload(id, created, base, map[string]any{"role": "assistant", "content": ""}, nil, nil))
+		}
+		payload := chunkPayload(id, created, base, map[string]any{}, finish, nil)
+		payload["x_zen_gate_exit"] = exit
+		sse.event(payload)
+	}
 	inStreamFail := func(uerr *lane.UpstreamError) {
 		sse.event(map[string]any{"error": map[string]any{
 			"message": uerr.Message, "type": errorType(uerr), "code": uerr.Code}})
@@ -420,6 +432,10 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 		}
 	})
 	served := servedModel(outcome, base)
+	// The first content chunk may already have committed the headers; this is
+	// still read by clients that got a header-less stream start, and the final
+	// usage chunk repeats it when the stream is already open.
+	w.Header().Set("x-zen-gate-exit", servedExit(outcome))
 	if uerr != nil && !emit.hasAny() {
 		// Free lane exhausted and the user opted in: continue the same SSE
 		// stream from a user-added provider.
@@ -438,7 +454,7 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 				} else {
 					outFinish = mapFinish(finish)
 				}
-				sendChunk(map[string]any{}, outFinish, nil)
+				sendFinish(outFinish, "direct")
 				if req.StreamOptions != nil && req.StreamOptions.IncludeUsage {
 					sse.event(map[string]any{
 						"id": id, "object": "chat.completion.chunk", "created": created, "model": fbServed,
@@ -476,7 +492,7 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 	} else {
 		finish = mapFinish(outcome.Finish)
 	}
-	sendChunk(map[string]any{}, finish, nil)
+	sendFinish(finish, servedExit(outcome))
 	if req.StreamOptions != nil && req.StreamOptions.IncludeUsage {
 		// The final chunk carries the model that actually served this turn —
 		// it differs from the requested one when failover took over.
@@ -485,10 +501,20 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 		payload := map[string]any{
 			"id": id, "object": "chat.completion.chunk", "created": created,
 			"model": finalModel, "choices": []any{choice}, "usage": usagePayload(outcome.Usage),
+			"x_zen_gate_exit": servedExit(outcome),
 		}
 		sse.event(payload)
 	}
 	sse.done()
+}
+
+// servedExit names the egress a turn actually left through. An empty node id
+// is the direct transport, not missing data.
+func servedExit(outcome lane.Outcome) string {
+	if outcome.ServedExit == "" {
+		return "direct"
+	}
+	return outcome.ServedExit
 }
 
 // servedModel picks the model id to advertise: the one that actually served
@@ -717,9 +743,11 @@ func errorStatus(e *lane.UpstreamError) int {
 	switch e.Code {
 	case lane.CodeQuota:
 		return 429
-	case lane.CodeRegion, lane.CodeFreeTier:
+	case lane.CodeOverloaded:
+		return 503
+	case lane.CodeRegion, lane.CodeFreeTier, lane.CodeEgressRefused:
 		return 403
-	case lane.CodeCredential:
+	case lane.CodeCredential, lane.CodeRelayUnauthorized, lane.CodeDeploymentProtected:
 		return 401
 	case lane.CodeClient:
 		return 400
@@ -736,7 +764,9 @@ func errorType(e *lane.UpstreamError) string {
 	switch e.Code {
 	case lane.CodeQuota:
 		return "rate_limit_error"
-	case lane.CodeRegion, lane.CodeFreeTier, lane.CodeCredential:
+	case lane.CodeOverloaded:
+		return "overloaded_error"
+	case lane.CodeRegion, lane.CodeFreeTier, lane.CodeCredential, lane.CodeRelayUnauthorized, lane.CodeDeploymentProtected, lane.CodeEgressRefused:
 		return "authentication_error"
 	case lane.CodeClient:
 		return "invalid_request_error"
@@ -907,6 +937,7 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 				convertOpenAITools(req.Tools), req.MaxOutputTokens, agent, collector.consume); ok {
 				fbOutcome := lane.Outcome{Usage: usage, Finish: finish, ServedModel: fbServed}
 				w.Header().Set("x-zen-gate-served-by", fbServed)
+				w.Header().Set("x-zen-gate-exit", "direct")
 				if req.Stream {
 					s.writeResponsesEvents(w, fbServed, collector, fbOutcome)
 				} else {
@@ -923,6 +954,7 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, errorStatus(uerr), body)
 		return
 	}
+	w.Header().Set("x-zen-gate-exit", servedExit(outcome))
 	if req.Stream {
 		s.writeResponsesEvents(w, served, collector, outcome)
 	} else {

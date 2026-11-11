@@ -1,14 +1,14 @@
 package lane
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -464,6 +464,16 @@ func toolsOf(body map[string]any) []map[string]any {
 		out = append(out, t...)
 	}
 	return out
+}
+
+// ApplyFingerprintIfEnabled applies the gate definition only when the active
+// fingerprint mode allows it. Probes use this so an operator who turned the
+// injection off does not measure a body shape production never sends.
+func ApplyFingerprintIfEnabled(body map[string]any, style string) map[string]string {
+	if !FingerprintEnabledFor("") {
+		return nil
+	}
+	return ApplyFingerprint(body, style)
 }
 
 // ApplyFingerprint satisfies the v2 free-tier gate on body.tools: OpenCode's

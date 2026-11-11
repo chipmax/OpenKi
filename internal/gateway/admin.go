@@ -483,6 +483,8 @@ func (s *Server) adminState(w http.ResponseWriter) {
 		"updateSelfUpdate":        update.SelfUpdateSupported,
 		"proxyMode":               cfg.ProxyMode,
 		"proxyURL":                cfg.ProxyURL,
+		"exitTokensPerMinute":     cfg.ExitTokensPerMinute,
+		"fingerprintMode":         lane.FingerprintMode(),
 		"proxyPool":               cfg.ProxyPool,
 		"egressModes":             cfg.EgressModes,
 		"relayPool":               cfg.RelayPool,
@@ -586,6 +588,8 @@ func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {
 		Notifications           *bool              `json:"notifications"`
 		ProxyMode               *string            `json:"proxyMode"`
 		ProxyURL                *string            `json:"proxyUrl"`
+		ExitTokensPerMinute     *int               `json:"exitTokensPerMinute"`
+		FingerprintMode         *string            `json:"fingerprintMode"`
 		ProxyPool               *[]string          `json:"proxyPool"`
 		EgressModes             *[]string          `json:"egressModes"`
 		RelayPool               *[]store.RelayPeer `json:"relayPool"`
@@ -808,6 +812,22 @@ func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {
 		changed = true
 		dirty["statsServerUrl"] = true
 	}
+	if in.ExitTokensPerMinute != nil {
+		v := *in.ExitTokensPerMinute
+		if v < 0 || v > 1_000_000 {
+			writeJSON(w, 400, map[string]any{"ok": false, "error": "Giới hạn token mỗi phút của exit phải trong khoảng 0–1.000.000 (0 = tắt)"})
+			return
+		}
+		cfg.ExitTokensPerMinute = v
+		s.Lane.SetExitTokenRate(v)
+		changed = true
+		dirty["exitTokensPerMinute"] = true
+	}
+	if in.FingerprintMode != nil {
+		cfg.FingerprintMode = lane.SetFingerprintMode(*in.FingerprintMode)
+		changed = true
+		dirty["fingerprintMode"] = true
+	}
 	if in.ExposeRegion != nil {
 		cfg.ExposeRegion = *in.ExposeRegion
 		s.Lane.SetExposeRegion(*in.ExposeRegion)
@@ -996,6 +1016,12 @@ func (s *Server) commitSettings(next *store.Config, dirty map[string]bool) {
 		}
 		if dirty["exposeRegion"] {
 			c.ExposeRegion = next.ExposeRegion
+		}
+		if dirty["exitTokensPerMinute"] {
+			c.ExitTokensPerMinute = next.ExitTokensPerMinute
+		}
+		if dirty["fingerprintMode"] {
+			c.FingerprintMode = next.FingerprintMode
 		}
 		if dirty["proxyMode"] {
 			c.ProxyMode = next.ProxyMode

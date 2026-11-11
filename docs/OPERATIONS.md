@@ -307,6 +307,66 @@ trước khi tầng retry quota của lane nhìn thấy response. Header
 khi điều tra, luôn quay về một peer duy nhất, khi vận hành bình thường mới bật
 kết hợp.
 
+### Giới hạn token theo exit và phản hồi 429
+
+Header `x-zen-gate-exit` trên response của làn miễn phí cho biết đúng đầu ra đã
+phục vụ lượt đó (`direct` khi không qua peer). Nó khác `X-Zen-Gate-Egress` của
+relay: header sau là peer transport, header trước là exit đã được rotator chọn
+và cũng là giá trị ghi trong `CallRecord.Exit`. Với stream, header chỉ kịp gửi
+khi chưa có byte nội dung nào; nếu đã mở stream, trường `x_zen_gate_exit` nằm
+trong chunk kết thúc (OpenAI) hoặc `message_delta` (Anthropic).
+
+Hạn mức miễn phí tính theo **IP đầu ra**, không theo mô hình. Đặt
+`exitTokensPerMinute` trong `config.json` (hoặc Cài đặt) để governor giữ nhịp
+token trên từng exit; `0` mặc định là tắt. Governor ước lượng prompt + đệm
+`max_tokens` trước khi gửi và cho request chờ thay vì đốt hạn mức bằng một đợt
+burst. Đây là ước lượng, không phải số đo tuyệt đối: nó chỉ có thể thu rộng
+hơn, không thể tiêu ít hơn thực tế.
+
+```json
+{
+  "exitTokensPerMinute": 60000,
+  "fingerprintMode": "auto"
+}
+```
+
+Một `429` bắt đầu chuỗi 90 giây, gấp đôi sau mỗi lần lặp và chặn trên ở 15
+phút; `Retry-After` kiểu “next UTC midnight” bị bỏ qua vì nó không phải thời
+điểm hồi phục thật. Mô hình chỉ bị park 15 phút khi **vừa** có ba lần 429 trải
+qua ít nhất 20 phút **vừa** một lần thăm dò độc lập cũng thấy giới hạn. Một lần
+429 đơn lẻ không bao giờ đủ. Exit WARP/sing-box có chuỗi làm nguội riêng theo
+cùng cấp số nhân, và ba lần lỗi trải qua ít nhất 20 phút mới bị coi là chặn dai
+dẳng. `503`/`overloaded` chỉ retry ngắn trên cùng mô hình trước khi xét chuyển
+sang mô hình khác, và không bao giờ bị coi là mô hình hỏng.
+
+Lỗi relay được phân biệt để không đổ nhầm thành “sai key”:
+
+| Dấu hiệu | Mã | Hành động |
+|---|---|---|
+| Vercel Authentication Protection | `DEPLOYMENT_PROTECTED` | Tắt Deployment Protection hoặc dùng bypass token |
+| `unauthorized relay request` | `RELAY_UNAUTHORIZED` | Kiểm tra `relayPool[].token` |
+| `address of this instance is used up` | `EGRESS_REFUSED` | Đổi exit; xoay sang peer khác |
+| `overloaded` / `server is busy` / HTTP 529 | `OVERLOADED` | Retry ngắn 1–3 giây trên cùng mô hình |
+
+### Kiểm tra cổng fingerprint
+
+Làn Zen có thể vẫn yêu cầu đúng định nghĩa `read`/`shell` của OpenCode, nhưng
+cổng này thay đổi theo thời gian. `gateprobe` gửi hai lượt chat tối thiểu —
+một có định nghĩa, một không — rồi kết luận:
+
+```bash
+go run -tags headless ./cmd/gateprobe -model space-bunny-free
+# hoặc bản đã cài:
+zen-gate -gate-check -gate-model space-bunny-free
+```
+
+Kết quả `FINGERPRINT_REQUIRED` nghĩa là giữ `fingerprintMode: "auto"`;
+`GATE_OPEN` nghĩa là có thể thử `"off"`; `INCONCLUSIVE` nghĩa là cả hai lượt
+đều lỗi (thường do quota/region) và phải chạy lại sau. Công cụ này tiêu hai
+request thật trên làn miễn phí, nên chỉ chạy khi cần chẩn đoán. Đặt
+`fingerprintMode` thành `"force"` chỉ khi muốn kiểm chứng một kênh không phải
+Zen cũng chấp nhận cùng định nghĩa.
+
 ## Xoay key
 
 ### mainKey

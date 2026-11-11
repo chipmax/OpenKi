@@ -58,11 +58,11 @@ const (
 
 // ZCodeAccount is one ZCode login, as this gateway stores it.
 type ZCodeAccount struct {
-	ID       string `json:"id,omitempty"`
-	JWT      string `json:"jwt,omitempty"`
+	ID        string `json:"id,omitempty"`
+	JWT       string `json:"jwt,omitempty"`
 	DeviceMID string `json:"deviceMid,omitempty"`
-	UserID   string `json:"userId,omitempty"`
-	Label    string `json:"label,omitempty"`
+	UserID    string `json:"userId,omitempty"`
+	Label     string `json:"label,omitempty"`
 	// ZaiToken / BigmodelToken are the third-party identities the flow hands
 	// back. They authorize nothing on the chat wire; they are kept because the
 	// coding-plan key is exchanged from them.
@@ -80,36 +80,36 @@ func zcodeHeaders(a ZCodeAccount, stream bool) map[string]string {
 		accept = "text/event-stream"
 	}
 	return map[string]string{
-		"Authorization":        "Bearer " + a.JWT,
-		"Content-Type":         "application/json",
-		"Accept":               accept,
-		"anthropic-version":    "2023-06-01",
-		"User-Agent":           "ZCode/" + zcodeAppVersion,
-		"HTTP-Referer":         ZCodeOrigin,
-		"X-ZCode-App-Version":  zcodeAppVersion,
-		"X-Release-Channel":    zcodeReleaseChan,
-		"X-Client-Language":    "zh-CN",
-		"X-Client-Timezone":    "Asia/Shanghai",
-		"X-Device-Mid":         a.DeviceMID,
-		"X-Platform":           "win32",
-		"X-Os-Category":        "windows",
+		"Authorization":       "Bearer " + a.JWT,
+		"Content-Type":        "application/json",
+		"Accept":              accept,
+		"anthropic-version":   "2023-06-01",
+		"User-Agent":          "ZCode/" + zcodeAppVersion,
+		"HTTP-Referer":        ZCodeOrigin,
+		"X-ZCode-App-Version": zcodeAppVersion,
+		"X-Release-Channel":   zcodeReleaseChan,
+		"X-Client-Language":   "zh-CN",
+		"X-Client-Timezone":   "Asia/Shanghai",
+		"X-Device-Mid":        a.DeviceMID,
+		"X-Platform":          "win32",
+		"X-Os-Category":       "windows",
 	}
 }
 
 // zcodeLoginFlow is one in-flight login. The poll secret is what the poll call
 // authenticates with, so it must live exactly as long as the flow.
 type zcodeLoginFlow struct {
-	FlowID     string
-	Secret     string
+	FlowID       string
+	Secret       string
 	AuthorizeURL string
-	Interval   time.Duration
-	StartedAt  time.Time
-	Provider   string
+	Interval     time.Duration
+	StartedAt    time.Time
+	Provider     string
 }
 
 var (
-	zcodeLoginMu   sync.Mutex
-	zcodeLoginCur  *zcodeLoginFlow
+	zcodeLoginMu  sync.Mutex
+	zcodeLoginCur *zcodeLoginFlow
 )
 
 // zcodeRandomHex mints the flow secret: 32 random bytes, hex, as the client does.
@@ -290,10 +290,10 @@ func (l *Lane) ZCodeLoginPoll() (string, error) {
 		return "", fmt.Errorf("Phản hồi thăm dò thiếu trường then chốt (token / user_id)")
 	}
 	acct := ZCodeAccount{
-		JWT:      jwt,
+		JWT:       jwt,
 		DeviceMID: zcodeNewDeviceMID(),
-		UserID:   userID,
-		Enabled:  true,
+		UserID:    userID,
+		Enabled:   true,
 	}
 	if b := parsed.Data.Zai; b != nil {
 		acct.ZaiToken = b.token()

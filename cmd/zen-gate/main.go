@@ -105,6 +105,9 @@ func main() {
 	noInject := flag.Bool("no-inject", false, "do not read or write any agent config (server/VPS mode)")
 	injectScope := flag.String("inject-scope", "", "agent scope: host|windows|wsl|all|none (default: config agentScope)")
 	showVersion := flag.Bool("version", false, "print version and exit")
+	gateCheck := flag.Bool("gate-check", false, "A/B check whether the upstream still requires the OpenCode tool fingerprint, then exit")
+	gateModel := flag.String("gate-model", "space-bunny-free", "model for -gate-check")
+	fingerprintMode := flag.String("fingerprint-mode", "", "override fingerprintMode for this run: auto|off|force")
 	flag.Parse()
 	if *injectScope != "" && !store.ValidAgentScope(strings.ToLower(strings.TrimSpace(*injectScope))) {
 		fmt.Println("invalid -inject-scope:", *injectScope)
@@ -120,6 +123,19 @@ func main() {
 	}
 	if *showVersion {
 		fmt.Println("zen-gate", gateway.Version)
+		return
+	}
+	if *gateCheck {
+		ctx, cancel := context.WithTimeout(context.Background(), 125*time.Second)
+		defer cancel()
+		res := lane.CheckFingerprintGate(ctx, *gateModel)
+		fmt.Printf("model: %s\n", res.Model)
+		fmt.Printf("with fingerprint:    ok=%v code=%s status=%d %dms\n", res.With.OK, res.With.Code, res.With.Status, res.With.Millis)
+		fmt.Printf("without fingerprint: ok=%v code=%s status=%d %dms\n", res.Without.OK, res.Without.Code, res.Without.Status, res.Without.Millis)
+		fmt.Printf("verdict: %s\n", res.Verdict)
+		if res.Note != "" {
+			fmt.Println("note:", res.Note)
+		}
 		return
 	}
 
@@ -212,6 +228,12 @@ func main() {
 	// WorkBuddy prompt-cache hint: off unless the user turned it on (live A/B
 	// first). Read at boot and again on every settings save.
 	ln.SetWorkBuddyCacheKey(cfg.WorkBuddyCacheKey)
+	ln.SetExitTokenRate(cfg.ExitTokensPerMinute)
+	lane.SetFingerprintMode(cfg.FingerprintMode)
+	if *fingerprintMode != "" {
+		lane.SetFingerprintMode(*fingerprintMode)
+		logger.Infof("Ghi đè chế độ fingerprint bằng tham số dòng lệnh: %s", lane.FingerprintMode())
+	}
 	ln.SetTTFTSource(func(model string) int64 {
 		avg, _ := st.TTFTStats(model)
 		return avg

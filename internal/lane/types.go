@@ -259,6 +259,8 @@ type Outcome struct {
 	// ServedModel is the model that actually produced this outcome — it
 	// differs from Request.Model when a failover attempt took over.
 	ServedModel string
+	// ServedExit is the egress that served the winning attempt ("" = direct).
+	ServedExit string
 	// Failovers counts extra models tried before this outcome.
 	Failovers int
 }
@@ -328,6 +330,16 @@ const (
 	// retrying them only burns the budget. Both stay switchable, which is what
 	// lets the turn fall through to the Kilo pool instead of surfacing as 401.
 	CodeFreeTier = "FREE_TIER_BLOCKED"
+	// CodeOverloaded is a transient capacity refusal. It is retried after a
+	// short jitter on the SAME model and never parked: a busy upstream is not
+	// evidence that the model or the credential is bad.
+	CodeOverloaded = "OVERLOADED"
+	// Relay-layer refusals. They are not model verdicts; each names a different
+	// operator action, which is why they must not collapse into
+	// INVALID_CREDENTIAL.
+	CodeRelayUnauthorized   = "RELAY_UNAUTHORIZED"
+	CodeDeploymentProtected = "DEPLOYMENT_PROTECTED"
+	CodeEgressRefused       = "EGRESS_REFUSED"
 )
 
 // traceKey carries the gateway's correlation id for one logical client request

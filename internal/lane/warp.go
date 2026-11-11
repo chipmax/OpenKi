@@ -182,6 +182,9 @@ func (w *warpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 		}
 		return resp, nil
 	}
+	if resp.StatusCode >= 200 && resp.StatusCode < 400 {
+		pool.Success(lease)
+	}
 	resp.Body = &leaseBody{Reader: resp.Body, closer: resp.Body, release: lease.Release}
 	return resp, nil
 }

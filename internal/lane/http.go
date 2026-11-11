@@ -29,6 +29,20 @@ var (
 	// the credential is consulted — an invalid key draws the identical
 	// document — and it lands on every model at once.
 	freeTierRe = regexp.MustCompile(`(?i)FreeTierError|free tier can only be used`)
+	// Relay failures are distinct from model failures. A Vercel deployment
+	// with Authentication Protection answers 401 before the relay code runs; a
+	// relay with the wrong token answers its own 401; a relay whose egress was
+	// burned names that in the body. Retrying these on another model is
+	// pointless, while another exit may still be usable for the last one.
+	relayProtectedRe    = regexp.MustCompile(`(?i)protected deployment|vercel.*protection|deployment is protected`)
+	relayUnauthorizedRe = regexp.MustCompile(`(?i)unauthorized relay request|invalid relay token|relay token`)
+	relayExhaustedRe    = regexp.MustCompile(`(?i)address of this instance is used up|egress.*(used up|exhausted)|x-relay-egress`)
+	// overloadedRe is a transient capacity signal, not a verdict about the
+	// model or the caller's request. A short jittered retry is the right
+	// response; a cooldown would turn a busy minute into a parked model.
+	// "try again" is deliberately absent: quota bodies use that wording too,
+	// and they must reach the quota branch below.
+	overloadedRe = regexp.MustCompile(`(?i)overloaded|server is busy|at capacity`)
 )
 
 // isHTMLPage reports whether an upstream failure body is a front proxy's HTML
@@ -50,6 +64,12 @@ const htmlPageHint = "the gateway's front proxy answered with an HTML error page
 // verdict, and an HTML page is the front proxy speaking, never the credential
 // store.
 func ClassifyFailure(status int, payload string, retryAfterSec int) *UpstreamError {
+	// A hint beyond the ramp cap is not an estimate this lane can use: this
+	// upstream names "next UTC midnight", which would park a healthy model for
+	// the rest of the day. Treat it as noise and let the 90-second ramp start.
+	if retryAfterSec < 0 || retryAfterSec > throttleCooldownMax/1000 {
+		retryAfterSec = 0
+	}
 	e := &UpstreamError{Message: truncate(payload, 300), RetryAfter: retryAfterSec, HTTPStatus: status}
 	switch {
 	case freeTierRe.MatchString(payload):
@@ -67,8 +87,26 @@ func ClassifyFailure(status int, payload string, retryAfterSec int) *UpstreamErr
 		// budget before reaching the fallback.
 		e.Code = CodeFreeTier
 		e.Unavailable = true
+	case relayProtectedRe.MatchString(payload):
+		// Vercel's own Authentication Protection answers before the relay
+		// function runs. No model or token change can fix it; the operator must
+		// disable Deployment Protection or use a bypass token.
+		e.Code = CodeDeploymentProtected
+		e.Message = "relay deployment is protected by its host (Vercel Authentication Protection); disable it or use a protection-bypass token"
+	case relayUnauthorizedRe.MatchString(payload):
+		e.Code = CodeRelayUnauthorized
+		e.Message = "relay rejected the shared token; check relayPool[].token"
+	case relayExhaustedRe.MatchString(payload):
+		// Another relay exit may still have a fresh address, so this is
+		// exit-shaped rather than a configuration error.
+		e.Code = CodeEgressRefused
 	case regionRe.MatchString(payload):
 		e.Code = CodeRegion
+	case status == 529 || overloadedRe.MatchString(payload):
+		e.Code = CodeOverloaded
+		if e.RetryAfter == 0 {
+			e.RetryAfter = 2
+		}
 	case status == 429 || quotaRe.MatchString(payload):
 		e.Code = CodeQuota
 		if e.RetryAfter == 0 {

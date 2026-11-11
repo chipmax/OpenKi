@@ -20,7 +20,7 @@ func Run(o Options) {}
 
 // ShowWindowWin, HideWindow, MaximizeWindow and IsVisible describe a window
 // that does not exist.
-func ShowWindowWin(hwnd uintptr) {}
+func ShowWindowWin(hwnd uintptr)  {}
 func HideWindow(hwnd uintptr)     {}
 func MaximizeWindow(hwnd uintptr) {}
 func IsVisible(hwnd uintptr) bool { return false }
@@ -36,8 +36,8 @@ func IsMinimized(hwnd uintptr) bool { return false }
 func GetBounds(hwnd uintptr) (left, top, right, bottom int) { return 0, 0, 0, 0 }
 
 // SetProcessDPIAwareness / SetAppUserModelID are desktop-shell concerns.
-func SetProcessDPIAwareness()          {}
-func SetAppUserModelID(id string)      {}
+func SetProcessDPIAwareness()                             {}
+func SetAppUserModelID(id string)                         {}
 func AcquireSingleInstance(name, windowTitle string) bool { return true }
 
 // FatalAlert must not try to raise a toast in a process with no desktop.

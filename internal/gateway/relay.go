@@ -438,14 +438,14 @@ func (s *Server) providerViews() []map[string]any {
 
 // decodeProviderIn is the shared save/fetch request body.
 type providerIn struct {
-	ID       string   `json:"id"`
-	Name     string   `json:"name"`
-	BaseURL  string   `json:"baseUrl"`
-	APIKey   string   `json:"apiKey"`
-	APIKeys  []string `json:"apiKeys"` // one per line; nil (field absent) = keep stored keys
-	Protocol string   `json:"protocol"`
-	Enabled  *bool    `json:"enabled"`
-	Models   []string `json:"models"`
+	ID       string             `json:"id"`
+	Name     string             `json:"name"`
+	BaseURL  string             `json:"baseUrl"`
+	APIKey   string             `json:"apiKey"`
+	APIKeys  []string           `json:"apiKeys"` // one per line; nil (field absent) = keep stored keys
+	Protocol string             `json:"protocol"`
+	Enabled  *bool              `json:"enabled"`
+	Models   []string           `json:"models"`
 	Catalog  []lane.ListingMeta `json:"catalog"` // listing rows, numbers included
 	Save     *bool              `json:"save"`    // models fetch: false = probe only, don't persist
 }

@@ -4292,6 +4292,19 @@ function renderSettings(s){
           <textarea id="set-proxy-pool" rows="3" placeholder="socks5h://127.0.0.1:13001&#10;http://user:pass@127.0.0.1:7890&#10;direct" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:100%;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
           <div class="muted" style="font-size:11.5px;margin-top:5px">Mỗi hội thoại bám một đầu ra (giữ cache tiền tố); khi đầu ra bị giới hạn, yêu cầu tự thử đầu ra khác. Hỗ trợ <code class="k">http(s)://</code>, <code class="k">socks5(h)://</code>, <code class="k">direct</code>.</div>
         </div>
+        <div class="row" style="margin-top:12px; gap:14px; flex-wrap:wrap">
+          <label class="dim" style="display:inline-flex; align-items:center; gap:6px">Token/phút mỗi exit
+            <input type="number" id="set-exit-tpm" min="0" max="1000000" step="1000" value="${s.settings.exitTokensPerMinute||0}" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:120px;font-family:var(--mono)">
+          </label>
+          <label class="dim" style="display:inline-flex; align-items:center; gap:6px">Fingerprint
+            <select id="set-fingerprint" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px">
+              <option value="auto" ${(s.settings.fingerprintMode||"auto")==="auto"?"selected":""}>auto (chỉ làn Zen)</option>
+              <option value="off" ${s.settings.fingerprintMode==="off"?"selected":""}>off (tắt tiêm)</option>
+              <option value="force" ${s.settings.fingerprintMode==="force"?"selected":""}>force (mọi kênh)</option>
+            </select>
+          </label>
+        </div>
+        <div class="muted" style="font-size:11.5px;margin-top:5px">0 = tắt governor token theo exit. Fingerprint đổi nóng; dùng <code class="k">gateprobe</code> trước khi chuyển sang <code class="k">off</code>.</div>
         <div class="muted" style="font-size:12px;margin-top:8px">Lưu proxy là áp dụng nóng ngay (ảnh hưởng các yêu cầu suy luận/danh sách/dò kiểm tra tới thượng nguồn).</div>
         <div class="switch" style="margin-top:12px"><div><span class="nm">Cho phép truy cập API qua mạng LAN</span><div class="ds">các máy khác cùng dải mạng đều có thể dùng <code class="k">http://&lt;IP của máy này&gt;:${s.port}/v1</code> để gọi interface, vẫn phải kèm API Key; bảng điều khiển quản trị và interface /admin không bị ảnh hưởng, luôn chỉ chấp nhận máy này. Chuyển đổi sẽ nghe lại, yêu cầu đang xuất theo luồng sẽ bị ngắt</div></div>
           <button class="act off" id="tg-lan">Đóng</button></div>
@@ -4353,6 +4366,8 @@ function renderSettings(s){
       const j = await api("/settings", { proxyMode: el.querySelector("#set-proxy").dataset.value,
       proxyURL: el.querySelector("#set-proxy-url").value.trim(),
       proxyPool: (el.querySelector("#set-proxy-pool")?.value||"").split("\n").map(x=>x.trim()).filter(Boolean),
+      exitTokensPerMinute: parseInt(el.querySelector("#set-exit-tpm")?.value)||0,
+      fingerprintMode: el.querySelector("#set-fingerprint")?.value || "auto",
       defaultEffort: document.getElementById("set-effort").dataset.value,
       defaultMaxTokens: parseInt($("#set-max").value)||undefined,
       probeIntervalMinutes: parseInt($("#set-probe").value)||undefined });

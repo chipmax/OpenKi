@@ -103,7 +103,8 @@ func TestProviderSaveStoresSingleAPIKeyField(t *testing.T) {
 	}
 }
 
-func TestProviderStateMasksBalancedKeys(t *testing.T) {	up := declaredListing()
+func TestProviderStateMasksBalancedKeys(t *testing.T) {
+	up := declaredListing()
 	defer up.Close()
 	s := newTestServer(t, up)
 	ts := httptest.NewServer(s.mux)

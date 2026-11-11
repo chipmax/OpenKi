@@ -240,6 +240,7 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		w.Header().Set("x-zen-gate-served-by", served)
+		w.Header().Set("x-zen-gate-exit", servedExit(outcome))
 		writeJSON(w, 200, anthropicResponse(randomID("msg_"), served, collector, outcome))
 		return
 	}
@@ -299,7 +300,7 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 				begin()
 				sse.typedEvent(map[string]any{"type": "message_delta",
 					"delta": map[string]any{"stop_reason": stop, "stop_sequence": nil},
-					"usage": anthropicUsage(usage)})
+					"usage": anthropicUsage(usage), "x_zen_gate_exit": "direct"})
 				sse.typedEvent(map[string]any{"type": "message_stop"})
 				return
 			}
@@ -317,7 +318,7 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 	begin()
 	sse.typedEvent(map[string]any{"type": "message_delta",
 		"delta": map[string]any{"stop_reason": stop, "stop_sequence": nil},
-		"usage": anthropicUsage(outcome.Usage)})
+		"usage": anthropicUsage(outcome.Usage), "x_zen_gate_exit": servedExit(outcome)})
 	sse.typedEvent(map[string]any{"type": "message_stop"})
 }
 
@@ -382,8 +383,8 @@ func anthropicResponse(id, model string, c *responsesCollector, outcome lane.Out
 		"id": id, "type": "message", "role": "assistant", "model": model,
 		"content":     content,
 		"stop_reason": stop, "stop_sequence": nil,
-		"usage":       anthropicUsage(outcome.Usage),
-		"created":     time.Now().Unix(),
+		"usage":   anthropicUsage(outcome.Usage),
+		"created": time.Now().Unix(),
 	}
 }
 

@@ -224,6 +224,17 @@ func main() {
 	})
 	lane.SetWarpEnabled(cfg.WarpEnabled, cfg.WarpPoolSize)
 	lane.SetProxy(cfg.ProxyMode, cfg.ProxyURL)
+	// Static proxy pool (the opencode2api "proxies" mechanism): the transport
+	// now asks the Rotator for every dial, so it must exist before the first
+	// request, not after the sidecar's subscription pull.
+	if cfg.ProxyMode == "pool" {
+		if pool, err := lane.NewProxyPool(cfg.ProxyPool); err == nil {
+			lane.SetRotator(pool)
+			logger.Infof("Đã nạp xoay vòng proxy tĩnh: %d đầu ra", pool.Healthy())
+		} else {
+			logger.Errorf("Không nạp được danh sách proxy tĩnh: %v", err)
+		}
+	}
 	// WorkBuddy 账号渠道：config 是账号池的落盘处，lane 持运行态（选号、冷却、
 	// 租约）。上游每次刷新都轮换 refresh token，lane 通过 persist 回调把新
 	// token 对按账号写回 config。

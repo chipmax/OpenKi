@@ -271,11 +271,13 @@ func SetProxy(mode, url string) {
 		// Base for the WARP wrapper (see warp.go): no proxy — the tunnel
 		// itself is the egress, and the wrapper overrides DialContext.
 		t.Proxy = nil
-	case "rotate":
+	case "rotate", "pool":
 		t.Proxy = nil
 		// Free quota is counted per egress IP and DialContext only runs when a
 		// connection is established: with keep-alives on, every request reuses
 		// the first tunnel and rotation quietly pins the process to one IP.
+		// "pool" is the static-list sibling of "rotate": the same transport,
+		// and the installed Rotator decides where a dial lands.
 		t.DisableKeepAlives = true
 		t.DialContext = rotateDialContext
 	default:

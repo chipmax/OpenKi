@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -364,8 +365,8 @@ func (s *Server) adminState(w http.ResponseWriter) {
 				lv, _ := effortLadder(m, s.modalityCapsOf(m.ID), cfg)
 				return lv
 			}(),
-			Hidden:  hidden[m.ID],
-			Channel: ch,
+			Hidden:   hidden[m.ID],
+			Channel:  ch,
 			Channels: []string{ch},
 		}
 		if tag, ok := s.Store.ModelTagOf(m.ID); ok {
@@ -465,6 +466,7 @@ func (s *Server) adminState(w http.ResponseWriter) {
 		"updateSelfUpdate":        update.SelfUpdateSupported,
 		"proxyMode":               cfg.ProxyMode,
 		"proxyURL":                cfg.ProxyURL,
+		"proxyPool":               cfg.ProxyPool,
 		"warpEnabled":             cfg.WarpEnabled,
 		"warpPoolSize":            cfg.WarpPoolSize,
 		"warpFallbacks":           lane.WarpFallbacks(),
@@ -564,6 +566,7 @@ func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {
 		Notifications           *bool            `json:"notifications"`
 		ProxyMode               *string          `json:"proxyMode"`
 		ProxyURL                *string          `json:"proxyUrl"`
+		ProxyPool               *[]string        `json:"proxyPool"`
 		WarpEnabled             *bool            `json:"warpEnabled"`
 		WarpPoolSize            *int             `json:"warpPoolSize"`
 		UpdateFeed              *string          `json:"updateFeed"`
@@ -648,9 +651,29 @@ func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {
 		changed = true
 		dirty["notifications"] = true
 	}
+	// The pool is parsed before the mode block: picking "pool" and pasting the
+	// list in one request must install the rotator from the new list, not from
+	// whatever the store held a moment ago.
+	if in.ProxyPool != nil {
+		clean, err := lane.NormalizeProxyPool(*in.ProxyPool)
+		if err != nil {
+			writeJSON(w, 400, map[string]any{"ok": false, "error": "Danh sách proxy tĩnh không hợp lệ: " + err.Error()})
+			return
+		}
+		if !slices.Equal(clean, cfg.ProxyPool) {
+			cfg.ProxyPool = clean
+			if cfg.ProxyMode == "pool" {
+				if note := s.installProxyModeFrom(cfg, cfg.ProxyMode, cfg.ProxyURL); note != "" {
+					proxyNote = note
+				}
+			}
+			changed = true
+			dirty["proxyPool"] = true
+		}
+	}
 	if in.ProxyMode != nil {
 		switch *in.ProxyMode {
-		case "env", "direct", "custom", "system", "rotate", "warp":
+		case "env", "direct", "custom", "system", "rotate", "pool", "warp":
 			if *in.ProxyMode == "custom" && (in.ProxyURL == nil || strings.TrimSpace(*in.ProxyURL) == "") && strings.TrimSpace(cfg.ProxyURL) == "" {
 				writeJSON(w, 400, map[string]any{"ok": false, "error": "Proxy tuỳ chỉnh cần điền địa chỉ proxy"})
 				return
@@ -661,7 +684,7 @@ func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {
 					cfg.ProxyURL = strings.TrimSpace(*in.ProxyURL)
 					dirty["proxyUrl"] = true
 				}
-				if note := s.installProxyMode(cfg.ProxyMode, cfg.ProxyURL); note != "" {
+				if note := s.installProxyModeFrom(cfg, cfg.ProxyMode, cfg.ProxyURL); note != "" {
 					proxyNote = note
 				}
 				changed = true
@@ -676,7 +699,7 @@ func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	if in.ProxyURL != nil && in.ProxyMode == nil {
 		cfg.ProxyURL = strings.TrimSpace(*in.ProxyURL)
-		if note := s.installProxyMode(cfg.ProxyMode, cfg.ProxyURL); note != "" {
+		if note := s.installProxyModeFrom(cfg, cfg.ProxyMode, cfg.ProxyURL); note != "" {
 			proxyNote = note
 		}
 		changed = true
@@ -693,7 +716,7 @@ func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {
 		}
 		lane.SetWarpEnabled(cfg.WarpEnabled, cfg.WarpPoolSize)
 		// Rebuild the transport so the switch applies now, not at restart.
-		if note := s.installProxyMode(cfg.ProxyMode, cfg.ProxyURL); note != "" {
+		if note := s.installProxyModeFrom(cfg, cfg.ProxyMode, cfg.ProxyURL); note != "" {
 			proxyNote = note
 		}
 		changed = true
@@ -907,6 +930,9 @@ func (s *Server) commitSettings(next *store.Config, dirty map[string]bool) {
 		}
 		if dirty["proxyUrl"] {
 			c.ProxyURL = next.ProxyURL
+		}
+		if dirty["proxyPool"] {
+			c.ProxyPool = append([]string(nil), next.ProxyPool...)
 		}
 		if dirty["warpEnabled"] {
 			c.WarpEnabled = next.WarpEnabled
@@ -1274,6 +1300,25 @@ func (s *Server) adminProxyTest(w http.ResponseWriter, r *http.Request) {
 // the subscription next); when rotation cannot actually dial yet, the returned
 // note says so instead of the panel silently claiming a working pool.
 func (s *Server) installProxyMode(mode, url string) (note string) {
+	return s.installProxyModeFrom(*s.Store.Config(), mode, url)
+}
+
+// installProxyModeFrom is the same decision against an explicit config
+// snapshot. The settings handler validates several proxy fields in one
+// request and must install from the merged values it is about to commit, not
+// from the store's previous generation.
+func (s *Server) installProxyModeFrom(cfg store.Config, mode, url string) (note string) {
+	if mode == "pool" {
+		pool, err := lane.NewProxyPool(cfg.ProxyPool)
+		if err != nil {
+			lane.SetProxy("pool", "")
+			lane.SetRotator(nil)
+			return "Xoay vòng proxy tĩnh đã đặt làm chế độ, nhưng danh sách proxy chưa dùng được: " + err.Error()
+		}
+		lane.SetProxy("pool", "")
+		lane.SetRotator(pool)
+		return ""
+	}
 	if mode == "rotate" {
 		lane.SetProxy("rotate", "")
 		switch {

@@ -150,8 +150,14 @@ type Config struct {
 	LastVersion       string   `json:"lastVersion,omitempty"`
 	StatsServerURL    string   `json:"statsServerUrl,omitempty"`
 	InstallID         string   `json:"installId,omitempty"`
-	ProxyMode         string   `json:"proxyMode"` // env | system | direct | custom | rotate | warp
+	ProxyMode         string   `json:"proxyMode"` // env | system | direct | custom | rotate | pool | warp
 	ProxyURL          string   `json:"proxyUrl,omitempty"`
+	// ProxyPool lists static proxy endpoints for proxyMode "pool". It is the
+	// opencode2api "proxies" mechanism: every dial is spread across these
+	// exits, with a per-(exit, model) failure ledger. Entries are
+	// direct/http(s):///socks5(h)://; credentials may be embedded in the URL
+	// and are never echoed back in node ids.
+	ProxyPool []string `json:"proxyPool,omitempty"`
 	// WarpEnabled turns on the userspace Cloudflare WARP egress pool
 	// (internal/warp, ported from opencode2api) for lane traffic. It takes
 	// precedence over ProxyMode; ProxyMode == "warp" is the equivalent

@@ -43,3 +43,51 @@ func TestSettingsRejectsUnknownProxyMode(t *testing.T) {
 		t.Errorf("rejected mode was still stored")
 	}
 }
+
+// "pool" is the static-list sibling of the subscription rotation: choosing it
+// must install a rotator built from the list in the same request that saves
+// the mode, or the transport dials through a nil rotator and silently leaves
+// from the machine's own IP.
+func TestSettingsPoolModeInstallsStaticRotator(t *testing.T) {
+	up := fakeUpstream(t, []string{"[DONE]"})
+	defer up.Close()
+	s := newTestServer(t, up)
+	t.Cleanup(func() { lane.SetProxy("direct", ""); lane.SetRotator(nil) })
+
+	ts := httptest.NewServer(s.mux)
+	defer ts.Close()
+	if code := patchSettings(t, ts.URL, `{"proxyMode":"pool","proxyPool":["direct","socks5h://127.0.0.1:13001"]}`); code != 200 {
+		t.Fatalf("pool = %d, want 200", code)
+	}
+	cfg := s.Store.Config()
+	if cfg.ProxyMode != "pool" {
+		t.Errorf("ProxyMode = %q, want pool", cfg.ProxyMode)
+	}
+	if len(cfg.ProxyPool) != 2 || cfg.ProxyPool[1] != "socks5h://127.0.0.1:13001" {
+		t.Errorf("ProxyPool = %v, want both entries persisted", cfg.ProxyPool)
+	}
+	r := lane.CurrentRotator()
+	if r == nil {
+		t.Fatal("the pool mode was saved without installing a rotator")
+	}
+	if r.Healthy() != 2 {
+		t.Errorf("rotator Healthy = %d, want 2", r.Healthy())
+	}
+}
+
+func TestSettingsRejectsInvalidProxyPoolEntry(t *testing.T) {
+	up := fakeUpstream(t, []string{"[DONE]"})
+	defer up.Close()
+	s := newTestServer(t, up)
+	t.Cleanup(func() { lane.SetProxy("direct", ""); lane.SetRotator(nil) })
+
+	ts := httptest.NewServer(s.mux)
+	defer ts.Close()
+	if code := patchSettings(t, ts.URL, `{"proxyMode":"pool","proxyPool":["socks5://127.0.0.1"]}`); code != 400 {
+		t.Fatalf("malformed pool = %d, want 400", code)
+	}
+	cfg := s.Store.Config()
+	if cfg.ProxyMode == "pool" || len(cfg.ProxyPool) != 0 {
+		t.Errorf("a rejected pool write was still stored: mode=%q pool=%v", cfg.ProxyMode, cfg.ProxyPool)
+	}
+}

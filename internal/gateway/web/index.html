@@ -177,6 +177,16 @@
     box-shadow:var(--card-shadow), inset 0 1px 0 rgba(255,255,255,.035);
     transition: background-color .16s ease, color .16s ease, border-color .16s ease; }
   .card h3 { font-size:15px; color:var(--ink); font-weight:600; margin-bottom:11px; letter-spacing:.005em; }
+  /* Gấp gọn: một dòng tiêu đề thay cho cả thẻ. Dùng cho thông tin hệ thống và
+     thư viện preset, để trang không phải xếp chồng mọi thứ cùng lúc. */
+  details.fold > summary { list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px;
+    font-size:15px; color:var(--ink); font-weight:600; letter-spacing:.005em; }
+  details.fold > summary::-webkit-details-marker { display:none; }
+  details.fold > summary::after { content:"＋"; margin-left:auto; color:var(--ink-mute);
+    font-family:var(--mono); font-size:13px; font-weight:400; }
+  details.fold[open] > summary::after { content:"－"; }
+  details.fold[open] > summary { margin-bottom:11px; }
+  details.fold > summary .sub { font-size:11.5px; font-weight:400; color:var(--ink-mute); }
   .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
   .muted { color:var(--ink-mute); } .dim { color:var(--ink-dim); }
   .mono { font-family:var(--mono); font-size:12px; font-variant-numeric:tabular-nums; }
@@ -1246,6 +1256,15 @@ function renderDash(s){
   const fail = day ? day.failed : 0;
   const failPill = fail > 0 ? ` <span class="pill bad">${fail} Thất bại</span>` : "";
   const todayHit = day ? cachePct(day.cacheRead||0, day.input||0) : null;
+  // Bốn bước nhập môn chỉ có nghĩa khi còn bước dở. Khi đã xong cả bốn, thẻ
+  // này chỉ chiếm chỗ: bỏ hẳn thay vì treo một danh sách bốn dấu tích.
+  const onboardDone = s.agents.some(a=>a.enabled) && !!s.settings.defaultModel &&
+    localStorage.getItem("zengate.onboard-copy")==="1" &&
+    Object.values(s.stats.days||{}).some(d=>(d.requests||0)>0);
+  const onboardCard = onboardDone ? "" : `<div class="card">
+          <h3>Bước tiếp theo <span class="muted" style="font-size:11.5px; font-weight:400">Hoàn thành theo thứ tự, gateway coi như đã nắm vững hoàn toàn</span></h3>
+          <div id="dash-tasks"></div>
+        </div>`;
 
   $("#page-dash").innerHTML = `
     <h2 class="pt">Tổng quan <span class="sub">Gateway mô hình miễn phí cục bộ v${esc(s.version)}</span></h2>${banner}
@@ -1255,7 +1274,6 @@ function renderDash(s){
       <div class="cell"><div class="v">${on}/${s.agents.filter(a=>a.installed).length}</div><div class="l">Agent đã bật</div></div>
       <div class="cell"><div class="v">${fmtN(day?day.output:0)}</div><div class="l">Tokens đầu ra hôm nay</div></div>
       <div class="cell"><div class="v">${fmtN(day?day.requests:0)}</div><div class="l">Yêu cầu hôm nay${failPill}</div></div>
-      <div class="cell"><div class="v">${fmtN(day?(day.input||0)+(day.output||0):0)}</div><div class="l">Tổng Token hôm nay</div></div>
       <div class="cell" title="Tỷ lệ đầu vào hôm nay khớp bộ nhớ đệm tiền tố ở thượng nguồn; 0 có nghĩa là đường truyền thượng nguồn này không trả về mức sử dụng bộ nhớ đệm"><div class="v">${todayHit!==null?todayHit+"%":"—"}</div><div class="l">Khớp bộ nhớ đệm hôm nay</div></div>
     </div>
 
@@ -1281,10 +1299,7 @@ function renderDash(s){
             <button class="ghost" id="dash-gologs">Xem nhật ký</button>
           </div>
         </div>
-        <div class="card">
-          <h3>Bước tiếp theo <span class="muted" style="font-size:11.5px; font-weight:400">Hoàn thành theo thứ tự, gateway coi như đã nắm vững hoàn toàn</span></h3>
-          <div id="dash-tasks"></div>
-        </div>
+        ${onboardCard}
       </div>
       <div>
         <div class="card">
@@ -1295,8 +1310,8 @@ function renderDash(s){
           <h3>Mức sử dụng mô hình hôm nay</h3>
           <div id="dash-today"></div>
         </div>
-        <div class="card">
-          <h3>Thông tin hệ thống</h3>
+        <details class="card fold">
+          <summary>Thông tin hệ thống</summary>
           <div class="sysinfo" style="grid-template-columns:1fr">
             <div class="kv"><span class="k">Phiên bản</span><span class="v mono">${esc(s.version)}</span></div>
             <div class="kv"><span class="k">Đã chạy</span><span class="v" id="uptime-val">${s.uptimeSec!=null ? fmtUptime(s.uptimeSec) : esc(s.uptime)}</span></div>
@@ -1305,7 +1320,7 @@ function renderDash(s){
             <div class="kv"><span class="k">Proxy</span><span class="v">${esc(proxyLabel(s.settings.proxyMode, s.settings.proxyURL))}</span></div>
             <div class="kv"><span class="k">Khay hệ thống / Thông báo</span><span class="v">${s.settings.closeToTray?"Bật":"Tắt"} / ${s.settings.notifications?"Bật":"Tắt"}</span></div>
           </div>
-        </div>
+        </details>
       </div>
     </div>`;
 
@@ -2354,11 +2369,8 @@ function renderProviders(s){
     el.innerHTML = `
       <h2 class="pt">Kênh <span class="sub">Mỗi kênh một thẻ: nhấn mở nó để quản lý các tài khoản của nó</span></h2>
       <div class="cwall" id="cwall"></div>
-      <div class="msec">
-        <span class="chname">Preset nhà cung cấp</span>
-        <span class="chdesc">Nhấn để mở cửa sổ bật lên thêm và điền sẵn, Key cần tự xin tại nền tảng tương ứng</span>
-      </div>
-      <div class="card">
+      <details class="fold card" id="pv-preset-fold">
+        <summary>Preset nhà cung cấp <span class="sub">nhấn để mở cửa sổ bật lên thêm và điền sẵn, Key cần tự xin tại nền tảng tương ứng</span></summary>
         <div class="row" style="row-gap:8px">
           <input class="msearch" id="pv-psearch" placeholder="Tìm kiếm tên preset / tên miền…">
           <div class="seg" id="pv-ptab">
@@ -2369,7 +2381,7 @@ function renderProviders(s){
         </div>
         <div class="pchips" id="pv-presets" style="margin-top:10px"></div>
         <div class="muted" style="font-size:11.5px;margin-top:8px" id="pv-preset-hint"></div>
-      </div>
+      </details>
 
       <!-- Cửa sổ bật lên của kênh: một thẻ = một kênh. Mặt quản lý của mỗi kênh luôn nằm trong .chan-pane
            (chỉ là display:none), cửa sổ bật lên chỉ chịu trách nhiệm hiển thị khối tương ứng đó —— bảng điều khiển không di chuyển DOM,
@@ -2652,6 +2664,10 @@ function renderProviders(s){
       if(j){ const wasEditing = !!pvEditing; pvResetForm(); toast(wasEditing ? "Đã lưu, danh sách mô hình đã được cập nhật" : "Đã kết nối, các mô hình đã đánh dấu đã xuất hiện trong /v1/models"); refresh(); }
     };
     el.dataset.rendered = "1";
+    // Con trượt của .seg chỉ đo được khi phần tử hiện: thư viện preset nằm
+    // trong <details> đóng lúc render, nên đo lại ngay khi người dùng mở ra.
+    const presetFold = el.querySelector("#pv-preset-fold");
+    if(presetFold) presetFold.addEventListener("toggle", ()=>{ if(presetFold.open) initSegs(); });
   }
   // Preset (backend cấp xuống, frontend không ghi cứng): thuộc mục 「Preset nhà cung cấp」, tìm kiếm / chuyển đổi Thường dùng xem pvRenderPresets
   pvPresetsAll = s.providerPresets || [];

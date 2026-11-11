@@ -1,0 +1,28 @@
+{
+  "port": 8787,
+  "allowLan": false,
+  "mainKey": "<MAIN_KEY_PLACEHOLDER>",
+  "agentScope": "all",
+  "egressModes": ["relay", "singbox", "warp"],
+  "singBoxPath": "<PATH_TO_SING_BOX_BINARY>",
+  "relayPool": [
+    {
+      "id": "vercel-sin",
+      "url": "https://relay-sin.example.com",
+      "token": "<RELAY_TOKEN_VERCEL_SIN>",
+      "enabled": true
+    },
+    {
+      "id": "vercel-fra",
+      "url": "https://relay-fra.example.com",
+      "token": "<RELAY_TOKEN_VERCEL_FRA>",
+      "enabled": true
+    },
+    {
+      "id": "vps-fallback",
+      "url": "https://relay-vps.example.com",
+      "token": "<RELAY_TOKEN_VPS_FALLBACK>",
+      "enabled": true
+    }
+  ]
+}

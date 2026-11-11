@@ -89,7 +89,7 @@ Build headless với `warpEnabled=true, warpPoolSize=2`, cổng 8797:
 
 ## Lưu ý license
 
-zen-gate gốc là MIT; opencode2api là **GPL-3.0**; package warp nguyên thủy
-trong ai-route là MIT. Bản fork phân phối lại phần kết hợp này phải tuân
-theo **GPL-3.0** cho phần derived từ opencode2api — đừng phát hành bản fork
-dưới danh nghĩa MIT thuần. Xem `internal/warp/NOTICE`.
+zen-gate (bản gốc) theo GPL-3.0; opencode2api là **GPL-3.0**; package warp
+nguyên thủy trong ai-route là MIT. Toàn bộ fork zen-gate-vi phát hành theo
+**GPL-3.0-only** — xem `LICENSE` và `COPYING`. Không phát hành bản fork dưới
+danh nghĩa MIT. Xem `internal/warp/NOTICE` và `THIRD_PARTY_NOTICES.md`.

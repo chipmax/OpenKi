@@ -225,11 +225,28 @@ func (s *Server) handleAdmin(w http.ResponseWriter, r *http.Request, rest string
 // guard) + loopback remote; mutating requests additionally require a
 // same-origin Origin/Referer when the client supplies one.
 func adminAllowed(w http.ResponseWriter, r *http.Request, mutating bool) bool {
-	host := r.Host
-	if i := strings.LastIndex(host, ":"); i >= 0 && !strings.Contains(host, "]") {
-		hname := host[:i]
-		if hname != "127.0.0.1" && hname != "localhost" && hname != "[::1]" && hname != "::1" {
-			writeJSON(w, 403, map[string]any{"error": "admin is loopback-only"})
+	// Normalise the Host regardless of whether it carries a port. The old
+	// code only checked a Host containing ":", so a reverse proxy that
+	// preserved "gateway.example.com" reached the loopback check below and
+	// was accepted as if it were local.
+	host := strings.TrimSpace(r.Host)
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	} else if strings.HasPrefix(host, "[") && strings.HasSuffix(host, "]") {
+		host = strings.Trim(host, "[]")
+	}
+	switch strings.ToLower(host) {
+	case "127.0.0.1", "localhost", "::1":
+	default:
+		writeJSON(w, 403, map[string]any{"error": "admin is loopback-only"})
+		return false
+	}
+	// A loopback RemoteAddr plus forwarding headers means something in front
+	// of us proxied the request. The admin surface is intentionally not
+	// proxy-aware: use an SSH tunnel instead, or the proxy must block /admin*.
+	for _, h := range []string{"x-forwarded-for", "x-real-ip", "forwarded"} {
+		if strings.TrimSpace(r.Header.Get(h)) != "" {
+			writeJSON(w, 403, map[string]any{"error": "admin is loopback-only (proxy headers rejected)"})
 			return false
 		}
 	}
@@ -467,6 +484,9 @@ func (s *Server) adminState(w http.ResponseWriter) {
 		"proxyMode":               cfg.ProxyMode,
 		"proxyURL":                cfg.ProxyURL,
 		"proxyPool":               cfg.ProxyPool,
+		"egressModes":             cfg.EgressModes,
+		"relayPool":               cfg.RelayPool,
+		"agentScope":              cfg.AgentScope,
 		"warpEnabled":             cfg.WarpEnabled,
 		"warpPoolSize":            cfg.WarpPoolSize,
 		"warpFallbacks":           lane.WarpFallbacks(),
@@ -556,36 +576,39 @@ func todayTokens(days map[string]*store.DayStat, model string) int {
 
 func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Port                    *int             `json:"port"`
-		DefaultMaxTokens        *int             `json:"defaultMaxTokens"`
-		DefaultEffort           *string          `json:"defaultEffort"`
-		DefaultModel            *string          `json:"defaultModel"`
-		ProbeIntervalMinutes    *int             `json:"probeIntervalMinutes"`
-		ExposeRegion            *bool            `json:"exposeRegion"`
-		CloseToTray             *bool            `json:"closeToTray"`
-		Notifications           *bool            `json:"notifications"`
-		ProxyMode               *string          `json:"proxyMode"`
-		ProxyURL                *string          `json:"proxyUrl"`
-		ProxyPool               *[]string        `json:"proxyPool"`
-		WarpEnabled             *bool            `json:"warpEnabled"`
-		WarpPoolSize            *int             `json:"warpPoolSize"`
-		UpdateFeed              *string          `json:"updateFeed"`
-		AnnouncementFeed        *string          `json:"announcementFeed"`
-		StatsServerURL          *string          `json:"statsServerUrl"`
-		FailoverEnabled         *bool            `json:"failoverEnabled"`
-		FailoverMax             *int             `json:"failoverMax"`
-		SmartRouting            *bool            `json:"smartRouting"`
-		RoutingStrategy         *string          `json:"routingStrategy"`
-		LaneFallbackToProviders *bool            `json:"laneFallbackToProviders"`
-		WorkBuddyCacheKey       *bool            `json:"workBuddyCacheKey"`
-		AutoTagEnabled          *bool            `json:"autoTagEnabled"`
-		OpenRefEnabled          *bool            `json:"openRefEnabled"`
-		WorkBuddyEnabled        *bool            `json:"workBuddyEnabled"`
-		CodeArtsEnabled         *bool            `json:"codeArtsEnabled"`
-		AllowLan                *bool            `json:"allowLan"`
-		LogCategories           *map[string]bool `json:"logCategories"`
-		LogLevel                *string          `json:"logLevel"`
-		LogKeepDays             *int             `json:"logKeepDays"`
+		Port                    *int               `json:"port"`
+		DefaultMaxTokens        *int               `json:"defaultMaxTokens"`
+		DefaultEffort           *string            `json:"defaultEffort"`
+		DefaultModel            *string            `json:"defaultModel"`
+		ProbeIntervalMinutes    *int               `json:"probeIntervalMinutes"`
+		ExposeRegion            *bool              `json:"exposeRegion"`
+		CloseToTray             *bool              `json:"closeToTray"`
+		Notifications           *bool              `json:"notifications"`
+		ProxyMode               *string            `json:"proxyMode"`
+		ProxyURL                *string            `json:"proxyUrl"`
+		ProxyPool               *[]string          `json:"proxyPool"`
+		EgressModes             *[]string          `json:"egressModes"`
+		RelayPool               *[]store.RelayPeer `json:"relayPool"`
+		AgentScope              *string            `json:"agentScope"`
+		WarpEnabled             *bool              `json:"warpEnabled"`
+		WarpPoolSize            *int               `json:"warpPoolSize"`
+		UpdateFeed              *string            `json:"updateFeed"`
+		AnnouncementFeed        *string            `json:"announcementFeed"`
+		StatsServerURL          *string            `json:"statsServerUrl"`
+		FailoverEnabled         *bool              `json:"failoverEnabled"`
+		FailoverMax             *int               `json:"failoverMax"`
+		SmartRouting            *bool              `json:"smartRouting"`
+		RoutingStrategy         *string            `json:"routingStrategy"`
+		LaneFallbackToProviders *bool              `json:"laneFallbackToProviders"`
+		WorkBuddyCacheKey       *bool              `json:"workBuddyCacheKey"`
+		AutoTagEnabled          *bool              `json:"autoTagEnabled"`
+		OpenRefEnabled          *bool              `json:"openRefEnabled"`
+		WorkBuddyEnabled        *bool              `json:"workBuddyEnabled"`
+		CodeArtsEnabled         *bool              `json:"codeArtsEnabled"`
+		AllowLan                *bool              `json:"allowLan"`
+		LogCategories           *map[string]bool   `json:"logCategories"`
+		LogLevel                *string            `json:"logLevel"`
+		LogKeepDays             *int               `json:"logKeepDays"`
 	}
 	if err := decodeBody(r, &in); err != nil {
 		writeJSON(w, 400, map[string]any{"error": err.Error()})
@@ -720,6 +743,55 @@ func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {
 			proxyNote = note
 		}
 		changed = true
+	}
+	if in.EgressModes != nil {
+		clean, err := lane.NormalizeEgressModes(*in.EgressModes)
+		if err != nil {
+			writeJSON(w, 400, map[string]any{"ok": false, "error": "Egress mode không hợp lệ: " + err.Error()})
+			return
+		}
+		if !slices.Equal(clean, cfg.EgressModes) {
+			cfg.EgressModes = clean
+			changed = true
+			dirty["egressModes"] = true
+		}
+	}
+	if in.RelayPool != nil {
+		clean, err := normalizeRelayPool(*in.RelayPool)
+		if err != nil {
+			writeJSON(w, 400, map[string]any{"ok": false, "error": "Relay pool không hợp lệ: " + err.Error()})
+			return
+		}
+		cfg.RelayPool = clean
+		changed = true
+		dirty["relayPool"] = true
+	}
+	if dirty["egressModes"] || dirty["relayPool"] {
+		if note := s.applyEgress(cfg); note != "" {
+			if proxyNote == "" {
+				proxyNote = note
+			} else {
+				proxyNote += "; " + note
+			}
+		}
+	}
+	if in.AgentScope != nil {
+		scope := store.NormalizeAgentScope(strings.ToLower(strings.TrimSpace(*in.AgentScope)))
+		if scope != *in.AgentScope && strings.ToLower(strings.TrimSpace(*in.AgentScope)) != "" {
+			// NormalizeAgentScope deliberately falls back to host for unknown
+			// values; a typo must be a 400 here, not a silent scope shrink.
+			switch strings.ToLower(strings.TrimSpace(*in.AgentScope)) {
+			case "host", "windows", "wsl", "all", "none":
+			default:
+				writeJSON(w, 400, map[string]any{"ok": false, "error": "agentScope không xác định: " + *in.AgentScope})
+				return
+			}
+		}
+		if cfg.AgentScope != scope {
+			cfg.AgentScope = scope
+			changed = true
+			dirty["agentScope"] = true
+		}
 	}
 	if in.UpdateFeed != nil {
 		cfg.UpdateFeed = strings.TrimSpace(*in.UpdateFeed)
@@ -933,6 +1005,15 @@ func (s *Server) commitSettings(next *store.Config, dirty map[string]bool) {
 		}
 		if dirty["proxyPool"] {
 			c.ProxyPool = append([]string(nil), next.ProxyPool...)
+		}
+		if dirty["egressModes"] {
+			c.EgressModes = append([]string(nil), next.EgressModes...)
+		}
+		if dirty["relayPool"] {
+			c.RelayPool = append([]store.RelayPeer(nil), next.RelayPool...)
+		}
+		if dirty["agentScope"] {
+			c.AgentScope = next.AgentScope
 		}
 		if dirty["warpEnabled"] {
 			c.WarpEnabled = next.WarpEnabled
@@ -1308,6 +1389,18 @@ func (s *Server) installProxyMode(mode, url string) (note string) {
 // request and must install from the merged values it is about to commit, not
 // from the store's previous generation.
 func (s *Server) installProxyModeFrom(cfg store.Config, mode, url string) (note string) {
+	// Re-apply the equal-peer selector after the legacy decision: changing a
+	// mode, the WARP switch or the relay pool must rebuild the selector from
+	// the merged snapshot, not leave the old peer list installed.
+	defer func() {
+		if n := s.applyEgress(cfg); n != "" {
+			if note == "" {
+				note = n
+			} else {
+				note += "; " + n
+			}
+		}
+	}()
 	if mode == "pool" {
 		pool, err := lane.NewProxyPool(cfg.ProxyPool)
 		if err != nil {
@@ -1335,6 +1428,57 @@ func (s *Server) installProxyModeFrom(cfg store.Config, mode, url string) (note 
 	lane.SetRotator(nil)
 	lane.SetProxy(mode, url)
 	return ""
+}
+
+// applyEgress installs the equal-peer layer from a complete config snapshot.
+// An empty EgressModes list falls back to the legacy transport built by the
+// caller, so old configs keep their single-mode behaviour.
+func (s *Server) applyEgress(cfg store.Config) string {
+	return lane.SetEgress(lane.EgressOptions{
+		Modes:        cfg.EgressModeList(),
+		Relays:       cfg.RelayEndpoints(),
+		WarpPoolSize: cfg.WarpPoolSize,
+		BaseMode:     cfg.ProxyMode,
+		BaseURL:      cfg.ProxyURL,
+	})
+}
+
+// normalizeRelayPool trims and validates relay entries. A relay URL is the
+// only field that must parse; a disabled entry may keep an empty token while
+// the operator fills it in. Enabled entries need a token because the relay
+// server fails closed without one.
+func normalizeRelayPool(in []store.RelayPeer) ([]store.RelayPeer, error) {
+	out := make([]store.RelayPeer, 0, len(in))
+	seen := map[string]bool{}
+	for i, r := range in {
+		r.ID = strings.TrimSpace(r.ID)
+		r.URL = strings.TrimSpace(r.URL)
+		r.Token = strings.TrimSpace(r.Token)
+		if r.URL == "" {
+			continue
+		}
+		if !strings.Contains(r.URL, "://") {
+			r.URL = "https://" + r.URL
+		}
+		u, err := neturl.Parse(r.URL)
+		if err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" {
+			return nil, fmt.Errorf("relay thứ %d có URL không hợp lệ: %s", i+1, r.URL)
+		}
+		if r.Enabled && r.Token == "" {
+			return nil, fmt.Errorf("relay thứ %d đang bật nhưng thiếu token", i+1)
+		}
+		key := strings.TrimRight(r.URL, "/")
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		r.URL = key
+		if r.ID == "" {
+			r.ID = "relay-" + strconv.Itoa(len(out)+1)
+		}
+		out = append(out, r)
+	}
+	return out, nil
 }
 
 // adminSubsSave replaces the subscription list and the feature switch in one
@@ -1381,6 +1525,9 @@ func (s *Server) adminSubsSave(w http.ResponseWriter, r *http.Request) {
 			_ = s.Store.Save()
 			lane.SetProxy("env", "")
 			lane.SetRotator(nil)
+			if note := s.applyEgress(*s.Store.Config()); note != "" {
+				s.logCat(logx.CatLifecycle, "warn", "Egress sau khi tắt đăng ký: %s", note)
+			}
 		}
 		writeJSON(w, 200, map[string]any{"ok": true})
 		return
@@ -1405,6 +1552,9 @@ func (s *Server) adminSubsSave(w http.ResponseWriter, r *http.Request) {
 		_ = s.Store.Save()
 		lane.SetProxy("rotate", "")
 		lane.SetRotator(s.subs.AsRotator())
+		if note := s.applyEgress(*s.Store.Config()); note != "" {
+			s.logCat(logx.CatLifecycle, "warn", "Egress sau khi nạp đăng ký: %s", note)
+		}
 	}()
 	writeJSON(w, 200, map[string]any{"ok": true, "proxyMode": "rotate"})
 }
@@ -1667,6 +1817,11 @@ func (s *Server) adminImport(w http.ResponseWriter, r *http.Request) {
 			incoming.Subscriptions[i].URL = ""
 		}
 	}
+	for i := range incoming.RelayPool {
+		if incoming.RelayPool[i].Token == store.MaskedValue {
+			incoming.RelayPool[i].Token = ""
+		}
+	}
 	// Every WorkBuddy account, not just the first: a masked export must not
 	// land its placeholders as credentials on any row.
 	for i := range incoming.WorkBuddyAccounts {
@@ -1699,6 +1854,9 @@ func (s *Server) adminImport(w http.ResponseWriter, r *http.Request) {
 	}
 	s.Store.Replace(incoming)
 	_ = s.Store.Save()
+	if note := s.applyEgress(*s.Store.Config()); note != "" {
+		s.logCat(logx.CatLifecycle, "warn", "Egress sau khi nhập cấu hình: %s", note)
+	}
 	// Push the imported pool into the lane now: without this the imported
 	// accounts only took effect on the next boot.
 	s.Lane.SetWorkBuddyAccounts(incoming.WorkBuddyAccounts)

@@ -116,6 +116,16 @@ func sharedWarpPool(poolSize int) (*warp.Pool, error) {
 type warpRoundTripper struct {
 	base     *http.Transport
 	poolSize int
+	// strict makes an unavailable/empty WARP pool a transport error instead of
+	// falling back to base. The equal-peer selector needs that signal so a
+	// failed WARP peer moves to relay/sing-box; the legacy single-mode wrapper
+	// keeps the forgiving fallback.
+	strict bool
+}
+
+// newWarpPeer builds the equal-peer form of the WARP transport.
+func newWarpPeer(base *http.Transport, poolSize int, strict bool) *warpRoundTripper {
+	return &warpRoundTripper{base: base, poolSize: poolSize, strict: strict}
 }
 
 // warpPoolFor is a seam for tests: when set, it replaces sharedWarpPool.
@@ -131,6 +141,9 @@ func (w *warpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 	pool, err := warpPoolFor(w.poolSize)
 	if err != nil {
 		warpFallbackN.Add(1)
+		if w.strict {
+			return nil, err
+		}
 		return w.base.RoundTrip(req)
 	}
 	actx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
@@ -139,6 +152,9 @@ func (w *warpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 	if err != nil {
 		warpFallbackN.Add(1)
 		slog.Default().Warn("lane: WARP lease failed, request falls back to the base transport", "err", err)
+		if w.strict {
+			return nil, err
+		}
 		return w.base.RoundTrip(req)
 	}
 

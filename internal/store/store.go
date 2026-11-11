@@ -49,15 +49,15 @@ const (
 // model. It is the provider's claim, not a measurement: a live capability
 // probe outranks it, and an empty value means the provider published nothing.
 type ModelMeta struct {
-	Name           string   `json:"name,omitempty"` // the provider's display name
-	ContextWindow  int      `json:"contextWindow,omitempty"`
-	MaxOutput      int      `json:"maxOutput,omitempty"`
-	Vision         bool     `json:"vision,omitempty"`
-	Audio          bool     `json:"audio,omitempty"`
-	File           bool     `json:"file,omitempty"`
-	Reasoning      bool     `json:"reasoning,omitempty"`
-	InputDeclared  bool     `json:"inputDeclared,omitempty"`
-	OutputDeclared bool     `json:"outputDeclared,omitempty"`
+	Name           string `json:"name,omitempty"` // the provider's display name
+	ContextWindow  int    `json:"contextWindow,omitempty"`
+	MaxOutput      int    `json:"maxOutput,omitempty"`
+	Vision         bool   `json:"vision,omitempty"`
+	Audio          bool   `json:"audio,omitempty"`
+	File           bool   `json:"file,omitempty"`
+	Reasoning      bool   `json:"reasoning,omitempty"`
+	InputDeclared  bool   `json:"inputDeclared,omitempty"`
+	OutputDeclared bool   `json:"outputDeclared,omitempty"`
 	// Efforts are the thinking rungs the provider itself publishes, in the
 	// names that provider understands (QoderCN: low / medium / xhigh). A
 	// provider that states them owns the picker: the gateway advertises these
@@ -127,6 +127,16 @@ type Subscription struct {
 	Enabled bool   `json:"enabled"`
 }
 
+// RelayPeer is one self-hosted or serverless relay endpoint for the new
+// egress peer layer. URL is the relay's base (https://relay.example.com);
+// Token is the shared X-Zen-Relay-Token secret and is masked on export.
+type RelayPeer struct {
+	ID      string `json:"id"`
+	URL     string `json:"url"`
+	Token   string `json:"token,omitempty"`
+	Enabled bool   `json:"enabled"`
+}
+
 type Config struct {
 	SchemaVersion int `json:"schemaVersion"`
 	Port          int `json:"port"`
@@ -169,11 +179,30 @@ type Config struct {
 	// SubsEnabled turns on the sing-box sidecar + per-request egress rotation
 	// over the subscription nodes; SingBoxPath optionally points at a
 	// user-provided sing-box.exe (empty = the auto-downloaded one).
-	SubsEnabled     bool           `json:"subsEnabled,omitempty"`
-	Subscriptions   []Subscription `json:"subscriptions,omitempty"`
-	SingBoxPath     string         `json:"singBoxPath,omitempty"`
-	FailoverEnabled bool           `json:"failoverEnabled"`
-	FailoverMax     int            `json:"failoverMax"`
+	SubsEnabled   bool           `json:"subsEnabled,omitempty"`
+	Subscriptions []Subscription `json:"subscriptions,omitempty"`
+	SingBoxPath   string         `json:"singBoxPath,omitempty"`
+	// EgressModes selects the lane's egress peers. The three roles are equal
+	// and may be combined in any order: "relay" (RelayPool below), "singbox"
+	// (the Rotator installed by the subscription sidecar or the static pool),
+	// and "warp" (the userspace Cloudflare WARP pool). An empty list keeps the
+	// legacy ProxyMode/WarpEnabled decision untouched, so an upgraded config
+	// behaves exactly as before until the user opts in.
+	EgressModes []string `json:"egressModes,omitempty"`
+	// RelayPool lists self-hosted or Vercel relays. Each entry is one egress
+	// peer: requests are spread across enabled entries and retried on the next
+	// entry when a tunnel dies. Token is a shared secret, never logged and
+	// masked by Store.Masked().
+	RelayPool []RelayPeer `json:"relayPool,omitempty"`
+	// AgentScope fences agent injection by platform. Values: host, windows,
+	// wsl, all, none. It exists because one machine can run several gateways
+	// (Windows, WSL, a server) and two of them injecting the same agent config
+	// is a silent write race: the last writer owns the endpoint. Empty is
+	// normalized to all, the pre-scope behaviour; a multi-gateway host must set
+	// an explicit scope.
+	AgentScope      string `json:"agentScope,omitempty"`
+	FailoverEnabled bool   `json:"failoverEnabled"`
+	FailoverMax     int    `json:"failoverMax"`
 	// SmartRouting is the multimodal-routing master switch: on = failover
 	// candidates are filtered by the request's modalities and ordered by the
 	// routing strategy; off = the exact pre-routing behaviour (catalog order,
@@ -259,7 +288,7 @@ type Config struct {
 	// modelscope). One list serves all six: Kind says which one an entry
 	// belongs to, and each channel keeps its own enable flag.
 	ExtAccounts []lane.ExtAccount `json:"extAccounts,omitempty"`
-	Window   WindowState    `json:"window"`
+	Window      WindowState       `json:"window"`
 }
 
 // DayStat aggregates one calendar day.
@@ -563,6 +592,30 @@ func Open() (*Store, error) {
 	if cfg.RoutingStrategy == "" {
 		cfg.RoutingStrategy = "catalog"
 	}
+	// v13: the fork owns its release and announcement feeds. Point both at
+	// chipmax/zen-gate-vi when they still carry the upstream default; a feed
+	// the user customized to another repo stays untouched. This is also the
+	// schema bump that marks installs understanding egressModes/relayPool and
+	// agentScope (no backfill: empty means the legacy single-egress path).
+	// Pre-scope builds injected every installed adapter, so an upgrade keeps
+	// that behaviour instead of silently shrinking to one host family; a
+	// machine running more than one gateway sets an explicit scope.
+	if cfg.SchemaVersion < 13 {
+		cfg.SchemaVersion = 13
+		const fork = "chipmax/zen-gate-vi"
+		const upstream = "LAGcomcom/zen-gate"
+		feed := strings.TrimSpace(cfg.UpdateFeed)
+		if feed == "" || strings.Contains(feed, upstream) {
+			cfg.UpdateFeed = "https://api.github.com/repos/" + fork + "/releases/latest"
+		}
+		ann := strings.TrimSpace(cfg.AnnouncementFeed)
+		if ann == "" || strings.Contains(ann, upstream) {
+			cfg.AnnouncementFeed = "https://api.github.com/repos/" + fork + "/contents/announcements.json?ref=master"
+		}
+		if strings.TrimSpace(cfg.AgentScope) == "" {
+			cfg.AgentScope = "all"
+		}
+	}
 	if cfg.SchemaVersion == 0 {
 		// first migration to the versioned schema: mature defaults
 		cfg.SchemaVersion = 1
@@ -771,6 +824,11 @@ func (s *Store) Masked() *Config {
 			cfg.Subscriptions[i].URL = MaskedValue
 		}
 	}
+	for i := range cfg.RelayPool {
+		if cfg.RelayPool[i].Token != "" {
+			cfg.RelayPool[i].Token = MaskedValue
+		}
+	}
 	if cfg.WorkBuddy.AccessToken != "" {
 		cfg.WorkBuddy.AccessToken = MaskedValue
 	}
@@ -862,6 +920,8 @@ func (c *Config) clone() *Config {
 	next.ModelPrefs = cloneMap(c.ModelPrefs)
 	next.HiddenAuto = cloneSlice(c.HiddenAuto)
 	next.Subscriptions = cloneSlice(c.Subscriptions)
+	next.EgressModes = cloneSlice(c.EgressModes)
+	next.RelayPool = cloneSlice(c.RelayPool)
 	next.WorkBuddyAccounts = cloneSlice(c.WorkBuddyAccounts)
 	next.ZCodeAccounts = cloneSlice(c.ZCodeAccounts)
 	next.TraeAccounts = cloneSlice(c.TraeAccounts)
@@ -1075,7 +1135,8 @@ func (s *Store) SetExtAccountEnabled(kind, id string, enabled bool) {
 }
 
 // UpsertWorkBuddyAccount inserts or replaces one account, matched by ID.
-func (s *Store) UpsertWorkBuddyAccount(acct lane.WBAccount) {	if strings.TrimSpace(acct.ID) == "" {
+func (s *Store) UpsertWorkBuddyAccount(acct lane.WBAccount) {
+	if strings.TrimSpace(acct.ID) == "" {
 		acct.ID = lane.WBAccountID(acct)
 	}
 	s.Mutate(func(c *Config) {

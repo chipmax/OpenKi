@@ -5,7 +5,7 @@
 > Đây là bản fork đã Việt hoá từ [LAGcomcom/zen-gate](https://github.com/LAGcomcom/zen-gate) (bản gốc tiếng Trung được giữ nguyên ở [README.zh-CN.md](README.zh-CN.md)):
 >
 > - Toàn bộ giao diện quản lý (dashboard), thông báo hệ thống, menu khay, thông báo lỗi và mô tả mô hình/nhà cung cấp trong mã nguồn Go đã được dịch sang tiếng Việt. Chi tiết phạm vi dịch và các chuỗi cố ý giữ nguyên (mẫu nhận dạng lỗi của upstream, giá trị enum dùng để so khớp) xem [GO-L10N-NOTES.md](GO-L10N-NOTES.md).
-> - **WARP (từ opencode2api): đã tích hợp.** Pool WARP userspace của [opencode2api](https://github.com/jasonxu114514/opencode2api) đã được đưa vào lane egress của fork: mỗi request thuê một exit riêng, exit dính 429/403 bị phạt (kèm cooldown /64), lease giữ nguyên trong suốt stream, và khi WARP không khả dụng gateway tự fallback về đường truyền thường. Bật bằng `warpEnabled: true` trong `config.json` (xem thêm `WARP-INTEGRATION.md`). Lưu ý: phần mã WARP thuộc GPL-3.0 — nếu phân phối lại bản fork đã gộp, toàn bộ bản gộp phải theo GPL-3.0.
+> - **WARP (từ opencode2api): đã tích hợp.** Pool WARP userspace của [opencode2api](https://github.com/jasonxu114514/opencode2api) đã được đưa vào lane egress của fork: mỗi request thuê một exit riêng, exit dính 429/403 bị phạt (kèm cooldown /64), lease giữ nguyên trong suốt stream, và khi WARP không khả dụng gateway tự fallback về đường truyền thường. Bật bằng `warpEnabled: true` trong `config.json` (xem thêm `WARP-INTEGRATION.md`). Lưu ý: phần mã WARP thuộc GPL-3.0; toàn bộ fork này cũng phát hành theo GPL-3.0 (xem [Giấy phép](#giấy-phép)).
 
 <div align="center">
 
@@ -17,10 +17,10 @@
 
 Một chương trình khay hệ thống trên máy tính (Windows 10/11, macOS 13+, Linux): mở một cổng (gateway) cục bộ tương thích OpenAI / Anthropic và tự động kết nối với các AI Agent đã cài trên máy — các mô hình miễn phí xuất hiện ngay trong bộ chọn mô hình của Agent.
 
-[![release](https://img.shields.io/github/v/release/LAGcomcom/zen-gate?style=flat-square&label=phiên%20bản)](https://github.com/LAGcomcom/zen-gate/releases/latest)
+[![release](https://img.shields.io/github/v/release/chipmax/zen-gate-vi?style=flat-square&label=phiên%20bản)](https://github.com/chipmax/zen-gate-vi/releases/latest)
 [![go](https://img.shields.io/badge/Go-1.26-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
-[![platform](https://img.shields.io/badge/Windows-10%2F11%20%7C%20macOS%2013%2B%20%7C%20Linux-0078D6?style=flat-square)](https://github.com/LAGcomcom/zen-gate/releases)
-[![license](https://img.shields.io/github/license/LAGcomcom/zen-gate?style=flat-square)](LICENSE)
+[![platform](https://img.shields.io/badge/Windows-10%2F11%20%7C%20macOS%2013%2B%20%7C%20Linux-0078D6?style=flat-square)](https://github.com/chipmax/zen-gate-vi/releases)
+[![license](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)](LICENSE)
 
 </div>
 
@@ -56,7 +56,7 @@ OpenCode Zen cung cấp một loạt mô hình miễn phí **không cần đăng
 
 ## Bắt đầu nhanh
 
-**Windows** — Tải `zen-gate.exe` từ trang [Releases của bản gốc](https://github.com/LAGcomcom/zen-gate/releases/latest) và chạy trực tiếp (biểu tượng xuất hiện ở khay). Nếu máy chưa có WebView2 Runtime, chương trình tự chuyển sang mở trang quản lý bằng trình duyệt mặc định, chức năng cổng không bị ảnh hưởng. Biến môi trường `ZEN_GATE_NO_WEBVIEW2=1` ép dùng chế độ trình duyệt (để chẩn đoán lỗi).
+**Windows** — Tải `zen-gate.exe` từ trang [Releases của bản fork](https://github.com/chipmax/zen-gate-vi/releases/latest) và chạy trực tiếp (biểu tượng xuất hiện ở khay). Nếu máy chưa có WebView2 Runtime, chương trình tự chuyển sang mở trang quản lý bằng trình duyệt mặc định, chức năng cổng không bị ảnh hưởng. Biến môi trường `ZEN_GATE_NO_WEBVIEW2=1` ép dùng chế độ trình duyệt (để chẩn đoán lỗi).
 
 **macOS** — `tools/build-macos.sh` tạo ra `dist/Zen Gate.app`:
 
@@ -168,10 +168,20 @@ Không dùng Docker, chỉ cần một binary không giao diện:
 CGO_ENABLED=0 go build -tags headless -trimpath -o zen-gate ./cmd/zen-gate
 ```
 
+Ma trận triển khai Windows (GUI/tray), WSL (systemd, cổng 8788) và VPS (Caddy
+TLS, loopback 8787) cùng quy tắc `agentScope`/`egressModes`/`relayPool`: xem
+[docs/DEPLOY.md](docs/DEPLOY.md). Giao thức và triển khai relay:
+[docs/RELAY.md](docs/RELAY.md).
+
 ## Cập nhật một chạm
 
-Ứng dụng kiểm tra Releases của kho gốc mỗi 6 giờ. Khi có phiên bản mới, trang tổng quan hiện nút "Cập nhật một chạm" — tự tải, thay thế và khởi động lại trong khoảng 10 giây. Tính năng này chỉ bật trên Windows (nơi bản phát hành là một file `.exe` đổi tên được khi đang chạy).
+Ứng dụng kiểm tra Releases của kho fork (`chipmax/zen-gate-vi`) mỗi 6 giờ. Khi có phiên bản mới, trang tổng quan hiện nút "Cập nhật một chạm" — tự tải, thay thế và khởi động lại trong khoảng 10 giây. Tính năng này chỉ bật trên Windows (nơi bản phát hành là một file `.exe` đổi tên được khi đang chạy).
 
 ## Giấy phép
 
-MIT — xem [LICENSE](LICENSE). Mã nguồn gốc thuộc về dự án [LAGcomcom/zen-gate](https://github.com/LAGcomcom/zen-gate); fork này bổ sung bản dịch tiếng Việt và tính năng WARP có nguồn từ opencode2api (GPL-3.0 — xem `internal/warp/NOTICE`; khi phân phối lại bản gộp, áp dụng GPL-3.0 cho toàn bộ).
+**GNU GPL-3.0-only** — SPDX: `GPL-3.0-only`. Toàn văn tại [LICENSE](LICENSE) và bản sao [COPYING](COPYING).
+
+- Mã nguồn gốc: [LAGcomcom/zen-gate](https://github.com/LAGcomcom/zen-gate) — Copyright (C) 2026 LAGcomcom.
+- Bản fork tiếng Việt: Copyright (C) 2026 chipmax.
+- Khi phân phối lại (kể cả binary), phải kèm giấy phép, giữ nguyên thông báo bản quyền và cung cấp mã nguồn tương ứng theo GPL-3.0.
+- Các thành phần bên thứ ba và giấy phép tương ứng: xem [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Phần WARP có nguồn từ opencode2api (GPL-3.0), chi tiết tại `internal/warp/NOTICE` và `WARP-INTEGRATION.md`.

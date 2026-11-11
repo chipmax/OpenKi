@@ -58,6 +58,10 @@ type Registry struct {
 	// injectedKey fingerprints the model roster the enabled adapters were
 	// last written with; see ResyncEnabled.
 	injectedKey string
+	// scopeOverride is set by --no-inject / --inject-scope. Empty means the
+	// store's agentScope wins. Kept under mu because settings edits and probe
+	// rounds can race.
+	scopeOverride string
 	// views caches the last Detect pass. Detect shells out for a version on
 	// every installed agent, which costs a few hundred ms each — with the
 	// full adapter set a /state poll took ~3s and the dashboard sat empty until it
@@ -118,6 +122,56 @@ func (r *Registry) SetEndpoints(baseURL string, models []lane.ModelInfo) {
 	r.modelsCache = models
 }
 
+// SetScopeOverride pins the injection scope for this process. It is how
+// --no-inject (scope none) and --inject-scope reach the registry without
+// rewriting config.json: a server flag must not be persisted into the user's
+// desktop config.
+func (r *Registry) SetScopeOverride(scope string) {
+	r.mu.Lock()
+	r.scopeOverride = strings.TrimSpace(scope)
+	r.mu.Unlock()
+}
+
+func (r *Registry) scope() string {
+	r.mu.Lock()
+	override := r.scopeOverride
+	r.mu.Unlock()
+	if override != "" {
+		return store.NormalizeAgentScope(override)
+	}
+	return store.NormalizeAgentScope(r.st.Config().AgentScope)
+}
+
+// scopeAllows fences an adapter id by the configured scope. The two host
+// families are disjoint: "wsl" means the Linux-side adapters, "windows" means
+// the Windows-side ones (including a native Windows process), and "host"
+// means whichever family this process is.
+func (r *Registry) scopeAllows(id string) bool {
+	scope := r.scope()
+	windowsAdapter := strings.HasSuffix(id, "-windows")
+	switch scope {
+	case "none":
+		return false
+	case "all":
+		return true
+	case "windows":
+		if isWSL() {
+			return windowsAdapter
+		}
+		return !windowsAdapter
+	case "wsl":
+		if !isWSL() {
+			return false
+		}
+		return !windowsAdapter
+	default: // host
+		if isWSL() {
+			return !windowsAdapter
+		}
+		return !windowsAdapter
+	}
+}
+
 // Views snapshots every adapter's state. The Detect pass is cached for
 // viewsTTL so the dashboard's 10s poll does not re-shell-out to every agent on
 // each tick; Enable/Disable drop the cache instead of relying on the TTL.
@@ -156,6 +210,10 @@ func (r *Registry) detectViews() []View {
 		id, name, describe := a.Meta()
 		installed, version, detail := a.Detect()
 		enabled, enDetail, _ := a.IsEnabled()
+		if !r.scopeAllows(id) {
+			enabled = false
+			enDetail = "Ngoài agentScope của tiến trình này; không ghi cấu hình"
+		}
 		v := View{
 			ID:        id,
 			Name:      name,
@@ -187,6 +245,9 @@ func (r *Registry) Enable(id string) error {
 	if !ok {
 		return fmt.Errorf("unknown agent %q", id)
 	}
+	if !r.scopeAllows(id) {
+		return fmt.Errorf("agent %q nằm ngoài agentScope %q của tiến trình này", id, r.scope())
+	}
 	opts, key := r.snapshot()
 	if err := a.Enable(opts); err != nil {
 		return err
@@ -210,6 +271,9 @@ func (r *Registry) Disable(id string) error {
 	a, ok := r.byID(id)
 	if !ok {
 		return fmt.Errorf("unknown agent %q", id)
+	}
+	if !r.scopeAllows(id) {
+		return fmt.Errorf("agent %q nằm ngoài agentScope %q của tiến trình này", id, r.scope())
 	}
 	err := a.Disable()
 	if err == nil {
@@ -243,6 +307,19 @@ func (r *Registry) ResyncEnabled() int {
 	}
 	var attempted, done int
 	for _, a := range r.agents {
+		id, _, _ := a.Meta()
+		if !r.scopeAllows(id) {
+			continue
+		}
+		// Config, not a pre-existing provider entry, decides ownership. The
+		// old IsEnabled-only gate rewrote any agent whose file already carried
+		// a zen-gate provider: a second instance (Windows/WSL) could silently
+		// take over an endpoint the user had explicitly disabled in its own
+		// config. The installed/enabled check stays so an uninstalled agent is
+		// not recreated by a stale enabledAgents entry.
+		if !r.st.Config().EnabledAgents[id] {
+			continue
+		}
 		if enabled, _, err := a.IsEnabled(); err != nil || !enabled {
 			continue
 		}

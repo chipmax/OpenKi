@@ -21,7 +21,7 @@
 [![downloads](https://img.shields.io/github/downloads/LAGcomcom/zen-gate/total?style=flat-square&label=%E4%B8%8B%E8%BD%BD)](https://github.com/LAGcomcom/zen-gate/releases)
 [![go](https://img.shields.io/badge/Go-1.26-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
 [![platform](https://img.shields.io/badge/Windows-10%2F11%20%7C%20macOS%2013%2B%20%7C%20Linux-0078D6?style=flat-square&logo=windows11&logoColor=white)](https://github.com/LAGcomcom/zen-gate/releases)
-[![license](https://img.shields.io/github/license/LAGcomcom/zen-gate?style=flat-square)](LICENSE)
+[![license](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)](LICENSE)
 
 [下载最新版](https://github.com/LAGcomcom/zen-gate/releases/latest) · [问题反馈](https://github.com/LAGcomcom/zen-gate/issues)
 
@@ -208,3 +208,17 @@ GUI 构建仍留在 `release.yml`。
 
 窗口按钮（最小化 / 最大化 / 关闭 / 拖拽）在两边都通过页面注入的
 `window.zengate*` 绑定实现，所以 dashboard 一份代码三处跑。
+
+## 许可证
+
+本项目按 **GNU GPL-3.0-only** 发布 — SPDX：`GPL-3.0-only`。完整文本见
+[LICENSE](LICENSE) 与副本 [COPYING](COPYING)。
+
+- 上游原始项目：[LAGcomcom/zen-gate](https://github.com/LAGcomcom/zen-gate) —
+  Copyright (C) 2026 LAGcomcom。
+- 越南语分叉：Copyright (C) 2026 chipmax。
+- 再分发（包括二进制）时必须附带许可证与版权声明，并按 GPL-3.0 提供对应源代码。
+- 第三方组件及其许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)；WARP 部分源自
+  opencode2api（GPL-3.0），详见 `internal/warp/NOTICE` 与 `WARP-INTEGRATION.md`。
+- 部署矩阵（Windows / WSL / VPS）见 [docs/DEPLOY.md](docs/DEPLOY.md)，relay 协议与部署见
+  [docs/RELAY.md](docs/RELAY.md)。

@@ -1,0 +1,36 @@
+[Unit]
+Description=Zen Gate gateway (WSL headless)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=admin
+Group=admin
+Environment=HOME=/home/admin
+Environment=ZEN_GATE_HEADLESS=1
+Environment=ZEN_GATE_HOME=/home/admin/.config/zen-gate
+WorkingDirectory=/home/admin
+ExecStart=/usr/local/bin/zen-gate --inject-scope=wsl
+Restart=always
+RestartSec=3
+TimeoutStopSec=10
+KillSignal=SIGTERM
+UMask=0077
+
+# Hardening cơ bản. Agent config nằm rải trong HOME nên HOME phải ghi được;
+# phần còn lại của hệ thống chỉ đọc.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ReadWritePaths=/home/admin
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

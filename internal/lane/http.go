@@ -201,12 +201,8 @@ func SetRotator(r Rotator) {
 // RotationActive reports whether per-request egress rotation is live. The
 // egress watcher uses it to skip the probe-round trigger on IP changes — with
 // rotation the exit IP is expected to flap constantly.
-func RotationActive() bool { return rotation.Load() }
+func RotationActive() bool { return rotation.Load() || egressActive.Load() }
 
-// SetProxy reconfigures the shared client: "env" honors HTTP(S)_PROXY,
-// "system" follows the Windows system proxy (WinINET settings), "direct"
-// bypasses, "custom" uses the given URL, "rotate" tunnels every dial through
-// the Rotator installed via SetRotator.
 // responseHeaderTimeout bounds the wait for a response's first byte once the
 // connection is up. The dial timeout does not cover this: an exit that accepts
 // the TCP connection and then simply never answers leaves the request hanging
@@ -215,6 +211,18 @@ func RotationActive() bool { return rotation.Load() }
 // exits answered in ~15 seconds. 90s clears the slowest cold start measured here
 // (a first-call step-5 took 62s) and still cuts a stalled exit short.
 const responseHeaderTimeout = 90 * time.Second
+
+// SetProxy reconfigures the shared client: "env" honors HTTP(S)_PROXY,
+// "system" follows the Windows system proxy (WinINET settings), "direct"
+// bypasses, "custom" uses the given URL, "rotate" tunnels every dial through
+// the Rotator installed via SetRotator.
+//
+// It also clears the explicit equal-peer selector: a legacy mode write is an
+// instruction to use that one mode, not to leave a stale relay/WARP mix on.
+func SetProxy(mode, url string) {
+	clearEgress()
+	setProxyTransport(mode, url)
+}
 
 // streamIdleTimeout is how long a stream may deliver nothing before the call is
 // abandoned. It resets on every chunk, so it never bounds a long answer -- what
@@ -230,7 +238,10 @@ const responseHeaderTimeout = 90 * time.Second
 // so 90s of silence is a stuck exit rather than a slow one.
 const streamIdleTimeout = 90 * time.Second
 
-func SetProxy(mode, url string) {
+// setProxyTransport is the legacy transport builder. SetEgress calls it
+// directly for the empty-mode case; public callers go through SetProxy so the
+// selector is cleared first.
+func setProxyTransport(mode, url string) {
 	t := &http.Transport{
 		ResponseHeaderTimeout: responseHeaderTimeout,
 		// Pool tuning. Every upstream request funnels to a single host

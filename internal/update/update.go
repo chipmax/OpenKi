@@ -40,7 +40,7 @@ func assetName() string {
 // build time and per-install through settings. It points at this repository's
 // own Releases API — leaving it empty made every build's update check answer
 // "already latest" without ever looking anywhere.
-var FeedURL = "https://api.github.com/repos/LAGcomcom/zen-gate/releases/latest"
+var FeedURL = "https://api.github.com/repos/chipmax/zen-gate-vi/releases/latest"
 
 // Current is the running version, overridable via -ldflags.
 var Current = "1.1.0"

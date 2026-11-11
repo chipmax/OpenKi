@@ -1,0 +1,32 @@
+# Caddyfile cho zen-gate trên VPS.
+#
+# - Thay gw.example.com bằng domain thật đã trỏ DNS về VPS.
+# - Caddy tự xin TLS (Let's Encrypt) và nghe 443/80.
+# - CHỈ proxy /v1/* và /healthz tới gateway loopback.
+# - /admin* bị chặn tại đây; quản trị đi bằng SSH tunnel.
+# - flush_interval -1: không buffer, chunk stream tới client ngay.
+
+gw.example.com {
+	handle /admin {
+		respond 404
+	}
+
+	handle /admin/* {
+		respond 404
+	}
+
+	handle /v1/* {
+		reverse_proxy 127.0.0.1:8787 {
+			flush_interval -1
+		}
+	}
+
+	handle /healthz {
+		reverse_proxy 127.0.0.1:8787
+	}
+
+	# Mọi đường dẫn khác (kể cả dashboard "/") không được lộ ra Internet.
+	handle {
+		respond 404
+	}
+}

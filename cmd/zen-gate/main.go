@@ -102,8 +102,14 @@ func main() {
 
 	noTray := flag.Bool("no-tray", false, "console mode: no tray icon/window, log to stdout")
 	port := flag.Int("port", 0, "override listen port")
+	noInject := flag.Bool("no-inject", false, "do not read or write any agent config (server/VPS mode)")
+	injectScope := flag.String("inject-scope", "", "agent scope: host|windows|wsl|all|none (default: config agentScope)")
 	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
+	if *injectScope != "" && !store.ValidAgentScope(strings.ToLower(strings.TrimSpace(*injectScope))) {
+		fmt.Println("invalid -inject-scope:", *injectScope)
+		os.Exit(2)
+	}
 	// ZEN_GATE_HEADLESS: env-var form of -no-tray for supervisors that pass
 	// environment, not argv (docker, systemd, launchd). Any non-empty value
 	// except "0"/"false" (case-insensitive) enables it. The -no-tray path
@@ -224,6 +230,15 @@ func main() {
 	})
 	lane.SetWarpEnabled(cfg.WarpEnabled, cfg.WarpPoolSize)
 	lane.SetProxy(cfg.ProxyMode, cfg.ProxyURL)
+	if note := lane.SetEgress(lane.EgressOptions{
+		Modes:        cfg.EgressModeList(),
+		Relays:       cfg.RelayEndpoints(),
+		WarpPoolSize: cfg.WarpPoolSize,
+		BaseMode:     cfg.ProxyMode,
+		BaseURL:      cfg.ProxyURL,
+	}); note != "" {
+		logger.Infof("Egress peer: %s", note)
+	}
 	// Static proxy pool (the opencode2api "proxies" mechanism): the transport
 	// now asks the Rotator for every dial, so it must exist before the first
 	// request, not after the sidecar's subscription pull.
@@ -312,6 +327,14 @@ func main() {
 		st.AddTTFTSample(r.Model, r.TTFTMs)
 	}
 	reg := agents.NewRegistry(st)
+	scope := strings.ToLower(strings.TrimSpace(*injectScope))
+	if *noInject {
+		scope = "none"
+	}
+	if scope != "" {
+		reg.SetScopeOverride(scope)
+		logger.Infof("Phạm vi tiêm cấu hình Agent: %s", scope)
+	}
 	gw := gateway.New(ln, st)
 	// A probe verdict that says available overturns the batch auto-hide that
 	// was standing on the model: healthy models re-enter the pickers without

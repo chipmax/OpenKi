@@ -49,7 +49,7 @@ const dateLayout = "2006-01-02"
 // The Contents API is rate-limited per proxy IP (403 once a shared
 // accelerator burns the anonymous quota), and raw keeps serving when it
 // does; mirror() below pairs the two for every GitHub repository.
-const DefaultFeedURL = "https://api.github.com/repos/LAGcomcom/zen-gate/contents/announcements.json?ref=master"
+const DefaultFeedURL = "https://api.github.com/repos/chipmax/zen-gate-vi/contents/announcements.json?ref=master"
 
 // Fetch pulls and parses the feed. GitHub feeds fail in two opposite ways:
 // the Contents API answers 403 once the proxy's shared IP burns the

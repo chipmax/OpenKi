@@ -33,6 +33,7 @@ func newCountingRegistry(t *testing.T, a *countingAgent) *Registry {
 	}
 	r := NewRegistry(st)
 	r.agents = []Agent{a}
+	st.Mutate(func(cfg *store.Config) { cfg.EnabledAgents["count"] = true })
 	return r
 }
 
@@ -93,6 +94,10 @@ func TestResyncGatePartialFailureDoesNotCommit(t *testing.T) {
 	failing := &failingAgent{}
 	r := NewRegistry(st)
 	r.agents = []Agent{good, failing}
+	st.Mutate(func(cfg *store.Config) {
+		cfg.EnabledAgents["count"] = true
+		cfg.EnabledAgents["fail"] = true
+	})
 	r.SetEndpoints("http://127.0.0.1:1/v1", []lane.ModelInfo{{ID: "m1"}})
 
 	// Two enabled adapters, one always fails: done(1) != attempted(2), so

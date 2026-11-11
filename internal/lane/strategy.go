@@ -102,6 +102,14 @@ func (l *Lane) ApplyCapabilityTags(model string, t CapabilityTags) bool {
 	return false
 }
 
+// NotifyCapabilityChange re-announces the catalog after capabilities were
+// updated in place (AI tagging). Listeners re-read the roster and re-inject
+// enabled agents, so a newly learned context window reaches their config files
+// without waiting for the next catalog refresh. Callers batch their updates and
+// announce once: every announcement costs one rewrite (and one backup) per
+// enabled agent.
+func (l *Lane) NotifyCapabilityChange() { l.notify() }
+
 // satisfiesNeeds reports whether a model can carry a request's modality
 // footprint. The catalog carries a verdict for every lane model, so false is
 // a hard filter — an image must never ride a text-only model.

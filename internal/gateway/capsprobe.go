@@ -162,6 +162,12 @@ func (s *Server) probeCapabilities(ctx context.Context, p *store.Provider, model
 		Reasoning: prev.Reasoning,
 		Source:    store.TagSourceProbe, At: time.Now().UnixMilli(),
 	})
+	// The tag is the source InjectableModels reads for a custom provider's
+	// modalities; without this the freshly measured values stay invisible to
+	// /v1/models and to every injected agent until some unrelated refresh.
+	if s.modelsSync != nil {
+		s.modelsSync()
+	}
 	return verdicts
 }
 

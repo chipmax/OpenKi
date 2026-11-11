@@ -193,6 +193,12 @@ func (t *Tagger) drain(ctx context.Context) {
 	t.failStreak = 0
 	t.tagging = false
 	t.mu.Unlock()
+	if applied > 0 {
+		// One announcement per batch: the tagger just rewrote context windows
+		// and modalities in place, and enabled agents must be re-injected so
+		// their pickers carry the learned values.
+		t.lane.NotifyCapabilityChange()
+	}
 	if applied == 0 {
 		// Nothing matched: surface the raw answer (trimmed) so the dashboard
 		// log shows whether the model skipped ids or answered unparseably.

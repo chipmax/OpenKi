@@ -90,7 +90,7 @@ zen-gate
 | | Windows | WSL |
 |---|---|---|
 | Giao diện | GUI + khay hệ thống | headless, mở bằng trình duyệt |
-| Dữ liệu | `%LOCALAPPDATA%\zen-gate` | `~/.zen-gate` (hoặc `ZEN_GATE_HOME`) |
+| Dữ liệu | `%APPDATA%\zen-gate` | `$XDG_CONFIG_HOME/zen-gate` (mặc định `~/.config/zen-gate`) |
 | Agent | cấu hình nằm trong Windows | cấu hình nằm trong Linux; thêm mục **omp (Windows)** khi tìm thấy `C:\Users\<tên>\.omp\agent\models.yml` qua `/mnt/c` |
 | Cổng | 127.0.0.1:8787 | 127.0.0.1:8787 |
 

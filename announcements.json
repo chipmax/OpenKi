@@ -314,14 +314,6 @@
       "start": "2026-10-07",
       "end": "2026-10-14",
       "url": "https://github.com/chipmax/zen-gate-vi/releases"
-    },
-    {
-      "id": "2026-10-06-v1.3.7-release",
-      "title": "v1.3.7 更新：自定义 API 模型进入全部 Agent 选择器",
-      "body": "本次更新带来：\n1. 修复自定义上游（NVIDIA NIM、Gemini、OpenRouter 等）的模型不出现在 Agent 选择器的问题——现在与免费车道一起注入所有已适配的 Agent，ID 形如 nvidia-nim/模型名；\n2. 「模型」页的勾选/取消现在会自动同步到所有已启用的 Agent，无需重新开关；\n3. Qoder 适配的无元数据自定义模型补齐默认上下文窗口，避免选择器显示异常。",
-      "level": "info",
-      "start": "2026-10-06",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
     }
   ]
 }

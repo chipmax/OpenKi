@@ -126,10 +126,20 @@ func main() {
 		return
 	}
 	if *gateCheck {
+		// The check compares the real profile, so read the same config the
+		// running gateway would. A missing config is not fatal here: fall back
+		// to the compiled defaults and say so.
+		if st, err := store.Open(); err == nil {
+			c := st.Config()
+			lane.SetGateProfile(c.GateUserAgent, c.GateTools)
+		} else {
+			fmt.Println("config not loaded (using compiled fingerprint):", err)
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), 125*time.Second)
 		defer cancel()
 		res := lane.CheckFingerprintGate(ctx, *gateModel)
 		fmt.Printf("model: %s\n", res.Model)
+		fmt.Printf("fingerprint hash: %s\n", res.Hash)
 		fmt.Printf("with fingerprint:    ok=%v code=%s status=%d %dms\n", res.With.OK, res.With.Code, res.With.Status, res.With.Millis)
 		fmt.Printf("without fingerprint: ok=%v code=%s status=%d %dms\n", res.Without.OK, res.Without.Code, res.Without.Status, res.Without.Millis)
 		fmt.Printf("verdict: %s\n", res.Verdict)
@@ -228,12 +238,22 @@ func main() {
 	// WorkBuddy prompt-cache hint: off unless the user turned it on (live A/B
 	// first). Read at boot and again on every settings save.
 	ln.SetWorkBuddyCacheKey(cfg.WorkBuddyCacheKey)
-	ln.SetExitTokenRate(cfg.ExitTokensPerMinute)
+	// A missing key means "use the protective default"; an explicit 0 is the
+	// user's choice to turn the governor off, so the pointer is preserved all
+	// the way to here.
+	exitRate := lane.DefaultExitTokensPerMinute
+	if cfg.ExitTokensPerMinute != nil {
+		exitRate = *cfg.ExitTokensPerMinute
+	}
+	ln.SetExitTokenRate(exitRate)
 	lane.SetFingerprintMode(cfg.FingerprintMode)
 	if *fingerprintMode != "" {
 		lane.SetFingerprintMode(*fingerprintMode)
 		logger.Infof("Ghi đè chế độ fingerprint bằng tham số dòng lệnh: %s", lane.FingerprintMode())
 	}
+	lane.SetGateProfile(cfg.GateUserAgent, cfg.GateTools)
+	logger.Infof("Fingerprint cổng OpenCode: hash=%s mode=%s (gateUserAgent=%s, gateTools=%d)",
+		lane.FingerprintHash(), lane.FingerprintMode(), effectiveGateUA(cfg.GateUserAgent), len(cfg.GateTools))
 	ln.SetTTFTSource(func(model string) int64 {
 		avg, _ := st.TTFTStats(model)
 		return avg
@@ -784,6 +804,15 @@ func saveWindowState(st *store.Store) {
 		c.Window = store.WindowState{X: x, Y: y, W: r - x, H: b - y, Maximized: window.IsMaximized(mainHwnd)}
 	})
 	_ = st.Save()
+}
+
+// effectiveGateUA is the User-Agent the startup log reports: the configured
+// override when present, the compiled default otherwise.
+func effectiveGateUA(ua string) string {
+	if strings.TrimSpace(ua) == "" {
+		return lane.ClientUA
+	}
+	return strings.TrimSpace(ua)
 }
 
 func trayStatus(st *store.Store, ln *lane.Lane) string {

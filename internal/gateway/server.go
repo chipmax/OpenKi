@@ -1074,7 +1074,7 @@ func openaiError(message, typ string) map[string]any {
 // setRetryAfter surfaces the upstream Retry-After (already parsed in the lane)
 // to clients that back off on 429s.
 func setRetryAfter(w http.ResponseWriter, uerr *lane.UpstreamError) {
-	if uerr != nil && uerr.Code == lane.CodeQuota && uerr.RetryAfter > 0 {
+	if uerr != nil && (uerr.Code == lane.CodeQuota || uerr.Code == lane.CodeGovernor) && uerr.RetryAfter > 0 {
 		w.Header().Set("Retry-After", strconv.Itoa(uerr.RetryAfter))
 	}
 }

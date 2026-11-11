@@ -4048,13 +4048,16 @@ function renderByAgent(U){
 function renderRecent(recent){
   const box = $("#recent-list");
   if(!recent.length){ box.innerHTML = '<div class="muted" style="font-size:12px">Chưa có yêu cầu nào.</div>'; return; }
-  box.innerHTML = '<table><tr><th>Thời gian</th><th>Mô hình</th><th>Agent</th><th>Mức</th><th>Kết quả</th><th>Đầu vào/Đầu ra</th><th>Cache</th><th>token đầu tiên</th></tr>' +
+  box.innerHTML = '<table><tr><th>Thời gian</th><th>Mô hình</th><th>Agent</th><th>Mức</th><th>Exit</th><th>Kết quả</th><th>Đầu vào/Đầu ra</th><th>Cache</th><th>token đầu tiên</th></tr>' +
     recent.slice().reverse().map(r=>{
       const t = new Date(r.at).toTimeString().slice(0,8);
+      const status = r.httpStatus ? ' <span class="muted" title="HTTP '+r.httpStatus+(r.retryAfter?' · Retry-After '+r.retryAfter+'s':'')+'">HTTP '+r.httpStatus+'</span>' : '';
       const res = r.ok ? '<span class="pill ok">Hoàn tất'+(r.recovered?" · Đã khôi phục":"")+'</span>'
-        : (r.truncated ? '<span class="pill warn">Bị cắt ngắn</span>' : '<span class="pill bad">Thất bại</span>');
+        : (r.truncated ? '<span class="pill warn">Bị cắt ngắn</span>' : '<span class="pill bad">Thất bại</span>') + status;
+      const exit = r.exitKind || (r.exit ? 'exit' : '—');
       return '<tr><td class="mono">'+t+'</td><td class="mono">'+esc(r.model)+'</td>'+
         '<td>'+esc(r.agent||"—")+'</td><td class="mono">'+esc(r.effort||"—")+'</td>'+
+        '<td class="mono" title="'+esc(r.exit||"direct")+'">'+esc(exit)+(r.egressIp?' · '+esc(r.egressIp):'')+'</td>'+
         '<td>'+res+'</td><td class="num">'+fmtN(r.input||0)+' / '+fmtN(r.output||0)+'</td>'+
         '<td class="num">'+(r.cacheRead?cacheCell(r.cacheRead, r.input):'<span class="muted">—</span>')+'</td>'+
         '<td class="num">'+(r.ttftMs?(r.ttftMs/1000).toFixed(1)+"s":"—")+'</td></tr>';
@@ -4293,8 +4296,8 @@ function renderSettings(s){
           <div class="muted" style="font-size:11.5px;margin-top:5px">Mỗi hội thoại bám một đầu ra (giữ cache tiền tố); khi đầu ra bị giới hạn, yêu cầu tự thử đầu ra khác. Hỗ trợ <code class="k">http(s)://</code>, <code class="k">socks5(h)://</code>, <code class="k">direct</code>.</div>
         </div>
         <div class="row" style="margin-top:12px; gap:14px; flex-wrap:wrap">
-          <label class="dim" style="display:inline-flex; align-items:center; gap:6px">Token/phút mỗi exit
-            <input type="number" id="set-exit-tpm" min="0" max="1000000" step="1000" value="${s.settings.exitTokensPerMinute||0}" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:120px;font-family:var(--mono)">
+          <label class="dim" style="display:inline-flex; align-items:center; gap:6px" title="Mặc định 300.000 token/phút mỗi exit; 0 = tắt governor">Token/phút mỗi exit
+            <input type="number" id="set-exit-tpm" min="0" max="1000000" step="1000" value="${s.settings.exitTokensPerMinute ?? 300000}" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:120px;font-family:var(--mono)">
           </label>
           <label class="dim" style="display:inline-flex; align-items:center; gap:6px">Fingerprint
             <select id="set-fingerprint" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px">

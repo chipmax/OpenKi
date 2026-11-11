@@ -22,8 +22,8 @@ func TestSettingsPATCHPersistsEgressPolicy(t *testing.T) {
 	if code := patchSettings(t, ts.URL, `{"exitTokensPerMinute":60000,"fingerprintMode":"off"}`); code != 200 {
 		t.Fatalf("settings = %d, want 200", code)
 	}
-	if got := s.Store.Config().ExitTokensPerMinute; got != 60000 {
-		t.Fatalf("exitTokensPerMinute persisted as %d, want 60000", got)
+	if got := s.Store.Config().ExitTokensPerMinute; got == nil || *got != 60000 {
+		t.Fatalf("exitTokensPerMinute persisted as %v, want 60000", got)
 	}
 	if got := s.Store.Config().FingerprintMode; got != "off" {
 		t.Fatalf("fingerprintMode persisted as %q, want off", got)
@@ -35,8 +35,8 @@ func TestSettingsPATCHPersistsEgressPolicy(t *testing.T) {
 	if code := patchSettings(t, ts.URL, `{"autoTagEnabled":false}`); code != 200 {
 		t.Fatalf("unrelated settings = %d, want 200", code)
 	}
-	if got := s.Store.Config().ExitTokensPerMinute; got != 60000 {
-		t.Fatalf("unrelated save changed exitTokensPerMinute to %d", got)
+	if got := s.Store.Config().ExitTokensPerMinute; got == nil || *got != 60000 {
+		t.Fatalf("unrelated save changed exitTokensPerMinute to %v", got)
 	}
 	if got := s.Store.Config().FingerprintMode; got != "off" {
 		t.Fatalf("unrelated save changed fingerprintMode to %q", got)
@@ -46,8 +46,8 @@ func TestSettingsPATCHPersistsEgressPolicy(t *testing.T) {
 	if code := patchSettings(t, ts.URL, `{"exitTokensPerMinute":0,"fingerprintMode":"auto"}`); code != 200 {
 		t.Fatalf("settings reset = %d, want 200", code)
 	}
-	if got := s.Store.Config().ExitTokensPerMinute; got != 0 {
-		t.Fatalf("exitTokensPerMinute reset to %d, want 0", got)
+	if got := s.Store.Config().ExitTokensPerMinute; got == nil || *got != 0 {
+		t.Fatalf("exitTokensPerMinute reset to %v, want explicit 0", got)
 	}
 	if got := s.Store.Config().FingerprintMode; got != "auto" {
 		t.Fatalf("fingerprintMode reset to %q, want auto", got)

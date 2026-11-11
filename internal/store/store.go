@@ -177,16 +177,24 @@ type Config struct {
 	WarpEnabled  bool `json:"warpEnabled,omitempty"`
 	WarpPoolSize int  `json:"warpPoolSize,omitempty"`
 	// ExitTokensPerMinute caps token spend per egress identity (tokens per
-	// minute, 0 = off). The upstream meters quota per IP, so spreading one
-	// busy model across exits still shares that IP's window; the governor
-	// waits before spending instead of discovering the limit with a 429.
-	ExitTokensPerMinute int `json:"exitTokensPerMinute,omitempty"`
+	// minute). nil means "not configured": the lane applies
+	// lane.DefaultExitTokensPerMinute (300k) so a fresh install is protected
+	// from the first burst. An explicit 0 disables the governor. The pointer
+	// is what tells the two cases apart — an int with omitempty could not.
+	ExitTokensPerMinute *int `json:"exitTokensPerMinute,omitempty"`
 	// FingerprintMode controls the OpenCode tool fingerprint: "" or "auto"
 	// keeps today's behaviour (inject on the Zen lane only), "off" stops the
 	// injection everywhere, and "force" injects on every channel. It exists so
 	// a live gate change can be handled without a rebuild — and so the
 	// dashboard can run an A/B check before choosing.
 	FingerprintMode string `json:"fingerprintMode,omitempty"`
+	// GateUserAgent/GateTools override the OpenCode fingerprint sent on the
+	// Zen lane. Empty keeps the compiled v2.0.26 profile. They exist for the
+	// day the upstream changes its expected shape without changing the gate
+	// verdict; the effective profile's hash is logged at boot and printed by
+	// -gate-check so the change is visible rather than a silent 403 storm.
+	GateUserAgent string                      `json:"gateUserAgent,omitempty"`
+	GateTools     map[string]lane.GateToolDef `json:"gateTools,omitempty"`
 	// SubsEnabled turns on the sing-box sidecar + per-request egress rotation
 	// over the subscription nodes; SingBoxPath optionally points at a
 	// user-provided sing-box.exe (empty = the auto-downloaded one).
@@ -937,6 +945,17 @@ func (c *Config) clone() *Config {
 	next.ZCodeAccounts = cloneSlice(c.ZCodeAccounts)
 	next.TraeAccounts = cloneSlice(c.TraeAccounts)
 	next.ExtAccounts = cloneSlice(c.ExtAccounts)
+	if c.ExitTokensPerMinute != nil {
+		v := *c.ExitTokensPerMinute
+		next.ExitTokensPerMinute = &v
+	}
+	if c.GateTools != nil {
+		next.GateTools = make(map[string]lane.GateToolDef, len(c.GateTools))
+		for name, def := range c.GateTools {
+			def.Parameters = append(json.RawMessage(nil), def.Parameters...)
+			next.GateTools[name] = def
+		}
+	}
 	// The CodeArts credential carries a DPoP key map; aliasing it across
 	// snapshots would let a later refresh mutate the value a prior export (or
 	// the old snapshot still being read) points at, so copy it.

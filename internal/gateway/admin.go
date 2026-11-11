@@ -273,6 +273,17 @@ func adminAllowed(w http.ResponseWriter, r *http.Request, mutating bool) bool {
 	return true
 }
 
+// effectiveExitRate resolves the settings payload's rate: a configured value
+// wins, an absent one reports the protective default so the dashboard shows
+// what the lane is actually enforcing. An explicit 0 (governor off) is a real
+// configured value and comes back as 0.
+func effectiveExitRate(p *int) int {
+	if p == nil {
+		return lane.DefaultExitTokensPerMinute
+	}
+	return *p
+}
+
 func (s *Server) adminState(w http.ResponseWriter) {
 	cfg := s.Store.Config()
 	cat, av, egress := s.Lane.Snapshot()
@@ -483,7 +494,7 @@ func (s *Server) adminState(w http.ResponseWriter) {
 		"updateSelfUpdate":        update.SelfUpdateSupported,
 		"proxyMode":               cfg.ProxyMode,
 		"proxyURL":                cfg.ProxyURL,
-		"exitTokensPerMinute":     cfg.ExitTokensPerMinute,
+		"exitTokensPerMinute":     effectiveExitRate(cfg.ExitTokensPerMinute),
 		"fingerprintMode":         lane.FingerprintMode(),
 		"proxyPool":               cfg.ProxyPool,
 		"egressModes":             cfg.EgressModes,
@@ -818,7 +829,7 @@ func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, 400, map[string]any{"ok": false, "error": "Giới hạn token mỗi phút của exit phải trong khoảng 0–1.000.000 (0 = tắt)"})
 			return
 		}
-		cfg.ExitTokensPerMinute = v
+		cfg.ExitTokensPerMinute = &v
 		s.Lane.SetExitTokenRate(v)
 		changed = true
 		dirty["exitTokensPerMinute"] = true
@@ -1018,7 +1029,12 @@ func (s *Server) commitSettings(next *store.Config, dirty map[string]bool) {
 			c.ExposeRegion = next.ExposeRegion
 		}
 		if dirty["exitTokensPerMinute"] {
-			c.ExitTokensPerMinute = next.ExitTokensPerMinute
+			if next.ExitTokensPerMinute != nil {
+				v := *next.ExitTokensPerMinute
+				c.ExitTokensPerMinute = &v
+			} else {
+				c.ExitTokensPerMinute = nil
+			}
 		}
 		if dirty["fingerprintMode"] {
 			c.FingerprintMode = next.FingerprintMode

@@ -37,9 +37,10 @@ const (
 	realShellDesc = "Execute a shell command and return its output. Commands run on Linux using bash. Quote file paths containing spaces or special characters. Prefer dedicated tools over shell commands when possible. When output is large, the full result is saved to a file and a truncated preview is returned. Rely on automatic truncation unless filtering the output is more useful. Commands accept an optional timeout, background commands have no timeout by default. Background commands return immediately, and you will be notified when they complete."
 )
 
-// fingerprintDefs returns the exact read/shell definitions keyed by name.
-// Values are rebuilt per call so callers cannot mutate the shared schema.
-func fingerprintDefs(name string) (desc string, params map[string]any, ok bool) {
+// defaultFingerprintDef returns the compiled exact read/shell definition for
+// one name. Gate overrides in config.json are layered on top in
+// fingerprintDefs; this is also the validation table for override names.
+func defaultFingerprintDef(name string) (desc string, params map[string]any, ok bool) {
 	switch name {
 	case "read":
 		return realReadDesc, map[string]any{
@@ -323,7 +324,7 @@ func GatewayHeaders(session, requestID string, stream bool, accept string) map[s
 	return map[string]string{
 		"content-type":          "application/json",
 		"authorization":         "Bearer public",
-		"user-agent":            ClientUA,
+		"user-agent":            GateUserAgent(),
 		"x-opencode-client":     "cli",
 		"x-opencode-session":    session,
 		"x-opencode-session-id": session,

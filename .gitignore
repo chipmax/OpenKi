@@ -33,3 +33,7 @@ tools/patch_theme_anim.py
 shot-*.png
 tools/deploy_zenstats.py
 .DS_Store
+
+# root-level go build outputs
+/zen-gate
+/gateprobe

@@ -19,6 +19,7 @@ type GateAttempt struct {
 // this is the only honest way to tell whether it still applies.
 type FingerprintGateResult struct {
 	Model    string      `json:"model"`
+	Hash     string      `json:"hash"`
 	With     GateAttempt `json:"withFingerprint"`
 	Without  GateAttempt `json:"withoutFingerprint"`
 	Verdict  string      `json:"verdict"`
@@ -40,7 +41,7 @@ func CheckFingerprintGate(ctx context.Context, model string) FingerprintGateResu
 	if model == "" {
 		model = "space-bunny-free"
 	}
-	res := FingerprintGateResult{Model: model, TestedAt: time.Now().UnixMilli()}
+	res := FingerprintGateResult{Model: model, Hash: FingerprintHash(), TestedAt: time.Now().UnixMilli()}
 	res.With = gateCheckOnce(ctx, model, true)
 	res.Without = gateCheckOnce(ctx, model, false)
 	switch {

@@ -66,6 +66,49 @@ func TestExitBudgetDisabled(t *testing.T) {
 	}
 }
 
+func TestExitBudgetWaitCappedRefusesWhenRefillIsFar(t *testing.T) {
+	b := newExitBudget(60000) // 1000 tokens/s
+	if ok, _ := b.Availability("a", 60000); !ok {
+		t.Fatal("fresh bucket could not hold its full minute")
+	}
+	if ok, _ := b.spend("a", 60000); !ok {
+		t.Fatal("fresh bucket refused its full minute")
+	}
+	start := time.Now()
+	ok, delay, err := b.WaitCapped(context.Background(), "a", 100, 20*time.Millisecond)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Fatal("WaitCapped reported success with an empty bucket and a 20ms window")
+	}
+	if delay < 50*time.Millisecond {
+		t.Fatalf("reported delay %s, want roughly the 100ms refill", delay)
+	}
+	if elapsed := time.Since(start); elapsed > 150*time.Millisecond {
+		t.Fatalf("WaitCapped held the request %s, want the 20ms cap", elapsed)
+	}
+}
+
+func TestExitBudgetWaitCappedWaitsWithinWindow(t *testing.T) {
+	b := newExitBudget(60000)
+	b.spend("a", 60000)
+	start := time.Now()
+	ok, _, err := b.WaitCapped(context.Background(), "a", 100, time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("WaitCapped refused a refill that fits inside the window")
+	}
+	if elapsed := time.Since(start); elapsed < 50*time.Millisecond || elapsed > 900*time.Millisecond {
+		t.Fatalf("WaitCapped took %s, want about 100ms", elapsed)
+	}
+	if ok, _ := b.Availability("a", 100); ok {
+		t.Fatal("successful WaitCapped did not charge the bucket")
+	}
+}
+
 func TestEstimateRequestTokensReservesOutput(t *testing.T) {
 	msgs := []Message{{Role: RoleUser, Parts: []Part{TextPart{Text: "hi"}}}}
 	small := estimateRequestTokens(msgs, nil, 10)

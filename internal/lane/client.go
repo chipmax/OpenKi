@@ -2,6 +2,10 @@ package lane
 
 import (
 	"context"
+	"fmt"
+	"math"
+	"net"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -150,6 +154,12 @@ type CallRecord struct {
 	// went out through the same exit; without it you can only guess. Empty
 	// means the direct fallback was used.
 	Exit string `json:"exit,omitempty"`
+	// ExitKind/EgressIP answer the next two questions without a second lookup:
+	// which transport class the exit belonged to (direct/warp/proxy/singbox)
+	// and, when the rotator keys by IP, the public egress address. EgressIP is
+	// empty when the exit is keyed by node id (a static proxy pool).
+	ExitKind string `json:"exitKind,omitempty"`
+	EgressIP string `json:"egressIp,omitempty"`
 	// Trace is the gateway correlation id of the client request this attempt
 	// served; empty for calls made outside a request.
 	Trace string `json:"trace,omitempty"`
@@ -157,6 +167,11 @@ type CallRecord struct {
 	// id, which is the only handle their support has on a failed turn.
 	ErrCode     string `json:"errCode,omitempty"`
 	UpstreamRID string `json:"upstreamRequestId,omitempty"`
+	// HTTPStatus/RetryAfter keep the upstream's own numbers next to the class:
+	// a 429 that said "retry in 90 s" is different evidence from one that named
+	// the next UTC midnight, and the classifier clamps both to its own ramp.
+	HTTPStatus int `json:"httpStatus,omitempty"`
+	RetryAfter int `json:"retryAfter,omitempty"`
 }
 
 // Lane orchestrates the free lane: catalog, availability, and completion calls.
@@ -1537,10 +1552,51 @@ func (l *Lane) attemptModel(ctx context.Context, req Request, model, effort stri
 	ctx = WithExitPlan(ctx, plan)
 	// Space token spend out per egress before holding a lease or opening a
 	// connection. Waiting here keeps a burst from burning one IP's window
-	// while other exits sit idle.
+	// while other exits sit idle. When the preferred exit is already over its
+	// budget, try a few alternates first: one conversation normally keeps one
+	// exit for cache affinity, but a budget hop costs less than a 429. The
+	// wait itself is capped — an exit minutes away from refilling is no better
+	// than a refusal, so the caller gets 429 + Retry-After instead of a held
+	// connection.
 	if b := l.exitBudget.Load(); b != nil {
-		if err := b.Wait(ctx, plan.ExitKey, estimateRequestTokens(messages, req.Tools, budget)); err != nil {
+		tokens := estimateRequestTokens(messages, req.Tools, budget)
+		if r := CurrentRotator(); r != nil {
+			if ok, wait := b.Availability(plan.ExitKey, tokens); !ok {
+				bestNode, bestKey, bestWait := plan.NodeID, plan.ExitKey, wait
+				for i := 1; i <= 3; i++ {
+					node := r.Pick(req.SessionSeed+"\x00budget\x00"+strconv.Itoa(i), base)
+					key := r.ExitKey(node)
+					if node == "" || key == "" || key == bestKey {
+						continue
+					}
+					if ok, w := b.Availability(key, tokens); ok {
+						bestNode, bestKey, bestWait = node, key, 0
+						break
+					} else if w < bestWait {
+						bestNode, bestKey, bestWait = node, key, w
+					}
+				}
+				if bestKey != plan.ExitKey {
+					plan.NodeID, plan.ExitKey = bestNode, bestKey
+					ctx = WithExitPlan(ctx, plan)
+				}
+			}
+		}
+		ok, wait, err := b.WaitCapped(ctx, plan.ExitKey, tokens, exitBudgetMaxWait)
+		if err != nil {
 			return Outcome{}, &UpstreamError{Code: CodeAborted, Message: "cancelled"}, false
+		}
+		if !ok {
+			retry := int(math.Ceil(wait.Seconds()))
+			if retry < 1 {
+				retry = 1
+			}
+			if retry > exitBudgetRetryCapSec {
+				retry = exitBudgetRetryCapSec
+			}
+			return Outcome{}, &UpstreamError{Code: CodeGovernor,
+				Message:    fmt.Sprintf("ngân sách token của exit đã cạn; thử lại sau %d giây", retry),
+				RetryAfter: retry}, false
 		}
 	}
 
@@ -1816,14 +1872,46 @@ func (l *Lane) attemptModel(ctx context.Context, req Request, model, effort stri
 	l.record(ctx, CallRecord{Model: base, Ok: false, Truncated: true, Exit: plan.NodeID, Effort: effort, Agent: req.Agent, At: time.Now().UnixMilli()}, result, nil, firstAt)
 	return Outcome{Usage: result.Usage}, &UpstreamError{Code: CodeTransport, Message: "upstream closed the stream without a finish token"}, sawAny
 }
+
+// exitKindForPlan names the transport that a CallRecord's exit belongs to. It
+// is derived from what the lane actually knows: a rotator node id, the WARP
+// switch when no rotator is installed, and direct otherwise. Relay peers are a
+// separate layer and stay visible in the response's X-Zen-Gate-Egress header.
+func exitKindForPlan(p ExitPlan) string {
+	switch {
+	case p.NodeID == "":
+		// The equal-peer selector can serve relay/WARP/sing-box without a
+		// lane rotator; the response's X-Zen-Gate-Egress header names which
+		// peer, so the record says "peer" instead of claiming direct.
+		if egressExplicit.Load() {
+			return "peer"
+		}
+		if warpCfgEnabled.Load() {
+			return "warp"
+		}
+		return "direct"
+	case strings.HasPrefix(p.NodeID, "pool-"):
+		return "proxy"
+	default:
+		return "singbox"
+	}
+}
+
 func (l *Lane) record(ctx context.Context, rec CallRecord, result StreamResult, err error, firstAt int64) {
 	if l.OnCall == nil {
 		return
 	}
 	rec.Trace = TraceFrom(ctx)
+	plan := ExitPlanFrom(ctx)
+	rec.ExitKind = exitKindForPlan(plan)
+	if ip := net.ParseIP(plan.ExitKey); ip != nil {
+		rec.EgressIP = plan.ExitKey
+	}
 	if ue := asUpstream(err); ue != nil {
 		rec.ErrCode = ue.Code
 		rec.UpstreamRID = ue.UpstreamRID
+		rec.HTTPStatus = ue.HTTPStatus
+		rec.RetryAfter = ue.RetryAfter
 	}
 	if err != nil {
 		rec.Ok = false

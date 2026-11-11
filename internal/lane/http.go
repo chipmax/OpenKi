@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	io "io"
+	"log/slog"
 	"net"
 	"net/http"
 	neturl "net/url"
@@ -87,6 +88,7 @@ func ClassifyFailure(status int, payload string, retryAfterSec int) *UpstreamErr
 		// budget before reaching the fallback.
 		e.Code = CodeFreeTier
 		e.Unavailable = true
+		noteFreeTierGate()
 	case relayProtectedRe.MatchString(payload):
 		// Vercel's own Authentication Protection answers before the relay
 		// function runs. No model or token change can fix it; the operator must
@@ -142,6 +144,25 @@ func ClassifyFailure(status int, payload string, retryAfterSec int) *UpstreamErr
 		e.Code = CodeServer
 	}
 	return e
+}
+
+var freeTierLoggedAt atomic.Int64
+
+// noteFreeTierGate emits at most one lifecycle event per hour when the
+// upstream free-tier gate refuses a turn. The access log already carries
+// errCode per request; this line adds the fingerprint hash, which is what
+// answers "did our gate body change?" after a FREE_TIER_BLOCKED storm.
+func noteFreeTierGate() {
+	now := time.Now().Unix()
+	last := freeTierLoggedAt.Load()
+	if last != 0 && now-last < 3600 {
+		return
+	}
+	if !freeTierLoggedAt.CompareAndSwap(last, now) {
+		return
+	}
+	slog.Warn("cổng free-tier của thượng nguồn từ chối yêu cầu; fingerprint đang gửi",
+		"hash", FingerprintHash(), "mode", FingerprintMode())
 }
 
 // laneHTTP is the shared client for all upstream traffic; zen-gate swaps its

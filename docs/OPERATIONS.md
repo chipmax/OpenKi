@@ -318,14 +318,17 @@ trong chunk kết thúc (OpenAI) hoặc `message_delta` (Anthropic).
 
 Hạn mức miễn phí tính theo **IP đầu ra**, không theo mô hình. Đặt
 `exitTokensPerMinute` trong `config.json` (hoặc Cài đặt) để governor giữ nhịp
-token trên từng exit; `0` mặc định là tắt. Governor ước lượng prompt + đệm
-`max_tokens` trước khi gửi và cho request chờ thay vì đốt hạn mức bằng một đợt
-burst. Đây là ước lượng, không phải số đo tuyệt đối: nó chỉ có thể thu rộng
-hơn, không thể tiêu ít hơn thực tế.
+token trên từng exit. Mặc định là **300.000 token/phút** khi khóa vắng mặt;
+`0` là tắt hẳn. Governor ước lượng prompt + đệm `max_tokens` trước khi gửi, thử
+tối đa ba exit khác khi exit ưa thích đã cạn, rồi chờ tối đa **20 giây**.
+Quá hạn, request nhận `429` mã `EXIT_GOVERNOR` kèm `Retry-After` thay vì giữ
+kết nối treo. Đây là ước lượng, không phải số đo tuyệt đối: nó chỉ có thể thu
+rộng hơn, không thể tiêu ít hơn thực tế. Chi tiết đầy đủ về phân loại lỗi,
+ramp làm nguội và các trường quan sát: [EGRESS-POLICY.md](EGRESS-POLICY.md).
 
 ```json
 {
-  "exitTokensPerMinute": 60000,
+  "exitTokensPerMinute": 300000,
   "fingerprintMode": "auto"
 }
 ```
@@ -355,17 +358,26 @@ cổng này thay đổi theo thời gian. `gateprobe` gửi hai lượt chat t�
 một có định nghĩa, một không — rồi kết luận:
 
 ```bash
-go run -tags headless ./cmd/gateprobe -model space-bunny-free
+go run -tags headless ./cmd/gateprobe -model glm-5.3-flash-free -via direct
+go run -tags headless ./cmd/gateprobe -model glm-5.3-flash-free -via pool -n 5
 # hoặc bản đã cài:
-zen-gate -gate-check -gate-model space-bunny-free
+zen-gate -gate-check -gate-model glm-5.3-flash-free
 ```
+
+`-via` chọn transport (`direct` bỏ qua proxy môi trường, `pool` dùng rotator
+tĩnh, `warp` dùng pool WARP); `-n` lặp cặp A/B tối đa 10 lần. Mỗi lần chạy in
+`fingerprint hash` của profile đang gửi (UA + mô tả + schema), để so hai lần
+mà không cần diff body. Có thể override profile trong `config.json` bằng
+`gateUserAgent` và `gateTools` (mô tả/schema của `read`/`shell`); hash và log
+khởi động sẽ phản ánh giá trị thực tế.
 
 Kết quả `FINGERPRINT_REQUIRED` nghĩa là giữ `fingerprintMode: "auto"`;
 `GATE_OPEN` nghĩa là có thể thử `"off"`; `INCONCLUSIVE` nghĩa là cả hai lượt
 đều lỗi (thường do quota/region) và phải chạy lại sau. Công cụ này tiêu hai
 request thật trên làn miễn phí, nên chỉ chạy khi cần chẩn đoán. Đặt
 `fingerprintMode` thành `"force"` chỉ khi muốn kiểm chứng một kênh không phải
-Zen cũng chấp nhận cùng định nghĩa.
+Zen cũng chấp nhận cùng định nghĩa. Cách đo, kết quả ngày 2026-11-11 và cách
+đọc header transport: [GATE-AB.md](GATE-AB.md).
 
 ## Xoay key
 

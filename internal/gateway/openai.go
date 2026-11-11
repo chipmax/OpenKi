@@ -741,7 +741,7 @@ func usagePayload(u lane.Usage) map[string]any {
 
 func errorStatus(e *lane.UpstreamError) int {
 	switch e.Code {
-	case lane.CodeQuota:
+	case lane.CodeQuota, lane.CodeGovernor:
 		return 429
 	case lane.CodeOverloaded:
 		return 503
@@ -762,7 +762,7 @@ func errorStatus(e *lane.UpstreamError) int {
 
 func errorType(e *lane.UpstreamError) string {
 	switch e.Code {
-	case lane.CodeQuota:
+	case lane.CodeQuota, lane.CodeGovernor:
 		return "rate_limit_error"
 	case lane.CodeOverloaded:
 		return "overloaded_error"

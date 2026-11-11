@@ -43,8 +43,8 @@ OpenCode Zen cung cấp một loạt mô hình miễn phí **không cần đăng
 | 🧭 **Định tuyến đa phương thức thông minh** | Khi yêu cầu có hình ảnh / âm thanh / tệp, chuyển đổi dự phòng chỉ rơi vào mô hình hỗ trợ đúng phương thức đó; năng lực mô hình được gắn nhãn ba lớp (bảng tuyển chọn tích hợp → AI gắn nhãn → đo thực tế) và hiển thị huy hiệu ngay trên trang mô hình |
 | 🎯 **Chiến lược định tuyến** | Công tắc định tuyến thông minh bật/tắt bất cứ lúc nào; chuỗi ứng viên dự phòng sắp xếp theo "thứ tự danh mục / độ trễ ký tự đầu"; khi làn miễn phí cạn hoàn toàn có thể lùi một chiều về API tuỳ chỉnh của bạn (mặc định tắt, vì sẽ tốn Key của bạn) |
 | 🔄 **Tự động chuyển đổi khi bị giới hạn** | Mô hình bị giới hạn tốc độ sẽ tự chuyển sang mô hình khả dụng tiếp theo, header phản hồi ghi rõ mô hình thực tế đã trả lời |
-| 🧯 **Giới hạn theo exit, không theo mô hình** | Chuỗi 429 bắt đầu 90 giây, gấp đôi đến trần 15 phút; chỉ park dài khi ba lần 429 cách xa **và** một lần thăm dò độc lập xác nhận. Governor `exitTokensPerMinute` giữ nhịp token trên từng IP đầu ra, tránh đốt hạn mức bằng một đợt burst |
-| 🫆 **Cổng fingerprint có công tắc và A/B** | `fingerprintMode` (`auto`/`off`/`force`) và `gateprobe`/`-gate-check` kiểm tra upstream còn bắt buộc định nghĩa `read`/`shell` hay không; header `x-zen-gate-exit` cho biết đúng exit đã phục vụ |
+| 🧯 **Giới hạn theo exit, không theo mô hình** | Chuỗi 429 bắt đầu 90 giây, gấp đôi đến trần 15 phút; chỉ park dài khi ba lần 429 cách xa **và** một lần thăm dò độc lập xác nhận. Governor `exitTokensPerMinute` (mặc định 300k/phút mỗi exit, `0` = tắt) giữ nhịp token, thử exit khác khi cạn và chỉ chờ tối đa 20 giây trước khi trả 429 kèm `Retry-After` — chi tiết ở [docs/EGRESS-POLICY.md](docs/EGRESS-POLICY.md) |
+| 🫆 **Cổng fingerprint có công tắc và A/B** | `fingerprintMode` (`auto`/`off`/`force`) và `gateprobe` (`-n`, `-via direct\|pool\|warp`) kiểm tra upstream còn bắt buộc định nghĩa `read`/`shell` hay không; mỗi lần chạy in hash của profile, header `x-zen-gate-exit` cho biết đúng exit đã phục vụ — xem [docs/GATE-AB.md](docs/GATE-AB.md) |
 | 📢 **Hệ thống thông báo** | Sửa `announcements.json` ở thư mục gốc là phát thông báo tới mọi người dùng (phân cấp info/warn/critical, khung giờ hiệu lực, theo dõi đã đọc); trang tổng quan đồng bộ mỗi 6 giờ |
 | 🔌 **API tuỳ chỉnh** | 14 preset nhà cung cấp miễn phí điền sẵn một chạm + tự truy vấn danh sách mô hình; Key của bạn do bạn điền, mức dùng vẫn ghi sổ đầy đủ |
 | 📖 **Siêu dữ liệu năng lực trong giao diện chuẩn** | `GET /v1/models` kèm theo mỗi mô hình các trường `context_window`, `max_output_tokens`, `input_modalities`, `reasoning`, `supported_reasoning_levels`, `capability_source` — kết luận đo thực tế đọc được từ Agent/SDK/script bất kỳ mà không cần mở bảng quản lý |
@@ -173,7 +173,9 @@ CGO_ENABLED=0 go build -tags headless -trimpath -o zen-gate ./cmd/zen-gate
 Ma trận triển khai Windows (GUI/tray), WSL (systemd, cổng 8788) và VPS (Caddy
 TLS, loopback 8787) cùng quy tắc `agentScope`/`egressModes`/`relayPool`: xem
 [docs/DEPLOY.md](docs/DEPLOY.md). Giao thức và triển khai relay:
-[docs/RELAY.md](docs/RELAY.md).
+[docs/RELAY.md](docs/RELAY.md). Chính sách egress/exit, cooldown, governor và
+cách đọc bản ghi: [docs/EGRESS-POLICY.md](docs/EGRESS-POLICY.md); A/B cổng
+fingerprint và transport: [docs/GATE-AB.md](docs/GATE-AB.md).
 
 ## Cập nhật một chạm
 

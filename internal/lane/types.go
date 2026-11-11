@@ -330,6 +330,11 @@ const (
 	// retrying them only burns the budget. Both stay switchable, which is what
 	// lets the turn fall through to the Kilo pool instead of surfacing as 401.
 	CodeFreeTier = "FREE_TIER_BLOCKED"
+	// CodeGovernor is the lane's own token governor refusing a turn: the
+	// request never reached an upstream, the exit's per-minute budget was
+	// already spent, and even after the capped wait it could not be charged.
+	// It carries Retry-After like a real 429 so clients back off the same way.
+	CodeGovernor = "EXIT_GOVERNOR"
 	// CodeOverloaded is a transient capacity refusal. It is retried after a
 	// short jitter on the SAME model and never parked: a busy upstream is not
 	// evidence that the model or the credential is bad.

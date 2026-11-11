@@ -5,6 +5,12 @@ phát triển (UTC+7).
 
 ## 2026-11-11
 
+### Giao diện
+
+- Bỏ trang "Kết nối" khỏi dashboard (mục điều hướng, khung trang và phần
+  render). Base URL/Key vẫn nằm trong trạng thái admin cho agent adapter và
+  các client tự cấu hình.
+
 ### Egress
 
 - Ramp làm nguội exit thay vì tin `Retry-After`: 90 s → 180 s → 360 s → trần

@@ -198,7 +198,7 @@
   th,td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--hairline-soft); vertical-align:top; }
   th { color:var(--ink-mute); font-weight:500; font-size:11.5px; letter-spacing:.04em; }
   tr:last-child td { border-bottom:0; }
-  #page-usage table tr:hover td, #page-access table tr:hover td { background:var(--panel-2); }
+  #page-usage table tr:hover td { background:var(--panel-2); }
   .pill { display:inline-block; padding:1px 9px; border-radius:999px; font-size:11.5px; }
   .pill.ok { background:var(--ok-bg); color:var(--ok); }
   .pill.unknown { background:var(--panel-2); color:var(--ink-mute); }
@@ -970,7 +970,6 @@
       <div class="page" id="page-agents"></div>
       <div class="page" id="page-models"></div>
       <div class="page" id="page-providers"></div>
-      <div class="page" id="page-access"></div>
       <div class="page" id="page-usage"></div>
       <div class="page" id="page-logs"></div>
       <div class="page" id="page-settings"></div>
@@ -982,7 +981,7 @@
 
 <script>
 const $ = s => document.querySelector(s);
-const PAGES = [["dash","Tổng quan","dash"],["agents","Tương thích Agent","agents"],["models","Mô hình","models"],["providers","Kênh","providers"],["access","Kết nối","access"],["usage","Mức sử dụng","usage"],["logs","Nhật ký","logs"],["settings","Cài đặt","settings"]];
+const PAGES = [["dash","Tổng quan","dash"],["agents","Tương thích Agent","agents"],["models","Mô hình","models"],["providers","Kênh","providers"],["usage","Mức sử dụng","usage"],["logs","Nhật ký","logs"],["settings","Cài đặt","settings"]];
 let cur = localStorage.getItem("zengate.page") || "dash";
 if (!PAGES.some(p=>p[0]===cur)) cur = "dash";
 let STATE = null;
@@ -1066,7 +1065,6 @@ const ICONS = {
   dash: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
   agents: '<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8z"/>',
   models: '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2"/><path d="M15 2v2"/><path d="M9 20v2"/><path d="M15 20v2"/><path d="M2 9h2"/><path d="M2 15h2"/><path d="M20 9h2"/><path d="M20 15h2"/>',
-  access: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
   usage: '<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
   logs: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
   settings: '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
@@ -1193,7 +1191,7 @@ function render(){ if(!STATE){ skeleton(); return; } const s=STATE;
   $("#side-models").textContent = lane.filter(m=>m.state==="available").length + "/" + lane.length;
   $("#side-ver").textContent = s.version || "";
   $("#egress-foot").textContent = s.egress&&s.egress.ip ? `${s.egress.ip} (${s.egress.country||"?"})` : "Không rõ lối ra";
-  renderDash(s); renderAgents(s); renderModels(s); renderProviders(s); renderAccess(s); renderUsage(s); renderSettings(s);
+  renderDash(s); renderAgents(s); renderModels(s); renderProviders(s); renderUsage(s); renderSettings(s);
   // Con trượt của điều khiển phân đoạn phải nhờ JS đo chiều rộng mới vào đúng vị trí: phiên bản đăng nhập ở trang「API tuỳ chỉnh」, chế độ nhiệt ở trang tổng quan,
   // trước đây chỉ trang nhật ký/cài đặt mới gọi nó, seg trên các trang khác cứ luôn đội con trượt mặc định 40px.
   initSegs();
@@ -3726,36 +3724,6 @@ function renderProviderList(s){
     };
     box.appendChild(d);
   }
-}
-
-/* ---- Kết nối ---- */
-function renderAccess(s){
-  // The example names a model this machine can actually call today, and asks
-  // for an effort only when that model really publishes a ladder.
-  const ex = (s.models || []).find(m => m.state === "available") || (s.models || [])[0] || {};
-  const exId = ex.id || "kilo-auto/free";
-  const exEff = (ex.efforts || []).length ? `,"reasoning_effort":"${(ex.efforts.find(e=>e.isDefault)||{}).id || "balanced"}"` : "";
-  const curl = `curl ${s.baseURL}/chat/completions \\\n  -H "Authorization: Bearer ${s.mainKey}" \\\n  -H "content-type: application/json" \\\n  -d '{"model":"${exId}","messages":[{"role":"user","content":"Xin chào"}],"stream":true${exEff}}'`;
-  $("#page-access").innerHTML = `
-    <h2 class="pt">Kết nối <span class="sub">Bất kỳ client nào hỗ trợ endpoint tương thích OpenAI / Anthropic</span></h2>
-    <div class="card"><h3>Tham số chung</h3>
-      <div class="row"><span class="dim">Base URL</span><code class="k">${s.baseURL}</code><button class="ghost" data-copy="${s.baseURL}">Sao chép</button></div>
-      ${s.lanBaseURL ? `<div class="row" style="margin-top:8px"><span class="dim">Base URL mạng LAN</span><code class="k">${s.lanBaseURL}</code><button class="ghost" data-copy="${s.lanBaseURL}">Sao chép</button>
-        <span class="muted" style="font-size:11.5px;margin-left:8px">Để dùng cho các thiết bị khác trong cùng mạng, hãy thay địa chỉ trong curl ở trên bằng địa chỉ này</span></div>` : ""}
-      <div class="row" style="margin-top:8px"><span class="dim">Key chính</span><code class="k">${s.mainKey}</code><button class="ghost" data-copy="${s.mainKey}">Sao chép</button></div>
-      <div class="muted" style="font-size:12px;margin-top:8px">Mỗi Agent đã bật có sub-Key riêng (xem trang「Thích ứng Agent」), để dễ thống kê mức sử dụng riêng.</div></div>
-    <div class="cgrid">
-      ${[
-        ["ChatBox","Cài đặt → Nhà cung cấp mô hình → Thêm nhà cung cấp tuỳ chỉnh (tương thích OpenAI), dán Base URL và Key"],
-        ["Cherry Studio","Cài đặt → Dịch vụ mô hình → Thêm nhà cung cấp, điền địa chỉ API là Base URL"],
-        ["ChatWise","Cài đặt → Nhà cung cấp → + Tuỳ chỉnh (tương thích OpenAI / tương thích Anthropic đều được)"],
-        ["Cline / Roo Code","Trong cài đặt tiện ích mở rộng VS Code, chọn OpenAI Compatible, điền Base URL và Key (cần làm thủ công)"],
-        ["Claude Code","Biến môi trường ANTHROPIC_BASE_URL=" + s.baseURL.replace(/\/v1$/,"") + "，ANTHROPIC_AUTH_TOKEN=Key chính"],
-        ["OpenAI SDK / bất kỳ ngôn ngữ nào","base_url trỏ tới Base URL, xác thực bằng Bearer Key chính; /v1/models ngoài tên mô hình còn kèm ngữ cảnh / giới hạn đầu ra / phương thức đầu vào / mức suy luận và capability_source (đã đo thực tế > Tuyên bố từ upstream > Gắn nhãn AI > Quy tắc）"],
-      ].map(([n,d])=>`<div class="ccard"><div class="cn">${esc(n)}</div><div class="cd">${esc(d)}</div>
-        <button class="ghost" data-copy="${s.baseURL}">Sao chép Base URL</button></div>`).join("")}
-    </div>
-    <div class="card"><h3>Ví dụ curl</h3><pre>${esc(curl)}</pre></div>`;
 }
 
 /* ---- Mức sử dụng (phong cách ZCode) ---- */

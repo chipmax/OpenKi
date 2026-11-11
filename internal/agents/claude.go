@@ -13,22 +13,37 @@ import (
 // local gateway. The whole file is backed up before the first write and the
 // pre-injection values are restored verbatim on disable.
 
-type claude struct{}
-
-func newClaude() *claude { return &claude{} }
-
-func (c *claude) Meta() (string, string, string) {
-	return "claude", "Claude Code", "~/.claude/settings.json: chuyển env sang cổng cục bộ (giá trị gốc được sao lưu và khôi phục tự động)"
+type claude struct {
+	home string // Windows profile when injected through /mnt/c; "" = host home
+	id   string
+	name string
 }
 
-func (c *claude) settingsPath() string { return homePath(".claude", "settings.json") }
+func newClaude() *claude { return newClaudeAt("", "claude", "Claude Code") }
+
+func newClaudeAt(home, id, name string) *claude {
+	return &claude{home: home, id: id, name: name}
+}
+
+func (c *claude) p(parts ...string) string {
+	if c.home == "" {
+		return homePath(parts...)
+	}
+	return filepath.Join(append([]string{c.home}, parts...)...)
+}
+
+func (c *claude) Meta() (string, string, string) {
+	return c.id, c.name, c.p(".claude", "settings.json") + ": chuyển env sang cổng cục bộ (giá trị gốc được sao lưu và khôi phục tự động)"
+}
+
+func (c *claude) settingsPath() string { return c.p(".claude", "settings.json") }
 
 func (c *claude) Detect() (bool, string, string) {
 	if _, err := os.Stat(c.settingsPath()); err == nil {
 		return true, "", "Đã phát hiện settings.json"
 	}
-	if _, err := os.Stat(homePath(".claude")); err == nil {
-		return true, "", "Đã phát hiện ~/.claude (chưa tạo settings.json)"
+	if _, err := os.Stat(c.p(".claude")); err == nil {
+		return true, "", "Đã phát hiện " + c.p(".claude") + " (chưa tạo settings.json)"
 	}
 	return false, "", "Chưa phát hiện Claude Code"
 }
@@ -62,7 +77,7 @@ func (c *claude) Enable(o Options) error {
 	path := c.settingsPath()
 	if data, err := os.ReadFile(path); err == nil {
 		// back up the pristine file once per enable
-		_, _ = backupFile("claude", path, data)
+		_, _ = backupFile(c.id, path, data)
 	}
 	doc, err := c.read()
 	if err != nil {
@@ -95,7 +110,7 @@ func (c *claude) Enable(o Options) error {
 
 func (c *claude) Disable() error {
 	path := c.settingsPath()
-	if b := latestBackup("claude", "settings.json"); b != "" {
+	if b := latestBackup(c.id, "settings.json"); b != "" {
 		data, err := os.ReadFile(b)
 		if err == nil {
 			return atomicWrite(path, data)

@@ -10,26 +10,43 @@ import (
 // openCode injects a provider block into opencode.json
 // (npm: @ai-sdk/openai-compatible). Both the CLI and the desktop app read it.
 
-type openCode struct{}
+type openCode struct {
+	home string // Windows profile when injected through /mnt/c; "" = host home
+	id   string
+	name string
+}
 
-func newOpenCode() *openCode { return &openCode{} }
+func newOpenCode() *openCode { return newOpenCodeAt("", "opencode", "OpenCode") }
+
+func newOpenCodeAt(home, id, name string) *openCode {
+	return &openCode{home: home, id: id, name: name}
+}
+
+func (o *openCode) p(parts ...string) string {
+	if o.home == "" {
+		return homePath(parts...)
+	}
+	return filepath.Join(append([]string{o.home}, parts...)...)
+}
 
 func (o *openCode) Meta() (string, string, string) {
-	return "opencode", "OpenCode", "opencode.json: tiêm provider @ai-sdk/openai-compatible"
+	return o.id, o.name, o.p(".config", "opencode", "opencode.json") + ": tiêm provider @ai-sdk/openai-compatible"
 }
 
 func (o *openCode) configPath() string {
-	if p := os.Getenv("OPENCODE_CONFIG"); p != "" {
-		return p
+	if o.home == "" {
+		if p := os.Getenv("OPENCODE_CONFIG"); p != "" {
+			return p
+		}
 	}
-	return homePath(".config", "opencode", "opencode.json")
+	return o.p(".config", "opencode", "opencode.json")
 }
 
 // defaultJSONC names the commented-config sibling OpenCode also reads. Only
 // the default path is at risk: OPENCODE_CONFIG is the user naming the exact
 // file to write, so no second config can appear beside it.
 func (o *openCode) defaultJSONC() string {
-	if os.Getenv("OPENCODE_CONFIG") != "" {
+	if o.home == "" && os.Getenv("OPENCODE_CONFIG") != "" {
 		return ""
 	}
 	p := filepath.Join(filepath.Dir(o.configPath()), "opencode.jsonc")
@@ -46,7 +63,7 @@ func (o *openCode) Detect() (bool, string, string) {
 	if p := o.defaultJSONC(); p != "" {
 		return true, "", "Đã phát hiện opencode.jsonc (cấu hình có chú thích); zen-gate sẽ không ghi thêm opencode.json song song, vui lòng kết nối thủ công"
 	}
-	if _, err := os.Stat(homePath(".config", "opencode")); err == nil {
+	if _, err := os.Stat(o.p(".config", "opencode")); err == nil {
 		return true, "", "Đã phát hiện thư mục cấu hình opencode (chưa tạo opencode.json)"
 	}
 	return false, "", "Chưa phát hiện OpenCode"
@@ -123,7 +140,7 @@ func (o *openCode) Enable(opts Options) error {
 		return err
 	}
 	_ = os.MkdirAll(filepath.Dir(path), 0o700)
-	backupBeforeWrite("opencode", path)
+	backupBeforeWrite(o.id, path)
 	return atomicWrite(path, data)
 }
 
@@ -152,6 +169,6 @@ func (o *openCode) Disable() error {
 	if err != nil {
 		return err
 	}
-	backupBeforeWrite("opencode", path)
+	backupBeforeWrite(o.id, path)
 	return atomicWrite(path, data)
 }

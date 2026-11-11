@@ -29,7 +29,11 @@ import (
 // experimental_supported_tools and input_modalities, or the catalog is
 // rejected wholesale.
 
-type codex struct{}
+type codex struct {
+	home string // Windows profile when injected through /mnt/c; "" = host home
+	id   string
+	name string
+}
 
 const codexMarkerBegin = "# >>> zen-gate managed block (do not edit)"
 const codexMarkerEnd = "# <<< zen-gate managed block"
@@ -70,23 +74,34 @@ type codexCatalog struct {
 	Models []codexCatalogModel `json:"models"`
 }
 
-func newCodex() *codex { return &codex{} }
+func newCodex() *codex { return newCodexAt("", "codex", "Codex CLI / bản desktop") }
 
-func (c *codex) Meta() (string, string, string) {
-	return "codex", "Codex CLI / bản desktop", "~/.codex/config.toml: tiêm nhà cung cấp và danh mục mô hình (wire_api=responses)"
+func newCodexAt(home, id, name string) *codex {
+	return &codex{home: home, id: id, name: name}
 }
 
-func (c *codex) configPath() string { return homePath(".codex", "config.toml") }
+func (c *codex) p(parts ...string) string {
+	if c.home == "" {
+		return homePath(parts...)
+	}
+	return filepath.Join(append([]string{c.home}, parts...)...)
+}
+
+func (c *codex) Meta() (string, string, string) {
+	return c.id, c.name, c.p(".codex", "config.toml") + ": tiêm nhà cung cấp và danh mục mô hình (wire_api=responses)"
+}
+
+func (c *codex) configPath() string { return c.p(".codex", "config.toml") }
 func (c *codex) catalogPath() string {
-	return homePath(".codex", "zen-gate-catalog.json")
+	return c.p(".codex", "zen-gate-catalog.json")
 }
 
 func (c *codex) Detect() (bool, string, string) {
 	if _, err := os.Stat(c.configPath()); err == nil {
 		return true, "", "Đã phát hiện config.toml"
 	}
-	if _, err := os.Stat(homePath(".codex")); err == nil {
-		return true, "", "Đã phát hiện ~/.codex (chưa tạo config.toml)"
+	if _, err := os.Stat(c.p(".codex")); err == nil {
+		return true, "", "Đã phát hiện " + c.p(".codex") + " (chưa tạo config.toml)"
 	}
 	return false, "", "Chưa phát hiện Codex"
 }
@@ -222,7 +237,7 @@ func stripMarkers(src string, begin, end string) string {
 // pre-existing model_catalog_json) — so Disable can put them all back
 // verbatim.
 func (c *codex) codexStatePath() string {
-	return homePath(".codex", "zen-gate-state.json")
+	return c.p(".codex", "zen-gate-state.json")
 }
 
 // replaceTopLevelKeys rewrites key=value lines in the top-level region (before

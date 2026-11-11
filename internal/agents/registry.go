@@ -75,15 +75,39 @@ const viewsTTL = 15 * time.Second
 
 // NewRegistry builds the built-in adapter set.
 func NewRegistry(st *store.Store) *Registry {
-	return &Registry{
-		st: st,
-		agents: append([]Agent{
-			newOpenCode(),
-			newCodex(),
-			newClaude(),
-			newDSH(),
-		}, ompAdapters()...),
+	return &Registry{st: st, agents: platformAdapters()}
+}
+
+// platformAdapters returns the host's adapters plus, when running inside WSL,
+// the Windows-side entry for every agent whose config exists under /mnt/c.
+// The two sides stay separate entries: enabling one never writes the other.
+func platformAdapters() []Agent {
+	out := []Agent{
+		newOpenCodeAt("", "opencode", hostLabel("OpenCode")),
+		newCodexAt("", "codex", hostLabel("Codex CLI / bản desktop")),
+		newClaudeAt("", "claude", hostLabel("Claude Code")),
+		newDSHAt("", "dsh", hostLabel("DeepSeek Harness")),
 	}
+	variants := []Agent{
+		windowsVariant([]string{".config", "opencode"}, "opencode-windows", "OpenCode (Windows)", func(home, id, name string) Agent {
+			return newOpenCodeAt(home, id, name)
+		}),
+		windowsVariant([]string{".codex"}, "codex-windows", "Codex (Windows)", func(home, id, name string) Agent {
+			return newCodexAt(home, id, name)
+		}),
+		windowsVariant([]string{".claude"}, "claude-windows", "Claude Code (Windows)", func(home, id, name string) Agent {
+			return newClaudeAt(home, id, name)
+		}),
+		windowsVariant([]string{".dsh"}, "dsh-windows", "DeepSeek Harness (Windows)", func(home, id, name string) Agent {
+			return newDSHAt(home, id, name)
+		}),
+	}
+	for _, a := range variants {
+		if a != nil {
+			out = append(out, a)
+		}
+	}
+	return append(out, ompAdapters()...)
 }
 
 // SetEndpoints supplies the live base URL and model list (main wires this).

@@ -30,15 +30,30 @@ const (
 	dshPatchName  = "@deepseek-ai/dsh-llm-pi-ai"
 )
 
-type dsh struct{}
-
-func newDSH() *dsh { return &dsh{} }
-
-func (d *dsh) Meta() (string, string, string) {
-	return "dsh", "DeepSeek Harness", "Tiêm nhà cung cấp tuỳ chỉnh llm-pi-ai (cordis.patch.yml, tắt là khôi phục)"
+type dsh struct {
+	home string // Windows profile when injected through /mnt/c; "" = host home
+	id   string
+	name string
 }
 
-func (d *dsh) profilesDir() string { return homePath(".dsh", "profiles") }
+func newDSH() *dsh { return newDSHAt("", "dsh", "DeepSeek Harness") }
+
+func newDSHAt(home, id, name string) *dsh {
+	return &dsh{home: home, id: id, name: name}
+}
+
+func (d *dsh) p(parts ...string) string {
+	if d.home == "" {
+		return homePath(parts...)
+	}
+	return filepath.Join(append([]string{d.home}, parts...)...)
+}
+
+func (d *dsh) Meta() (string, string, string) {
+	return d.id, d.name, d.p(".dsh", "profiles") + ": tiêm nhà cung cấp tuỳ chỉnh llm-pi-ai (cordis.patch.yml, tắt là khôi phục)"
+}
+
+func (d *dsh) profilesDir() string { return d.p(".dsh", "profiles") }
 
 // profileDirs lists profile folders — each carries a package.json (the
 // profile manifest) beside its user patch layer.
@@ -341,7 +356,7 @@ func (d *dsh) removeProvider(dir string) error {
 	if !changed {
 		return nil
 	}
-	_, _ = backupFile("dsh", path, data)
+	_, _ = backupFile(d.id, path, data)
 	return writeYAML(path, &doc)
 }
 
@@ -444,7 +459,7 @@ func (d *dsh) stripLegacyPlugin(dir string) error {
 	if !changed {
 		return nil
 	}
-	if _, err := backupFile("dsh", pkgPath, data); err != nil {
+	if _, err := backupFile(d.id, pkgPath, data); err != nil {
 		return err
 	}
 	out, err := json.MarshalIndent(pkg, "", "  ")
@@ -462,7 +477,7 @@ func (d *dsh) stripLegacyPlugin(dir string) error {
 
 func (d *dsh) writePatch(path string, doc *yaml.Node) error {
 	if data, err := os.ReadFile(path); err == nil {
-		if _, err := backupFile("dsh", path, data); err != nil {
+		if _, err := backupFile(d.id, path, data); err != nil {
 			return err
 		}
 	}

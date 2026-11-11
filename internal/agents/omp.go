@@ -38,14 +38,10 @@ func newOMP(root, id, name string) *omp {
 // ~/.omp, plus — when running inside WSL — the first Windows profile that has
 // one.
 func ompAdapters() []Agent {
-	hostName := "omp"
+	out := []Agent{newOMP(homePath(".omp"), "omp", hostLabel("omp"))}
 	if isWSL() {
-		hostName = "omp (WSL)"
-	}
-	out := []Agent{newOMP(homePath(".omp"), "omp", hostName)}
-	if runtime.GOOS != "windows" {
-		if root := windowsOMPRoot(); root != "" {
-			out = append(out, newOMP(root, "omp-windows", "omp (Windows)"))
+		if root := windowsProfileHolding(".omp", "agent", "models.yml"); root != "" {
+			out = append(out, newOMP(filepath.Join(root, ".omp"), "omp-windows", "omp (Windows)"))
 		}
 	}
 	return out
@@ -63,32 +59,6 @@ func isWSL() bool {
 	}
 	b, err := os.ReadFile("/proc/version")
 	return err == nil && strings.Contains(strings.ToLower(string(b)), "microsoft")
-}
-
-// windowsOMPRoot finds the first Windows user profile (visible through the
-// WSL /mnt/c mount) that carries an omp models.yml. System profiles are
-// skipped. Multiple Windows users would need distinct ids, so only the first
-// is offered — the common case is one desktop account.
-func windowsOMPRoot() string {
-	const base = "/mnt/c/Users"
-	entries, err := os.ReadDir(base)
-	if err != nil {
-		return ""
-	}
-	for _, e := range entries {
-		if !e.IsDir() {
-			continue
-		}
-		switch strings.ToLower(e.Name()) {
-		case "public", "default", "default user", "all users":
-			continue
-		}
-		root := filepath.Join(base, e.Name(), ".omp")
-		if fileExists(filepath.Join(root, "agent", "models.yml")) {
-			return root
-		}
-	}
-	return ""
 }
 
 func fileExists(p string) bool { _, err := os.Stat(p); return err == nil }

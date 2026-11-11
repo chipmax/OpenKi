@@ -98,11 +98,14 @@ func TestParseDefaultsLevel(t *testing.T) {
 // networks — the feed must survive either failure) ---
 
 func TestMirrorMapsGitHubPair(t *testing.T) {
-	if got := mirror("https://api.github.com/repos/LAGcomcom/zen-gate/contents/announcements.json?ref=main"); got != rawFeedURL {
+	if got := mirror("https://api.github.com/repos/LAGcomcom/zen-gate/contents/announcements.json?ref=main"); got != "https://raw.githubusercontent.com/LAGcomcom/zen-gate/master/announcements.json" {
 		t.Errorf("contents mirror = %q, want raw", got)
 	}
 	if got := mirror("https://raw.githubusercontent.com/LAGcomcom/zen-gate/master/announcements.json"); got != DefaultFeedURL {
 		t.Errorf("raw mirror = %q, want contents", got)
+	}
+	if got := mirror("https://api.github.com/repos/chipmax/zen-gate-vi/contents/announcements.json?ref=master"); got != "https://raw.githubusercontent.com/chipmax/zen-gate-vi/master/announcements.json" {
+		t.Errorf("fork contents mirror = %q, want its raw feed", got)
 	}
 	if got := mirror("https://example.com/feed.json"); got != "" {
 		t.Errorf("custom feed mirror = %q, want none", got)

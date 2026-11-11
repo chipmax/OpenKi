@@ -32,8 +32,8 @@ retry là nhiều dòng liên tiếp, không phải một dòng gộp.
 |---|---|
 | `model`, `at`, `trace` | Mô hình được yêu cầu, thời điểm, id tương quan của request |
 | `exit` | Node id của exit đã chọn (rỗng = không có rotator) |
-| `exitKind` | `direct`, `warp`, `peer` (selector relay/WARP/sing-box không có rotator), `proxy` (proxy pool tĩnh) hoặc `singbox` |
-| `egressIp` | IP công khai khi rotator định danh exit bằng IP (subscription); rỗng với pool tĩnh vì exit được định danh bằng node id |
+| `exitKind` | `direct`, `warp`, `peer` (selector relay/WARP/sing-box không có rotator), `proxy` (proxy pool tĩnh) hoặc `singbox`; khi peer WARP tự báo danh tính, bản ghi dùng `warp` thay cho `peer` |
+| `egressIp` | IP công khai khi rotator định danh exit bằng IP (subscription) hoặc khi peer WARP chọn lease trong transport; rỗng với pool tĩnh vì exit được định danh bằng node id |
 | `errCode` | Lớp lỗi đã phân loại (bảng dưới) |
 | `httpStatus` | Mã HTTP thật của upstream (0 nếu lỗi transport) |
 | `retryAfter` | `Retry-After` đã parse, trước khi bị kẹp theo ramp |
@@ -105,6 +105,8 @@ hình.
 | Cùng mô hình `cat-jam-free`: 200 lúc 14:28:57, `REGION_BLOCKED` lúc 14:31:10, rồi 6/6 request 200 ngay sau đó | Region là verdict của exit IP; phải thử exit khác thay vì bỏ mô hình |
 | Một exit nhận TCP rồi không trả byte nào: request 217 s kết thúc `TRANSPORT`, cùng mô hình qua exit khác ~15 s | Cần `responseHeaderTimeout` 90 s và retry theo exit |
 | `Retry-After` upstream: 54.282 s (nửa đêm UTC) | Kẹp hint theo ramp thay vì park theo header |
+| Một đợt 429 kéo dài 13 phút 48 giây (15:54–16:08): 44 lần thử, 34M token đầu vào, 6,7M token trong 10 phút, cùng một exit | Cần governor token theo exit và ramp; retry mù chỉ đốt thêm cửa sổ |
+| 5 lượt liên tiếp 140k token trên một exit 300k/phút | Hai lượt đầu đi ngay, các lượt sau chờ tối đa 20 giây rồi trả 429 `EXIT_GOVERNOR`; không lượt nào bị giữ quá cap |
 | Pool 8 exit tĩnh, nhiều node có thể ra cùng một IP | Khoá bucket theo IP khi biết, không theo số node |
 | Governor mặc định 300k/phút | Một lượt coding lớn mỗi phút mỗi exit; burst không đốt hết cửa sổ trong một phút |
 

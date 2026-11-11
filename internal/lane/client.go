@@ -3,6 +3,7 @@ package lane
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math"
 	"net"
 	"strconv"
@@ -1497,6 +1498,7 @@ func (l *Lane) nextCandidate(needs Needs, tried map[string]bool) string {
 
 func (l *Lane) attemptModel(ctx context.Context, req Request, model, effort string, emit func(Chunk)) (Outcome, *UpstreamError, bool) {
 	start := time.Now()
+	ctx, _ = withEgressIdentity(ctx)
 	base := model
 
 	l.mu.RLock()
@@ -1582,6 +1584,7 @@ func (l *Lane) attemptModel(ctx context.Context, req Request, model, effort stri
 				}
 			}
 		}
+		governorStarted := time.Now()
 		ok, wait, err := b.WaitCapped(ctx, plan.ExitKey, tokens, exitBudgetMaxWait)
 		if err != nil {
 			return Outcome{}, &UpstreamError{Code: CodeAborted, Message: "cancelled"}, false
@@ -1594,9 +1597,15 @@ func (l *Lane) attemptModel(ctx context.Context, req Request, model, effort stri
 			if retry > exitBudgetRetryCapSec {
 				retry = exitBudgetRetryCapSec
 			}
+			slog.Warn("lane: token governor refused the turn",
+				"exit", plan.ExitKey, "tokens", tokens, "remainingMs", wait.Milliseconds())
 			return Outcome{}, &UpstreamError{Code: CodeGovernor,
 				Message:    fmt.Sprintf("ngân sách token của exit đã cạn; thử lại sau %d giây", retry),
 				RetryAfter: retry}, false
+		}
+		if elapsed := time.Since(governorStarted); elapsed >= 250*time.Millisecond {
+			slog.Info("lane: token governor delayed the turn",
+				"exit", plan.ExitKey, "tokens", tokens, "waitMs", elapsed.Milliseconds())
 		}
 	}
 
@@ -1906,6 +1915,18 @@ func (l *Lane) record(ctx context.Context, rec CallRecord, result StreamResult, 
 	rec.ExitKind = exitKindForPlan(plan)
 	if ip := net.ParseIP(plan.ExitKey); ip != nil {
 		rec.EgressIP = plan.ExitKey
+	}
+	if identity := egressIdentityFrom(ctx); identity != nil {
+		peer, ip := identity.get()
+		if rec.EgressIP == "" {
+			rec.EgressIP = ip
+		}
+		// The equal-peer selector names the transport class "peer" before the
+		// RoundTripper runs. Once the winning peer reports itself, keep that
+		// detail instead of hiding WARP behind the generic label.
+		if rec.ExitKind == "peer" && peer != "" {
+			rec.ExitKind = peer
+		}
 	}
 	if ue := asUpstream(err); ue != nil {
 		rec.ErrCode = ue.Code

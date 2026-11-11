@@ -4308,6 +4308,8 @@ function renderSettings(s){
           </label>
         </div>
         <div class="muted" style="font-size:11.5px;margin-top:5px">0 = tắt governor token theo exit. Fingerprint đổi nóng; dùng <code class="k">gateprobe</code> trước khi chuyển sang <code class="k">off</code>.</div>
+        <div class="muted" style="font-size:11.5px;margin-top:3px">Fingerprint hash: <code class="k">${esc(s.settings.fingerprintHash||"—")}</code></div>
+        ${s.settings.freeTierGateAt ? `<div class="muted" style="font-size:11.5px;margin-top:5px;color:var(--warn)">Cổng free-tier từ chối gần nhất: ${new Date(s.settings.freeTierGateAt).toLocaleString("vi-VN")}. Nếu lặp lại, chạy <code class="k">gateprobe</code> và so hash trước khi đổi <code class="k">fingerprintMode</code>.</div>` : ""}
         <div class="muted" style="font-size:12px;margin-top:8px">Lưu proxy là áp dụng nóng ngay (ảnh hưởng các yêu cầu suy luận/danh sách/dò kiểm tra tới thượng nguồn).</div>
         <div class="switch" style="margin-top:12px"><div><span class="nm">Cho phép truy cập API qua mạng LAN</span><div class="ds">các máy khác cùng dải mạng đều có thể dùng <code class="k">http://&lt;IP của máy này&gt;:${s.port}/v1</code> để gọi interface, vẫn phải kèm API Key; bảng điều khiển quản trị và interface /admin không bị ảnh hưởng, luôn chỉ chấp nhận máy này. Chuyển đổi sẽ nghe lại, yêu cầu đang xuất theo luồng sẽ bị ngắt</div></div>
           <button class="act off" id="tg-lan">Đóng</button></div>

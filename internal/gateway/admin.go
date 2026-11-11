@@ -496,6 +496,8 @@ func (s *Server) adminState(w http.ResponseWriter) {
 		"proxyURL":                cfg.ProxyURL,
 		"exitTokensPerMinute":     effectiveExitRate(cfg.ExitTokensPerMinute),
 		"fingerprintMode":         lane.FingerprintMode(),
+		"fingerprintHash":         lane.FingerprintHash(),
+		"freeTierGateAt":          lane.FreeTierGateAt(),
 		"proxyPool":               cfg.ProxyPool,
 		"egressModes":             cfg.EgressModes,
 		"relayPool":               cfg.RelayPool,

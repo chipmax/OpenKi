@@ -19,6 +19,9 @@ type exitBudget struct {
 	perMin  int
 	buckets map[string]*exitBucket
 	now     func() time.Time
+	// pause is the clock seam used by the burst-cap tests. Production always
+	// gets sleepCtx; nil falls back to it for zero-value budgets.
+	pause func(context.Context, time.Duration) error
 }
 
 type exitBucket struct {
@@ -27,7 +30,14 @@ type exitBucket struct {
 }
 
 func newExitBudget(perMin int) *exitBudget {
-	return &exitBudget{perMin: perMin, buckets: map[string]*exitBucket{}, now: time.Now}
+	return &exitBudget{perMin: perMin, buckets: map[string]*exitBucket{}, now: time.Now, pause: sleepCtx}
+}
+
+func (b *exitBudget) waitFor(ctx context.Context, delay time.Duration) error {
+	if b.pause == nil {
+		return sleepCtx(ctx, delay)
+	}
+	return b.pause(ctx, delay)
 }
 
 // setRate replaces the rate. Buckets keep their balance, clamped to the new
@@ -72,7 +82,7 @@ func (b *exitBudget) Wait(ctx context.Context, exit string, tokens int) error {
 		if ok {
 			return nil
 		}
-		if err := sleepCtx(ctx, delay); err != nil {
+		if err := b.waitFor(ctx, delay); err != nil {
 			return err
 		}
 	}
@@ -110,7 +120,7 @@ func (b *exitBudget) WaitCapped(ctx context.Context, exit string, tokens int, ma
 		if sleep < time.Millisecond {
 			sleep = time.Millisecond
 		}
-		if err := sleepCtx(ctx, sleep); err != nil {
+		if err := b.waitFor(ctx, sleep); err != nil {
 			return false, delay, err
 		}
 	}

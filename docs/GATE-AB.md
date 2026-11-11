@@ -47,6 +47,7 @@ Máy: WSL Debian, làn miễn phí qua gateway đang chạy; profile mặc đị
 | Via | Model | Số cặp | Có fingerprint | Không fingerprint | Kết luận |
 |---|---|---|---|---|---|
 | direct | glm-5.3-flash-free | 2 | 429 `FreeUsageLimitError` | 429 `FreeUsageLimitError` | INCONCLUSIVE |
+| direct | glm-5.3-flash-free | 3 (23:19) | 429 `FreeUsageLimitError` | 429 `FreeUsageLimitError` | INCONCLUSIVE |
 | pool (8 exit tĩnh) | glm-5.3-flash-free | 1 | 429 `FreeUsageLimitError` | 429 `FreeUsageLimitError` | INCONCLUSIVE |
 | pool (8 exit tĩnh) | deepseek-v4.1-flash-free | 2 | 429 `FreeUsageLimitError` | 429 `FreeUsageLimitError` | INCONCLUSIVE |
 | warp | glm-5.3-flash-free | 1 | 429 sau khi WARP fallback (IPv6 unreachable) | 429 cùng lý do | INCONCLUSIVE |
@@ -56,6 +57,10 @@ biến nhiễu khác: `HTTPS_PROXY=127.0.0.1:8888` của shell WSL đã chết, 
 có fingerprint nhận `TIMEOUT` 30 s trong khi phía không fingerprint nhận 429.
 Đây là lý do `gateprobe` luôn đặt transport tường minh thay vì dựa vào môi
 trường.
+
+Ba cặp direct lúc 23:19 dùng đúng hash `dfca0a028c169fd8`; cả 6 request đều
+trả 429 `FreeUsageLimitError` trong 0,25–1,5 s. Đây là bằng chứng quota đang che
+cổng, không phải bằng chứng cổng đã đổi.
 
 Kết luận từ bảng: **chưa đo được cổng trong phiên này**. Mọi exit khả dụng
 (direct, 8 proxy tĩnh, WARP fallback) đều trả cùng một `FreeUsageLimitError`

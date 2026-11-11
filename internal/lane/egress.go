@@ -370,6 +370,9 @@ func (s *egressSelector) RoundTrip(req *http.Request) (*http.Response, error) {
 			lastErr = err
 			break
 		}
+		// A WARP attempt that falls through to the next peer must not leave
+		// its lease address on the response that another peer finally served.
+		resetEgressIdentity(attempt.Context())
 		resp, err := peer.rt.RoundTrip(attempt)
 		if err != nil {
 			lastErr = fmt.Errorf("egress %s: %w", peer.name, err)

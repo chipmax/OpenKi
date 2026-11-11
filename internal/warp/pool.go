@@ -144,6 +144,17 @@ type Lease struct {
 	once sync.Once
 }
 
+// Egress is the public address this lease exits through. The pool learns it
+// during the registration probe and never mutates it afterwards, so callers
+// can stamp it onto the attempt record without a lock. The zero Addr means the
+// pool has not identified the address (invalid/closed lease).
+func (l *Lease) Egress() netip.Addr {
+	if l == nil || l.exit == nil {
+		return netip.Addr{}
+	}
+	return l.exit.egress
+}
+
 // Snapshot is a point-in-time view of a pool for health and admin reporting.
 type Snapshot struct {
 	Stack string
@@ -394,10 +405,49 @@ func (p *Pool) ReportWithRetryAfter(lease *Lease, status int, body []byte, retry
 	if !rotate {
 		return
 	}
-	if retryAfter < 0 || retryAfter > egressCooldownMax {
-		retryAfter = 0
-	}
 	p.penalizeFor(lease.exit, reason, retryAfter)
+}
+
+// clampEgressHint treats an implausible Retry-After as noise. The upstream
+// reports "next UTC midnight" (measured: 54,282 s), which is not a recovery
+// estimate for this exit; only hints inside the ramp's cap can extend it.
+func clampEgressHint(hint time.Duration) time.Duration {
+	if hint < 0 || hint > egressCooldownMax {
+		return 0
+	}
+	return hint
+}
+
+// egressCooldown is the pure ramp policy for one egress block. previous is the
+// penalty's last failure before this one (zero for a new or expired episode).
+// Keeping it pure makes the 44-refusal/18-exit simulation deterministic.
+func egressCooldown(penalty *egressPenalty, previous, now time.Time, hint time.Duration) time.Duration {
+	cooldown := egressCooldownBase
+	if penalty != nil {
+		for i := 1; i < penalty.fails && cooldown < egressCooldownMax; i++ {
+			cooldown *= 2
+		}
+		if cooldown > egressCooldownMax {
+			cooldown = egressCooldownMax
+		}
+		// A persistent block is confirmed only by three failures spanning at
+		// least two spacing windows; three refusals inside two minutes are a
+		// crowd, not an exhausted address.
+		if penalty.fails >= egressRetireFailures && !previous.IsZero() &&
+			now.Sub(penalty.first) >= 2*egressRetireSpacing {
+			cooldown = egressCooldownMax
+		}
+		if hint > 0 && hint < cooldown && penalty.fails == 1 {
+			cooldown = hint
+		}
+	}
+	if hint > cooldown {
+		cooldown = hint
+	}
+	if cooldown > egressCooldownMax {
+		cooldown = egressCooldownMax
+	}
+	return cooldown
 }
 
 // HasUntriedActive reports whether an active, unpenalized exit sits on an
@@ -451,6 +501,7 @@ func (p *Pool) penalize(bad *exit, reason string) {
 }
 
 func (p *Pool) penalizeFor(bad *exit, reason string, hint time.Duration) {
+	hint = clampEgressHint(hint)
 	now := time.Now()
 	p.mu.Lock()
 	if p.closed {
@@ -477,22 +528,8 @@ func (p *Pool) penalizeFor(bad *exit, reason string, hint time.Duration) {
 		previous := penalty.last
 		penalty.fails++
 		penalty.last = now
-		cooldown = egressCooldownBase
-		for i := 1; i < penalty.fails && cooldown < egressCooldownMax; i++ {
-			cooldown *= 2
-		}
-		if cooldown > egressCooldownMax {
-			cooldown = egressCooldownMax
-		}
-		if penalty.fails >= egressRetireFailures && !previous.IsZero() &&
-			now.Sub(penalty.first) >= 2*egressRetireSpacing {
-			cooldown = egressCooldownMax
-		}
-		if hint > 0 && hint < cooldown && penalty.fails == 1 {
-			cooldown = hint
-		}
-	}
-	if hint > cooldown {
+		cooldown = egressCooldown(penalty, previous, now, hint)
+	} else if hint > cooldown {
 		cooldown = hint
 	}
 	if cooldown > egressCooldownMax {

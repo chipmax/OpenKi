@@ -3,6 +3,7 @@ package lane
 import (
 	"encoding/json"
 	"testing"
+	"time"
 )
 
 func TestGateProfileOverrideChangesHashAndDefinitions(t *testing.T) {
@@ -52,5 +53,13 @@ func TestGateProfileOverrideChangesHashAndDefinitions(t *testing.T) {
 	}
 	if FingerprintHash() != baseHash {
 		t.Fatal("hash did not return to the compiled default after overrides were dropped")
+	}
+}
+
+func TestFreeTierGateRecencyIsRecorded(t *testing.T) {
+	before := time.Now().UnixMilli()
+	noteFreeTierGate()
+	if got := FreeTierGateAt(); got < before {
+		t.Fatalf("FreeTierGateAt() = %d, want >= %d", got, before)
 	}
 }

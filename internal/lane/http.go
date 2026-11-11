@@ -147,18 +147,26 @@ func ClassifyFailure(status int, payload string, retryAfterSec int) *UpstreamErr
 }
 
 var freeTierLoggedAt atomic.Int64
+var freeTierGateAt atomic.Int64
+
+// FreeTierGateAt is the Unix-millisecond time of the most recent upstream
+// free-tier refusal. The settings panel shows it next to the fingerprint hash:
+// a refusal is the signal that the gate body may have changed, and the hash is
+// what makes the before/after comparable without a body diff.
+func FreeTierGateAt() int64 { return freeTierGateAt.Load() }
 
 // noteFreeTierGate emits at most one lifecycle event per hour when the
 // upstream free-tier gate refuses a turn. The access log already carries
 // errCode per request; this line adds the fingerprint hash, which is what
 // answers "did our gate body change?" after a FREE_TIER_BLOCKED storm.
 func noteFreeTierGate() {
-	now := time.Now().Unix()
+	now := time.Now()
+	freeTierGateAt.Store(now.UnixMilli())
 	last := freeTierLoggedAt.Load()
-	if last != 0 && now-last < 3600 {
+	if last != 0 && now.Unix()-last < 3600 {
 		return
 	}
-	if !freeTierLoggedAt.CompareAndSwap(last, now) {
+	if !freeTierLoggedAt.CompareAndSwap(last, now.Unix()) {
 		return
 	}
 	slog.Warn("cổng free-tier của thượng nguồn từ chối yêu cầu; fingerprint đang gửi",

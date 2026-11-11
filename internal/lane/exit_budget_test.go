@@ -121,3 +121,42 @@ func TestEstimateRequestTokensReservesOutput(t *testing.T) {
 		t.Fatalf("tool definitions did not raise the estimate: %d <= %d", withTools, small)
 	}
 }
+
+// Five 140k-token turns cannot all fit inside one 300k/minute window, but no
+// turn may hold a connection for longer than exitBudgetMaxWait. The virtual
+// clock makes the test instantaneous: refused turns must surface as a prompt
+// 429 with the remaining delay instead of silently queueing for minutes.
+func TestExitBudgetLargeBurstHonoursPerRequestWaitCap(t *testing.T) {
+	b := newExitBudget(DefaultExitTokensPerMinute)
+	now := time.Unix(1_700_000_000, 0)
+	b.now = func() time.Time { return now }
+	b.pause = func(_ context.Context, delay time.Duration) error {
+		now = now.Add(delay)
+		return nil
+	}
+	successes, refusals := 0, 0
+	for i := 0; i < 5; i++ {
+		started := now
+		ok, wait, err := b.WaitCapped(context.Background(), "exit-a", 140_000, exitBudgetMaxWait)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if elapsed := now.Sub(started); elapsed > exitBudgetMaxWait {
+			t.Fatalf("turn %d waited %s, over the %s cap", i+1, elapsed, exitBudgetMaxWait)
+		}
+		if ok {
+			successes++
+		} else {
+			refusals++
+			if wait <= 0 {
+				t.Fatalf("refused turn %d reported no retry delay", i+1)
+			}
+		}
+	}
+	if successes != 3 || refusals != 2 {
+		t.Fatalf("successes/refusals = %d/%d, want 3/2 for a 5x140k burst at 300k/min", successes, refusals)
+	}
+	if exitBudgetMaxWait != 20*time.Second {
+		t.Fatalf("exitBudgetMaxWait = %s, want 20s", exitBudgetMaxWait)
+	}
+}

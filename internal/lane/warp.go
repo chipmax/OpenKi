@@ -172,6 +172,12 @@ func (w *warpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 		lease.Release()
 		return nil, err
 	}
+	// The lane chooses a rotator exit before the request, but this transport
+	// chooses the WARP lease during it. Stamp the address onto the attempt so
+	// CallRecord can show which public IP actually served the turn.
+	if ip := lease.Egress(); ip.IsValid() {
+		setEgressIdentity(req.Context(), "warp", ip.String())
+	}
 	if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusForbidden {
 		head, _ := io.ReadAll(io.LimitReader(resp.Body, 32<<10))
 		pool.ReportWithRetryAfter(lease, resp.StatusCode, head, parseRetryAfter(resp.Header))

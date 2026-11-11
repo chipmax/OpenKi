@@ -181,6 +181,8 @@ fingerprint và transport: [docs/GATE-AB.md](docs/GATE-AB.md).
 
 Ứng dụng kiểm tra Releases của kho fork (`chipmax/zen-gate-vi`) mỗi 6 giờ. Khi có phiên bản mới, trang tổng quan hiện nút "Cập nhật một chạm" — tự tải, thay thế và khởi động lại trong khoảng 10 giây. Tính năng này chỉ bật trên Windows (nơi bản phát hành là một file `.exe` đổi tên được khi đang chạy).
 
+Lịch sử thay đổi của fork: [CHANGELOG.md](CHANGELOG.md).
+
 ## Giấy phép
 
 **GNU GPL-3.0-only** — SPDX: `GPL-3.0-only`. Toàn văn tại [LICENSE](LICENSE) và bản sao [COPYING](COPYING).

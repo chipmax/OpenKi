@@ -29,7 +29,7 @@ func TestOpenCodeRefusesToShadowAJSONCConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	o := newOpenCode()
-	err := o.Enable(zOptions())
+	err := o.Enable(testOptions())
 	if err == nil {
 		t.Fatalf("Enable wrote a shadowing opencode.json next to the user's opencode.jsonc")
 	}
@@ -50,7 +50,7 @@ func TestOpenCodeHonoursExplicitConfigPath(t *testing.T) {
 	}
 	target := filepath.Join(dir, "elsewhere.json")
 	t.Setenv("OPENCODE_CONFIG", target)
-	if err := newOpenCode().Enable(zOptions()); err != nil {
+	if err := newOpenCode().Enable(testOptions()); err != nil {
 		t.Fatalf("Enable with an explicit path: %v", err)
 	}
 	if _, err := os.Stat(target); err != nil {
@@ -70,7 +70,7 @@ func TestOpenCodeUpdatesAnExistingJSONBesideJSONC(t *testing.T) {
 	if err := os.WriteFile(path, []byte("{}\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := newOpenCode().Enable(zOptions()); err != nil {
+	if err := newOpenCode().Enable(testOptions()); err != nil {
 		t.Fatalf("Enable on an existing opencode.json: %v", err)
 	}
 	doc := readJSON(t, path)
@@ -85,7 +85,7 @@ func TestOpenCodeDetectsWithoutJSONC(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "opencode.json"), []byte("{}\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := newOpenCode().Enable(zOptions()); err != nil {
+	if err := newOpenCode().Enable(testOptions()); err != nil {
 		t.Fatalf("Enable on a plain opencode.json: %v", err)
 	}
 }

@@ -30,7 +30,7 @@ Một chương trình khay hệ thống trên máy tính (Windows 10/11, macOS 1
 
 OpenCode Zen cung cấp một loạt mô hình miễn phí **không cần đăng nhập, không tính phí**, nhưng chúng không có cơ chế API Key tiêu chuẩn nên các client thông thường không kết nối được. Zen Gate đóng gói "làn" này trên máy của bạn thành **giao diện tương thích OpenAI / Anthropic tiêu chuẩn**, và tự động hoàn tất việc tiêm cấu hình cho mọi Agent.
 
-- **Tự động thích ứng toàn diện**: phát hiện ZCode / OpenCode / Codex / Claude Code / DeepSeek Harness / Crush / ChatBox / Aider / Qwen Code / Continue / WorkBuddy / Qoder là tiêm cấu hình ngay (sao lưu trước, tắt là khôi phục). Khởi động lại Agent tương ứng là thấy mô hình miễn phí trong bộ chọn mô hình.
+- **Tự động thích ứng toàn diện**: phát hiện OpenCode / Codex / Claude Code / DeepSeek Harness / omp (bản Windows và bản WSL là hai mục riêng) là tiêm cấu hình ngay (sao lưu trước, tắt là khôi phục). Khởi động lại Agent tương ứng là thấy mô hình miễn phí trong bộ chọn mô hình.
 - **Thêm API tuỳ chỉnh**: ngoài làn miễn phí, có thể thêm bất kỳ upstream tương thích OpenAI / Anthropic nào — tích hợp sẵn 14 preset nhà cung cấp miễn phí (NVIDIA NIM, Google Gemini, GitHub Models, Groq, Cerebras, Mistral, OpenRouter, HuggingFace, SiliconFlow, ModelScope, BigModel...) để điền sẵn, bạn chỉ cần dán Key của mình; mô hình xuất hiện trong mọi Agent dưới dạng `nhà cung cấp/mô hình`.
 - **Pool miễn phí Kilo**: nguồn miễn phí thứ hai không cần thông tin xác thực, gộp chung vào danh mục, dùng chung cơ chế định tuyến, chuyển đổi khi bị giới hạn và bảng thăm dò với làn miễn phí.
 - **Lớp giao thức được kiểm chứng thực tế**: đúc phiên, cổng dấu vân tay, ba giao thức đường dây (chat / responses / messages), ba lớp dự phòng khi đứt luồng/trống/kết thúc sớm — tất cả đều được đo theo hành vi client thật.
@@ -84,6 +84,50 @@ zen-gate
 ```
 
 Ở mọi nền tảng, cách dùng đều như nhau: vào trang "Thích ứng Agent", bật công tắc của Agent bạn đã cài → khởi động lại Agent đó → mô hình miễn phí xuất hiện trong bộ chọn mô hình.
+
+### Windows và WSL: hai bản tách riêng
+
+| | Windows | WSL |
+|---|---|---|
+| Giao diện | GUI + khay hệ thống | headless, mở bằng trình duyệt |
+| Dữ liệu | `%LOCALAPPDATA%\zen-gate` | `~/.zen-gate` (hoặc `ZEN_GATE_HOME`) |
+| Agent | cấu hình nằm trong Windows | cấu hình nằm trong Linux; thêm mục **omp (Windows)** khi tìm thấy `C:\Users\<tên>\.omp\agent\models.yml` qua `/mnt/c` |
+| Cổng | 127.0.0.1:8787 | 127.0.0.1:8787 |
+
+Chạy một bản tại một thời điểm trên cùng một cổng; hai bản không chia sẻ dữ liệu hay danh sách Agent.
+
+#### Cài trong WSL (Debian/Ubuntu, systemd)
+
+```bash
+git clone https://github.com/chipmax/zen-gate-vi.git
+cd zen-gate-vi
+CGO_ENABLED=0 go build -tags headless -trimpath -o zen-gate ./cmd/zen-gate
+sudo install -m755 zen-gate /usr/local/bin/zen-gate
+
+sudo tee /etc/systemd/system/zen-gate.service >/dev/null <<'EOF'
+[Unit]
+Description=Zen Gate (headless)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=YOUR_USER
+Environment=ZEN_GATE_HEADLESS=1
+ExecStart=/usr/local/bin/zen-gate
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo sed -i "s/YOUR_USER/$USER/" /etc/systemd/system/zen-gate.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now zen-gate
+```
+
+Mở `http://127.0.0.1:8787` từ trình duyệt trên Windows (WSL2 chuyển tiếp localhost). Log: `journalctl -u zen-gate -f`.
 
 ## Build từ mã nguồn
 

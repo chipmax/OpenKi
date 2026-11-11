@@ -59,8 +59,8 @@ type Registry struct {
 	// last written with; see ResyncEnabled.
 	injectedKey string
 	// views caches the last Detect pass. Detect shells out for a version on
-	// every installed agent, which costs a few hundred ms each — with 13
-	// adapters a /state poll took ~3s and the dashboard sat empty until it
+	// every installed agent, which costs a few hundred ms each — with the
+	// full adapter set a /state poll took ~3s and the dashboard sat empty until it
 	// returned. Any Enable/Disable invalidates the cache, so a user action is
 	// visible on the very next poll.
 	viewsMu sync.Mutex
@@ -77,21 +77,12 @@ const viewsTTL = 15 * time.Second
 func NewRegistry(st *store.Store) *Registry {
 	return &Registry{
 		st: st,
-		agents: []Agent{
-			newZCode(),
+		agents: append([]Agent{
 			newOpenCode(),
 			newCodex(),
 			newClaude(),
 			newDSH(),
-			newCrush(),
-			newChatBox(),
-			newAider(),
-			newQwenCode(),
-			newContinueIDE(),
-			newWorkBuddy(),
-			newWorkBuddyAI(),
-			newQoder(),
-		},
+		}, ompAdapters()...),
 	}
 }
 
@@ -158,17 +149,8 @@ func (r *Registry) detectViews() []View {
 		if installed && id == "dsh" && processRunning("DeepSeek Harness") {
 			v.Warn = "DeepSeek Harness đang chạy, cần khởi động lại ứng dụng sau khi bật/tắt mới có hiệu lực"
 		}
-		if installed && id == "zcode" && processRunning("ZCode") {
-			v.Warn = "ZCode đang chạy, cần khởi động lại ZCode sau khi bật mới có hiệu lực"
-		}
-		if installed && id == "workbuddy" && processRunning("WorkBuddy") {
-			v.Warn = "WorkBuddy đang chạy, cấu hình sẽ tự nạp nóng sau ~1 giây khi lưu, không cần khởi động lại"
-		}
-		if installed && id == "workbuddy-ai" && processRunning("WorkBuddy AI") {
-			v.Warn = "WorkBuddy AI đang chạy, cấu hình sẽ tự nạp nóng sau ~1 giây khi lưu, không cần khởi động lại"
-		}
-		if installed && id == "qoder" && processRunning("Qoder CN", "Qoder") {
-			v.Warn = "Qoder đang chạy, nếu danh sách mô hình chưa được làm mới, hãy khởi động lại Qoder để áp dụng"
+		if installed && strings.HasPrefix(id, "omp") && processRunning("omp") {
+			v.Warn = "omp đang chạy, hãy khởi động lại omp sau khi bật/tắt để nạp lại models.yml"
 		}
 		out = append(out, v)
 	}

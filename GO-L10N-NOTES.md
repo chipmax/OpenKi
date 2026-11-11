@@ -101,7 +101,7 @@ Ngoài ra, theo quy tắc chung: **toàn bộ comment trong code giữ nguyên t
 
 | Test | File | Nội dung cập nhật |
 |---|---|---|
-| `TestWorkBuddyAIDetect` | `internal/agents/workbuddy_ai_test.go` | Chuỗi detail phát hiện ~/.workbuddy-ai |
+| `TestWorkBuddyRefusalReadsAsASentence` | `internal/lane/workbuddy_test.go` | Hậu tố `(upstream code 14003)` + tiền tố "Cửa sổ miễn phí đã dùng hết" |
 | `TestRoutingLineIsClassified` | `internal/gateway/access_log_test.go` | Dòng log định tuyến "Làn miễn phí đã cạn…" |
 | `TestCapabilityProbeReportsEachModality` | `internal/gateway/capsprobe_events_test.go` | Tên bước: Hình ảnh/Âm thanh/Tệp |
 | `TestDashboardProxyLabelCoversEveryMode` | `internal/gateway/dashboard_settings_test.go` | Nhãn proxy của dashboard đã Việt hoá; phép kiểm "chứa chữ Hán" đổi thành so khớp đúng nhãn tiếng Việt |

@@ -53,6 +53,7 @@ type Server struct {
 	// registry is the agent-adapter set, injected by main after construction.
 	registry AgentRegistry
 	mux      *http.ServeMux
+	srvMu    sync.Mutex
 	srv      *http.Server
 	// listen opens the TCP listener; tests swap it to force a bind refusal.
 	listen func(network, addr string) (net.Listener, error)
@@ -337,8 +338,12 @@ func (s *Server) Start() error {
 	// user's unchecked models kept being probed (and billing quota) until the
 	// first visibility toggle (issue #103).
 	s.Lane.SetHidden(s.hiddenSet())
-	addr := fmt.Sprintf("%s:%d", s.bindHost(), s.Store.Config().Port)
-	s.srv = &http.Server{
+	addr := net.JoinHostPort(s.bindHost(), strconv.Itoa(s.Store.Config().Port))
+	ln, err := s.listen("tcp", addr)
+	if err != nil {
+		return err
+	}
+	srv := &http.Server{
 		Addr:    addr,
 		Handler: s.mux,
 		// Reclaim keep-alive client connections (the AI agents talking to this
@@ -354,12 +359,14 @@ func (s *Server) Start() error {
 		// instead of lingering for the OS TCP keep-alive window.
 		ReadHeaderTimeout: 15 * time.Second,
 	}
-	ln, err := s.listen("tcp", addr)
-	if err != nil {
-		return err
-	}
+	s.srvMu.Lock()
+	s.srv = srv
+	s.srvMu.Unlock()
 	go func() {
-		if err := s.srv.Serve(ln); err != nil && err != http.ErrServerClosed {
+		// Capture the server locally: a later Rebind replaces the field while
+		// this goroutine is still entering Serve, and reading the field here
+		// would race with that write.
+		if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
 			log.Printf("[zen-gate] http serve: %v", err)
 		}
 	}()
@@ -380,9 +387,7 @@ func (s *Server) bindHost() string {
 // instead of leaving the gateway with no listener at all.
 func (s *Server) Rebind() error {
 	allowLan := s.Store.Config().AllowLan
-	if s.srv != nil {
-		_ = s.srv.Close()
-	}
+	s.closeListener()
 	err := s.Start()
 	if err == nil || !allowLan {
 		return err
@@ -395,11 +400,20 @@ func (s *Server) Rebind() error {
 	return err
 }
 
-// Stop shuts the listener down.
-func (s *Server) Stop() {
+// closeListener closes the current HTTP server, if any. The mutex matters
+// because Rebind runs from the settings handler while shutdown may run from
+// the signal path.
+func (s *Server) closeListener() {
+	s.srvMu.Lock()
+	defer s.srvMu.Unlock()
 	if s.srv != nil {
 		_ = s.srv.Close()
 	}
+}
+
+// Stop shuts the listener down.
+func (s *Server) Stop() {
+	s.closeListener()
 }
 
 // BaseURL is the locally advertised endpoint. It stays on loopback even while

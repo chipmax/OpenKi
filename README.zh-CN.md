@@ -1,0 +1,210 @@
+> **Windows 桌面重构版已发布：Lamp Guide**
+>
+> zen-gate 现有版本与历史发布继续保留。全新桌面界面、模型聚合管理、OpenCode 专页、日夜主题和中文安装向导在独立项目迭代。
+>
+> **[前往 Lamp Guide 新仓库](https://github.com/LAGcomcom/Lamp-Guide) · [下载安装包](https://github.com/LAGcomcom/Lamp-Guide/releases/latest) · [版本关系与迁移说明](docs/LAMP_GUIDE.md)**
+>
+> 当前重构版支持 Windows 10 / 11 x64，版本号与 zen-gate 分别计算。原版其他平台发行包仍在本仓库。
+
+<div align="center">
+
+<img src="assets/icon-256.png" width="88" alt="Zen Gate">
+
+# ZEN—GATE
+
+**把 OpenCode Zen 免费模型，装进你所有的 AI Agent。**
+
+一个桌面托盘程序（Windows 10/11、macOS 13+ 与 Linux）：本地起一个 OpenAI / Anthropic
+兼容网关，自动探测并接入你机器上已安装的 AI Agent——模型选择器里直接出现免费模型。
+
+[![release](https://img.shields.io/github/v/release/LAGcomcom/zen-gate?style=flat-square&label=%E7%89%88%E6%9C%AC)](https://github.com/LAGcomcom/zen-gate/releases/latest)
+[![downloads](https://img.shields.io/github/downloads/LAGcomcom/zen-gate/total?style=flat-square&label=%E4%B8%8B%E8%BD%BD)](https://github.com/LAGcomcom/zen-gate/releases)
+[![go](https://img.shields.io/badge/Go-1.26-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
+[![platform](https://img.shields.io/badge/Windows-10%2F11%20%7C%20macOS%2013%2B%20%7C%20Linux-0078D6?style=flat-square&logo=windows11&logoColor=white)](https://github.com/LAGcomcom/zen-gate/releases)
+[![license](https://img.shields.io/github/license/LAGcomcom/zen-gate?style=flat-square)](LICENSE)
+
+[下载最新版](https://github.com/LAGcomcom/zen-gate/releases/latest) · [问题反馈](https://github.com/LAGcomcom/zen-gate/issues)
+
+</div>
+
+---
+
+## 这是什么
+
+OpenCode Zen 提供了一批**免登录、免计费**的模型车道，但它们没有标准的 API Key 体系，
+一般客户端接不上。Zen Gate 在本机把这条车道封装成**标准 OpenAI / Anthropic 兼容接口**，
+并自动完成所有 Agent 的配置注入。v1.8.0 曾因上游按客户端指纹拦截（一律 403）退役这条
+车道，v1.9.0 按官方客户端指纹实测对齐后恢复——免费额度按出口 IP 计量，撞到限额由
+failover 与出口轮换自动消化：
+
+<div align="center"><img src="docs/screenshot-home.png" width="820" alt="Zen Gate 总览"></div>
+
+- **全自动适配**：检测到 ZCode / OpenCode / Codex / Claude Code / DeepSeek Harness /
+  Crush / ChatBox / Aider / Qwen Code / Continue / WorkBuddy / Qoder 后，一键注入配置（先备份，关闭即还原），
+  重启对应 Agent 就能在模型选择器里看到免费模型（WorkBuddy 无需重启，保存后自动热加载；Qoder 注入
+  `~/.qoder-cn/settings.json` 自定义供应商，IDE 本地直连）；
+- **自定义 API 接入**：免费车道之外，可添加任意 OpenAI / Anthropic 兼容上游——
+  内置 NVIDIA NIM、Google Gemini、GitHub Models、Groq、Cerebras、Mistral、OpenRouter、
+  HuggingFace、硅基流动、魔搭、智谱、LongCat、书生 Intern 等 14 个免费商预设一键填充，
+  填上自己的 Key 后自动检索模型列表，模型以 `供应商ID/模型名` 出现在所有 Agent 选择器里；
+- **协议层实测打磨**：会话铸造、指纹门、三种线协议（chat / responses / messages），
+  断流续写、空停续写、截断自动续写三重兜底——全部按真实客户端行为逐项实测；
+- **Kilo 免费池**：第二条免凭据免费源直接并入目录，与免费车道共用路由、
+  限流切换与探测看板；免费池提示词可能被上游记录，别交机密内容；
+- **渠道分文件**：每个免费车道渠道一份配置文件（`%APPDATA%\zen-gate\channels\<渠道ID>.json`），
+  记录启用开关与该渠道当前模型名单，停用即时生效——模型立刻从所有 Agent 选择器撤下；
+- **面板 v1.9.1 大改版**：模型页页首直接给「现在用这个」+ 一键主用，搜索/筛选带计数、卡片/列表双视图；总览变上手任务清单；自定义 API 三分区；错误全部人话化；整体配色与排版向克制风收敛；**模型页按渠道分组**：搜索与状态筛选、每渠道一个主开关、同 id 多渠道合并单卡；
+  每个模型可在卡片上点击设置默认思考档，默认模型可指定；
+- **单模型体检**：每个模型可单独探测可用性与首字延迟，探测历史持久化、跨重启可查。
+
+## 亮点
+
+| | |
+|---|---|
+| 🧭 **多模态智能路由** | 请求带图 / 音频 / 文件时，限流切换只会落到支持该模态的模型；模型能力三层打标（内置精选表 → 免费车道大模型 AI 标注 → 一键实测），徽章直接标在模型页 |
+| 🎯 **路由策略** | 智能路由总开关随时启停；failover 候选链按「目录顺序 / 首字延迟优先」排序；免费车道全部耗尽可单向回落到你的自定义 API（默认关，消耗自己的 Key） |
+| 🔄 **限流自动切换** | 模型被限流时自动换下一个可用模型接住请求，响应头标注实际模型 |
+| 📢 **公告系统** | 编辑仓库根目录 `announcements.json` 即向所有用户发公告（info/warn/critical 分级、生效时段、已读跟踪），总览页每 6 小时同步 |
+| 🔌 **自定义 API** | 免费商预设一键填充 + 自动检索模型列表，自己的 Key 自己填，用量照常入账 |
+| 📖 **能力元数据进标准接口** | `GET /v1/models` 每条模型除 OpenAI 字段外附带 `context_window`、`max_output_tokens`、`input_modalities`、`reasoning`、`supported_reasoning_levels` 与 `capability_source`（实测 > 上游声明 > AI标注 > 规则 / 未标注）——一键实测的结论不用打开面板也能被 Agent、SDK 或任意脚本读到；重启后实测结论仍随 `tags.json` 生效 |
+| 🌐 **订阅轮询** | 粘贴代理订阅（vless / vmess / ss / trojan / hy2 / tuic），内嵌 sing-box 侧车转成本地 socks 池，**每个请求轮换一个健康出口**——免费车道额度按出口 IP 计，多节点就是多份额度；节点健康探测 + 拨号失败自动跳下一节点 |
+| 🗂 **渠道墙** | 「自定义 API」页顶部一屏看完所有渠道：已打开 / 已关闭分组，每张卡带状态行（`N 账号 · M 模型` / 未登录 / 已停用），可按名称筛选，点卡直接跳到它的管理区。判据只有渠道文件里那一个 `enabled`，墙本身不持有状态 |
+| 💾 **前缀缓存** | 三条主动声明 + 一条被动统计。**主动**：CodeArts 与自定义供应商的请求带 `prompt_cache_key`（OpenAI 协议）或 `cache_control` 断点（Anthropic 协议，只打在最长的稳定前缀上：最后一个 system 块 + 最后一个 tool，占 2/4 个断点预算）；WorkBuddy 同一个字段放在设置里手动开（实测通过再打开）。Zen 车道与 Kilo 不动——前者按字节校验请求体，多一个字段就 403。**被动**：用量页、最近请求、CSV、`stats.json` 日桶都记命中量，`prompt_cache_hit_tokens` / `prompt_tokens_details.cached_tokens` / `cache_read_input_tokens` 三种拼法都认 |
+| 📊 **额度测算** | 无官方余额 API 也能估：限额时段追踪 + 恢复时间预估 + 日额度进度条 |
+| ⏱ **首字历史** | 每次探测的首字延迟入样本环，重启不丢，模型页直接看平均首字 |
+| 🌡 **GitHub 式热力图** | 365 天用量热力图 + 多模型趋势折线 + 每 / 周 / 累计三种视图 |
+| 🖥 **托盘常驻** | 关窗即进托盘/菜单栏、开机自启（注册表 / launchd）、系统通知、跟随系统代理（WinINET / `scutil --proxy`） |
+| 🛡 **只听本机** | 网关默认仅绑定 127.0.0.1；设置里可放开局域网给同网段设备调用（接口仍必须带 API Key，管理端固定只接受本机），另有同源护栏、配置先备份再改 |
+
+## 快速开始
+
+**Windows** — 从 [Releases](https://github.com/LAGcomcom/zen-gate/releases/latest) 下载
+`zen-gate.exe`，双击运行（托盘出现图标）。机器没装 WebView2 Runtime 时会自动改用
+默认浏览器打开管理页，网关功能不受影响；想要内嵌窗口装一下
+[WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) 即可。
+`ZEN_GATE_NO_WEBVIEW2=1` 可强制浏览器模式（排障用）。
+
+**macOS** — `tools/build-macos.sh` 产出 `dist/Zen Gate.app`，安装并启动：
+
+```bash
+tools/build-macos.sh
+cp -R "dist/Zen Gate.app" /Applications/
+open "/Applications/Zen Gate.app"
+```
+
+**Linux** — `tools/build-linux.sh` 产出 `dist/Zen_Gate-x86_64.AppImage`
+（自包含 GTK3 + appindicator，无需安装依赖），下载后 `chmod +x` 双击运行即可：
+
+```bash
+tools/build-linux.sh 1.2.1
+chmod +x dist/Zen_Gate-x86_64.AppImage
+./dist/Zen_Gate-x86_64.AppImage
+```
+
+Linux 版没有原生内嵌窗口：管理页在默认浏览器打开，托盘常驻（AppImage 内的
+`zen-gate.desktop` 也支持「开机自启」开关，写入 `~/.config/autostart`）。
+
+**Debian / Ubuntu / Deepin 等** — `tools/build-deb.sh` 产出 `dist/zen-gate_*.deb`
+（依赖系统 `libgtk-3-0` 与 `libayatana-appindicator3-1`，体积更小），安装：
+
+```bash
+tools/build-deb.sh 1.2.1
+sudo apt install ./dist/zen-gate_1.2.1-linux_amd64.deb
+zen-gate   # 或从应用菜单启动
+```
+
+两边都是：到「Agent 适配」页打开你装的 Agent 开关 → 重启该 Agent →
+模型选择器里出现免费模型。
+
+> 想接 ChatBox / Cherry Studio / 任意 SDK？「接入」页有每个客户端的填法和 curl 示例。
+
+
+## 从源码构建
+
+Windows：
+
+```bash
+go build -trimpath -ldflags "-H=windowsgui -X zen-gate/internal/gateway.Version=1.2.1 -X zen-gate/internal/update.Current=1.2.1" -o dist/zen-gate.exe ./cmd/zen-gate
+```
+
+不要加 `-s -w`（剥符号表）：火绒一分钟内就会把这样产出、刚解压出来的
+`zen-gate.exe` 直接删掉，表现成"下载完文件就不见了"。
+
+macOS（需要 cgo 与 Xcode 命令行工具；脚本负责编出 arm64 + x86_64 双架构、
+打 .app 包、生成 .icns、做 ad-hoc 签名并压 zip）：
+
+```bash
+tools/build-macos.sh 1.2.1
+```
+
+Linux（需要 cgo、gcc、`libgtk-3-dev` 与 `libayatana-appindicator3-dev`；
+脚本编译后自动用 linuxdeploy + appimagetool 打出自包含 AppImage）：
+
+```bash
+tools/build-linux.sh 1.2.1
+```
+
+Debian 系 .deb（同一二进制，依赖系统库，体积更小）：
+
+```bash
+tools/build-deb.sh 1.2.1
+```
+
+发版：推一个 `v*` 标签（GitHub Actions 自动构建发布），或本地
+`powershell -File tools\release.ps1 -Version 1.2.2`。macOS 包目前**不**随标签
+发布——只有 ad-hoc 签名，缺少 Developer ID 与公证，发出去只会被 Gatekeeper 拦。
+Actions 里的 `build-macos` job 负责每次构建验证，产物作为 workflow artifact 留存。
+
+## 一键更新
+
+应用每 6 小时检查本仓库的 Releases（走系统代理）。发现新版本时总览页出现「一键更新」
+按钮——自动下载、替换、重启，全程约 10 秒。
+
+一键更新只在 Windows 开启：那里发行物就是一个可以在运行时改名的 `.exe`。
+macOS 的发行物是整个 `.app`，覆盖包内二进制会破坏签名，所以总览页只给「发布页 →
+」链接，由用户自行下载替换。
+
+## Docker 与无头部署
+
+仓库带了 `headless` 构建标签：窗口与托盘整块编译出去，二进制不再链 GTK /
+WebView2 / appindicator，因此 `CGO_ENABLED=0` 也能交叉编译，容器与 NAS 里直接
+跑得起来（issue #79）。
+
+```bash
+docker compose up -d        # 或 docker build -t zen-gate .
+```
+
+* 端口 `8787`，数据落在 `/data` 卷（`ZEN_GATE_HOME`）；`ZEN_GATE_HEADLESS=1`
+  等价于 `-no-tray`
+* 镜像自带 `HEALTHCHECK`，打的是 `/healthz`（`/health` 的 supervisor 拼法）
+* 面板仍**只**监听 loopback：容器里用 SSH 隧道或同机反代访问，端口映射出去的是
+  `/v1` 这层 OpenAI / Anthropic 端点，不是管理页
+
+不用 Docker、只要一个无界面二进制：
+
+```bash
+CGO_ENABLED=0 go build -tags headless -trimpath -o zen-gate ./cmd/zen-gate
+```
+
+`.github/workflows/headless.yml` 会在每次 PR 上跑这套交叉编译矩阵
+（linux amd64/arm64、darwin amd64/arm64、windows amd64）并 `docker build` 一次，
+GUI 构建仍留在 `release.yml`。
+
+## 平台差异
+
+三个平台的实现按文件后缀拆分（`*_windows.go` / `*_darwin.go` / `*_linux.go`），
+共用代码不带后缀：
+
+| | Windows | macOS | Linux |
+|---|---|---|---|
+| 窗口 | WebView2 + Win32 无边框窗口 | WKWebView + NSWindow（全尺寸内容视图，隐藏系统红绿灯） | 无内嵌窗口：管理页在默认浏览器打开（`xdg-open`），托盘常驻 |
+| 托盘 | `getlantern/systray`，独占一个锁定的 goroutine | 同上，但与窗口共用主线程——AppKit 只允许主线程建窗口 | 同上，GTK 主循环跑在主 goroutine（libayatana-appindicator） |
+| 开机自启 | `HKCU\...\Run` | `~/Library/LaunchAgents/com.lagcomcom.zen-gate.plist` + `launchctl bootstrap` | `~/.config/autostart/zen-gate.desktop`（AppImage 运行时指向 `.AppImage` 本体） |
+| 系统代理 | `HKCU\...\Internet Settings`（WinINET） | `scutil --proxy` | `https_proxy` / `http_proxy` 环境变量 |
+| 通知 | PowerShell + WinRT toast | `osascript -e 'display notification'` | `notify-send`（libnotify） |
+| 数据目录 | `%APPDATA%\zen-gate` | `~/Library/Application Support/zen-gate`（`ZEN_GATE_HOME` 可覆盖） | `$XDG_CONFIG_HOME`（或 `~/.config`）`/zen-gate`（`ZEN_GATE_HOME` 可覆盖） |
+| 单实例 | 命名互斥体 | `zen-gate.lock` 上的 `flock`（进程退出即释放，不会留死锁） | 未做进程级互斥：靠网关端口绑定兜底（同一端口被占时第二个实例退出） |
+| 一键更新 | 支持 | 不支持，只跳发布页 | 不支持（AppImage 为只读挂载），只跳发布页 |
+
+窗口按钮（最小化 / 最大化 / 关闭 / 拖拽）在两边都通过页面注入的
+`window.zengate*` 绑定实现，所以 dashboard 一份代码三处跑。

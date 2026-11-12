@@ -56,7 +56,7 @@ jobs:
           "$hash  openki.exe" | Set-Content -Encoding ascii dist/openki.exe.sha256
           $size = (Get-Item dist/openki.exe).Length
           $manifest = [ordered]@{ version = $ver; asset = "openki.exe"; sha256 = $hash; size = $size } | ConvertTo-Json -Compress
-          Set-Content -Encoding ascii -NoNewline dist/openki.exe.manifest $manifest
+          [IO.File]::WriteAllText("dist/openki.exe.manifest", $manifest)
           if ($env:OPENKI_UPDATE_SIGNING_KEY) {
             go run ./tools/signupdate -in dist/openki.exe.manifest -out dist/openki.exe.manifest.sig
           } else {

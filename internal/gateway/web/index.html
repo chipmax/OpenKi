@@ -547,6 +547,42 @@
   .mcard .mhead .mname { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .mcard .mfoot { display:flex; justify-content:space-between; align-items:center; gap:8px;
     border-top:1px dashed var(--hairline-soft); padding-top:8px; margin-top:auto; }
+  /* Lựa chọn mặc định bằng chữ, không bắt người dùng đoán nghĩa của dấu sao. */
+  .mcard .mchoose { font-size:11.5px; font-weight:600; padding:4px 10px; border-radius:8px;
+    border:1px solid var(--hairline); background:transparent; color:var(--ink-dim); cursor:pointer; }
+  .mcard .mchoose:hover:not(:disabled) { border-color:var(--accent); color:var(--ink); background:var(--accent-soft); }
+  .mcard .mchoose.on { color:var(--accent); border-color:color-mix(in srgb,var(--accent) 55%,transparent); background:var(--accent-soft); }
+  .mcard .mchoose:disabled { opacity:.7; cursor:default; }
+  /* Thông tin dài (mô tả, hạn mức, lỗi, nút kiểm tra) nằm sau một dòng tóm tắt, để thẻ chỉ còn thứ cần để chọn. */
+  .mcard .madv { margin-top:2px; border-top:1px dashed var(--hairline-soft); padding-top:6px; }
+  .mcard .madv > summary { list-style:none; cursor:pointer; display:flex; align-items:center; gap:6px;
+    font-size:11.5px; color:var(--ink-mute); }
+  .mcard .madv > summary::-webkit-details-marker { display:none; }
+  .mcard .madv > summary::after { content:"▾"; margin-left:auto; }
+  .mcard .madv[open] > summary::after { content:"▴"; }
+  .mcard .madv-body { display:flex; flex-direction:column; gap:6px; margin-top:7px; }
+  .mcard .madv-text { font-size:12.5px; line-height:1.6; color:var(--ink-dim); }
+  .mcard .madv-acts { display:flex; gap:6px; flex-wrap:wrap; padding-top:2px; }
+  .mfilter { margin-top:6px; }
+  .mfilter > summary { list-style:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px;
+    font-size:11.5px; color:var(--ink-mute); padding:3px 0; }
+  .mfilter > summary::-webkit-details-marker { display:none; }
+  .mfilter > summary::after { content:"▾"; }
+  .mfilter[open] > summary::after { content:"▴"; }
+  .mfilter-body { display:flex; align-items:center; gap:6px 8px; flex-wrap:wrap; margin-top:6px; }
+  .mfilter-body .spacer { flex:1; min-width:8px; }
+  .mempty-chans { margin:6px 0 var(--gap-card); border:1px dashed var(--hairline); border-radius:var(--r-lg);
+    background:var(--panel); }
+  .mempty-chans > summary { list-style:none; cursor:pointer; padding:9px 12px; font-size:12px; color:var(--ink-mute); }
+  .mempty-chans > summary::-webkit-details-marker { display:none; }
+  .mempty-chans > summary::after { content:"▾"; float:right; }
+  .mempty-chans[open] > summary::after { content:"▴"; }
+  .mempty-list { padding:0 12px 9px; display:flex; flex-direction:column; gap:6px; }
+  .mempty-row { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-mute); }
+  .mempty-row .dot { width:7px; height:7px; border-radius:50%; flex:none; }
+  .mempty-row .dot.on { background:var(--ok); }
+  .mempty-row .dot.off { background:var(--bad); }
+  .mempty-row .grow { flex:1; min-width:0; }
 
   /* ---- v1.9.1 Trang mô hình: dính trên / lựa chọn tốt nhất / công tắc chọn dùng / dùng chính / chế độ xem danh sách ---- */
   .msticky { position:sticky; top:0; z-index:30; padding:8px 0 8px;
@@ -642,24 +678,6 @@
   .mcard .meff { display:flex; gap:6px; flex-wrap:wrap; }
   .mcard .meff .eff { font-size:11px; color:var(--ink-dim); background:var(--panel-2); border-radius:5px; padding:1px 7px; }
   .mcard .meff .eff b { color:var(--accent); font-family:var(--mono); }
-  .mcard .mblurb { font-size:12.5px; line-height:1.6; color:var(--ink-dim); background:var(--panel-2);
-    border-left:2px solid var(--accent); border-radius:0 5px 5px 0; padding:5px 8px; margin-top:7px;
-    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-    cursor:pointer; user-select:none; position:relative; }
-  /* Nhấp để mở rộng: bỏ cắt ngắn theo số dòng, phần quá cao chuyển thành cuộn nội bộ, mô tả dài không còn làm phình thẻ */
-  .mcard .mblurb.open { -webkit-line-clamp:unset; display:block;
-    max-height:170px; overflow-y:auto; user-select:text; padding-bottom:22px; }
-  /* Ở trạng thái thu gọn, góc dưới phải cho một OpenKi rộng rõ ràng, đừng để người dùng phải đoán là có thể nhấp */
-  .mcard .mblurb:not(.open)::after { content:"Nhấp để mở rộng ▾"; position:absolute; right:7px; bottom:4px;
-    font-size:10px; color:var(--accent); background:var(--accent-soft); border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);
-    padding:0 6px; border-radius:6px; pointer-events:none; }
-  .mcard .mblurb.open::after { content:"Nhấp để thu gọn ▴"; position:absolute; right:7px; bottom:4px;
-    font-size:10px; color:var(--ink-mute); background:var(--panel-2); padding:0 6px; border-radius:6px; pointer-events:none; }
-  /* Mô tả trùng lặp đó được thu vào đầu trang: một dải mảnh một hàng, không tranh với thông số trong thẻ */
-  .mnote { display:flex; gap:10px; align-items:flex-start; padding:9px 13px; margin:0 0 12px;
-    border:1px solid var(--hairline-soft); border-left:2px solid var(--accent); border-radius:8px;
-    background:var(--panel); color:var(--ink-dim); font-size:12.5px; line-height:1.7; }
-  .mnote .k { flex:none; color:var(--ink-mute); }
   .mcard .mquota { margin-top:8px; border-top:1px dashed var(--hairline-soft); padding-top:7px; }
   .mcard .qbar { height:5px; background:var(--panel-2); border-radius:3px; overflow:hidden; }
   .mcard .qbar i { display:block; height:100%; border-radius:3px; transition:width .3s ease; }
@@ -1817,8 +1835,6 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape" && drawerFor) cl
 
 // Trạng thái lọc ở trang Mô hình: kênh × Trạng thái × Từ khoá tìm kiếm, lọc thuần ở frontend, giữ lại qua các lần làm mới.
 let mf = { q: "", chan: "", state: "" };
-// Thẻ mô tả đã mở rộng (key = tiền tố id mô hình+blurb）：việc render lại khi polling 10s không thu gọn lại.
-const openBlurbs = new Set();
 // Chế độ xem: grid | list, ghi nhớ trong localStorage.
 let mview = localStorage.getItem("openki.mview") || "grid";
 // Mục kênh đã thu gọn: toàn bộ nhóm có số khả dụng bằng 0 dưới đầu ra CN mặc định thu gọn, mở rộng thủ công sẽ được ghi nhớ.
@@ -1924,12 +1940,6 @@ function renderModels(s){
   const customProbed = customModels.filter(m=>m.state!=="custom").length;
   const avail = laneModels.filter(m=>m.state==="available" && !m.hidden).length;
   const hiddenCount = s.models.filter(m=>m.hidden).length;
-  const blurbCount = new Map();
-  for(const m of sorted) if(m.blurb) blurbCount.set(m.blurb, (blurbCount.get(m.blurb)||0)+1);
-  const sharedBlurbs = [...blurbCount].filter(([,n])=>n>=3).map(([b])=>b);
-  const sharedBlurbSet = new Set(sharedBlurbs);
-  const sharedNote = sharedBlurbs.length
-    ? `<div class="mnote"><span class="k">Mô tả</span><div>${sharedBlurbs.map(b=>`<div>${esc(b)}</div>`).join("")}</div></div>` : "";
 
   // ---- hero：hiện đang dùng cái nào ----
   const defId = s.settings.defaultModel || "";
@@ -1947,7 +1957,7 @@ function renderModels(s){
     const chans = best.channels && best.channels.length ? best.channels : [best.custom?"custom":(best.channel||"zen")];
     const caps = [best.vision?"Thị giác":"", best.audioInput?"Âm thanh":"", best.fileInput?"Tệp":"", best.reasoning?"Suy luận":""].filter(Boolean).join(" · ");
     hero = `<div class="hero${defModel && defModel.id !== best.id ? " degraded" : ""}">
-      <span class="h-name">${isPrimary ? "Đang dùng chính：" : "Hiện đang dùng cái này："}${esc(best.name)}</span>
+      <span class="h-name">${isPrimary ? "Đang dùng chính：" : "Đề xuất："}${esc(best.name)}</span>
       <span class="h-meta">
         ${chans.map(chanBadge).join(" ")}
         <span>token đầu tiên <b>${best.ttftMs?(best.ttftMs/1000).toFixed(1)+"s":(best.ttftMedMs?(best.ttftMedMs/1000).toFixed(1)+"s":"—")}</b></span>
@@ -1989,26 +1999,32 @@ function renderModels(s){
         <option value="">Mô hình mặc định：（cái đầu tiên trong danh sách）</option>
         ${sorted.filter(m=>!m.hidden&&!m.systemOne).map(m=>`<option value="${esc(m.id)}" ${s.settings.defaultModel===m.id?"selected":""}>Mặc định：${esc(m.id)}</option>`).join("")}
       </select>
-      <span class="mchip ${!mf.chan?"on":""}" data-chan="">Kênh</span>
-      ${["zen","kilo","codearts"].map(c=>chip("chan",c,c,cnt(s.models,m=>!m.custom&&(m.channel||"zen")===c))).join("")}
-      ${chip("chan","custom","Tuỳ chỉnh",customModels.length)}
-      <span class="mchip ${!mf.state?"on":""}" data-state="">Trạng thái</span>
-      ${chip("state","available","Khả dụng",stateCounts.available)}
-      ${chip("state","throttled","bị giới hạn tốc độ",stateCounts.throttled)}
-      ${chip("state","region-blocked","Bị giới hạn khu vực",stateCounts["region-blocked"])}
-      ${chip("state","unavailable","Không khả dụng",stateCounts.unavailable)}
       <span class="spacer"></span>
-      <button class="ghost" id="hide-dead" title="Ẩn khỏi bộ chọn Agent các mô hình được dò kiểm tra là không khả dụng / bị hạn chế theo khu vực; khi dò thấy khả dụng sẽ tự động gỡ ẩn">Ẩn toàn bộ mục không khả dụng</button>
-      <button class="ghost" id="show-all" title="Khôi phục tất cả mô hình đã ẩn${hiddenCount?`（hiện tại ${hiddenCount}  cái）`:""}">Khôi phục hiển thị</button>
-      <button class="ghost" id="reprobe">${s.probeTotal ? "Đang dò kiểm tra…" : "Dò kiểm tra lại"}</button>
-      <span class="muted" id="m-count" style="font-size:11.5px"></span>
-      ${s.probeTotal ? `<span class="muted" id="m-progress" style="font-size:11.5px">Đã dò kiểm tra <b>${s.probeDone}/${s.probeTotal}</b>${s.probingModel?` · Đang kiểm tra <code class="k">${esc(s.probingModel)}</code>`:""}</span>` : ""}
-      ${active?`<span class="mchip on" id="m-clear" style="cursor:pointer">✕ Xoá bỏ</span>`:""}
       <span class="vtoggle" title="Thẻ để xem chi tiết, danh sách để quét nhanh toàn bộ">
         <button data-view="grid" class="${mview==="grid"?"on":""}">Thẻ</button>
         <button data-view="list" class="${mview==="list"?"on":""}">Danh sách</button>
       </span>
     </div>
+    <details class="mfilter" ${active||s.probeTotal?"open":""}>
+      <summary>Bộ lọc &amp; thao tác <span class="muted" style="font-size:11px">${active?"· đang lọc":"· kênh, trạng thái, dò kiểm tra"}</span></summary>
+      <div class="mfilter-body">
+        <span class="mchip ${!mf.chan?"on":""}" data-chan="">Kênh</span>
+        ${["zen","kilo","codearts"].map(c=>chip("chan",c,c,cnt(s.models,m=>!m.custom&&(m.channel||"zen")===c))).join("")}
+        ${chip("chan","custom","Tuỳ chỉnh",customModels.length)}
+        <span class="mchip ${!mf.state?"on":""}" data-state="">Trạng thái</span>
+        ${chip("state","available","Khả dụng",stateCounts.available)}
+        ${chip("state","throttled","bị giới hạn tốc độ",stateCounts.throttled)}
+        ${chip("state","region-blocked","Bị giới hạn khu vực",stateCounts["region-blocked"])}
+        ${chip("state","unavailable","Không khả dụng",stateCounts.unavailable)}
+        <span class="spacer"></span>
+        <button class="ghost" id="hide-dead" title="Ẩn khỏi bộ chọn Agent các mô hình được dò kiểm tra là không khả dụng / bị hạn chế theo khu vực; khi dò thấy khả dụng sẽ tự động gỡ ẩn">Ẩn toàn bộ mục không khả dụng</button>
+        <button class="ghost" id="show-all" title="Khôi phục tất cả mô hình đã ẩn${hiddenCount?`（hiện tại ${hiddenCount}  cái）`:""}">Khôi phục hiển thị</button>
+        <button class="ghost" id="reprobe">${s.probeTotal ? "Đang dò kiểm tra…" : "Dò kiểm tra lại"}</button>
+        <span class="muted" id="m-count" style="font-size:11.5px"></span>
+        ${s.probeTotal ? `<span class="muted" id="m-progress" style="font-size:11.5px">Đã dò kiểm tra <b>${s.probeDone}/${s.probeTotal}</b>${s.probingModel?` · Đang kiểm tra <code class="k">${esc(s.probingModel)}</code>`:""}</span>` : ""}
+        ${active?`<span class="mchip on" id="m-clear" style="cursor:pointer">✕ Xoá bỏ</span>`:""}
+      </div>
+    </details>
   </div>`;
 
   // ---- lọc ----
@@ -2031,6 +2047,12 @@ function renderModels(s){
   }
   groups.push({ ch: "custom", meta: CHAN_META.custom, enabled: true, roster: customModels.length,
     cards: sorted.filter(m => m.custom) });
+  // Kênh có mô hình dùng được lên trước: mục tiêu của trang là chọn nhanh, không phải duyệt theo thứ tự nội bộ.
+  groups.sort((a,b)=>{
+    const aa = a.cards.filter(m => m.state === "available" && !m.hidden).length;
+    const bb = b.cards.filter(m => m.state === "available" && !m.hidden).length;
+    return bb - aa;
+  });
 
   const totalShown = s.models.filter(match).length;
 
@@ -2068,11 +2090,16 @@ function renderModels(s){
   // ---- chế độ xem nhóm thẻ ----
   let body = "";
   let anyShown = false;
+  const emptyGroups = [];
   if(mview === "grid"){
     for(const g of groups){
       const shown = g.cards.filter(match);
       const disabled = !g.enabled;
       const availInGroup = g.cards.filter(m => m.state === "available" && !m.hidden).length;
+      if(!shown.length && !mf.q && !mf.state && !mf.chan){
+        emptyGroups.push(g);
+        continue;
+      }
       if(!shown.length && (mf.q || mf.state || (mf.chan && mf.chan !== g.ch))) continue;
       anyShown = anyShown || shown.length > 0;
       // Kênh có 0 khả dụng mặc định thu gọn (ghi nhớ thao tác mở thủ công); khi lọc rõ ràng thì không thu gọn
@@ -2148,35 +2175,54 @@ function renderModels(s){
         const hd = humanDetail(m);
         const rawTitle = rawDetailTitle(m);
         const isPrimary = s.settings.defaultModel === m.id;
+        const runningTask = !!(m.task && m.task.status === "running");
+        const advanced = [
+          m.blurb ? `<div class="madv-text">${esc(m.blurb)}</div>` : "",
+          eff ? `<div class="meff">${eff}</div>` : "",
+          quotaRow,
+          hd ? `<div class="mdetail" ${rawTitle?`title="${esc(rawTitle)}"`:""}>${esc(hd)}</div>` : "",
+          !runningTask ? taskBand(m) : "",
+          `<div class="madv-acts">
+            <button class="ghost mcopy" data-copy="${esc(m.id)}" title="Sao chép id mô hình —— với mô hình mà bảng điều khiển không dò thấy nhưng gọi thủ công vẫn dùng được, hãy dán thẳng nó vào Agent khác">Sao chép id</button>
+            <button class="ghost mtest" data-m="${esc(m.id)}" ${probeBusy?"disabled":""} title="${m.custom?"Gửi một yêu cầu tối thiểu tới nhà cung cấp đó, đo thực tế tính khả dụng và độ trễ token đầu tiên":"Dò kiểm tra riêng tính khả dụng của mô hình này"}">${probeBusy?"Đang kiểm tra…":"Kiểm tra"}</button>
+            ${m.custom?`<button class="ghost capstest" data-m="${esc(m.id)}" ${capsBusy?"disabled":""} title="Dùng Key của bạn để gửi yêu cầu hình ảnh / âm thanh / PDF tối thiểu, đo thực tế các phương thức đầu vào mà mô hình thực sự hỗ trợ（kết quả được ưu tiên cao nhất）">${capsBusy?"Đang đo thực tế…":"Kiểm tra năng lực thực tế"}</button>`:""}
+          </div>`
+        ].filter(Boolean).join("");
         card.innerHTML = `
           <div class="mhead">
             <button class="starbtn ${isPrimary?"on":""}" data-primary="${esc(m.id)}" title="${isPrimary?"Mô hình chính hiện tại, nhấn một lần để huỷ":"Đặt làm chính（mô hình mặc định + xuất hiện trong bộ chọn）"}">★</button>
             <span class="mname" title="${esc(m.name)}">${esc(m.name)}</span>${pill}</div>
           <div class="mid">${(m.channels&&m.channels.length?m.channels:[m.custom?"custom":(m.channel||"zen")]).map(chanBadge).join(" ")} <span style="opacity:.85">${esc(m.id)}</span></div>
-          ${m.blurb && !sharedBlurbSet.has(m.blurb)?`<div class="mblurb${openBlurbs.has(m.id+"|"+m.blurb.slice(0,20))?" open":""}" data-bk="${esc(m.id)}|${esc(m.blurb.slice(0,20))}" title="${esc(m.blurb)}">${esc(m.blurb)}</div>`:""}
           ${meta.length?`<div class="mmeta">${meta.join("")}</div>`:""}
-          ${(tags||eff)?`<div class="mtags">${tags}${eff?`<span class="meff">${eff}</span>`:""}</div>`:""}
-          ${quotaRow}
-          ${hd?`<div class="mdetail" ${rawTitle?`title="${esc(rawTitle)}"`:""}>${esc(hd)}</div>`:""}
-          ${taskBand(m)}
+          ${tags?`<div class="mtags">${tags}</div>`:""}
+          ${runningTask?taskBand(m):""}
+          <details class="madv">
+            <summary>Chi tiết &amp; kiểm tra</summary>
+            <div class="madv-body">${advanced}</div>
+          </details>
           <div class="mfoot">
             <button class="vpill ${m.hidden?"":"on"}" data-vis="${esc(m.id)}" title="Xuất hiện trong bộ chọn mô hình của Agent; tắt đi chỉ là không hiển thị, vẫn có thể gọi đích danh">${m.hidden?"＋ Chọn dùng":"✓ Đã chọn dùng"}</button>
-            <span>
-              <button class="ghost mcopy" data-copy="${esc(m.id)}" title="Sao chép id mô hình —— với mô hình mà bảng điều khiển không dò thấy nhưng gọi thủ công vẫn dùng được, hãy dán thẳng nó vào Agent khác">Sao chép id</button>
-              <button class="ghost mtest" data-m="${esc(m.id)}" ${probeBusy?"disabled":""} title="${m.custom?"Gửi một yêu cầu tối thiểu tới nhà cung cấp đó, đo thực tế tính khả dụng và độ trễ token đầu tiên":"Dò kiểm tra riêng tính khả dụng của mô hình này"}">${probeBusy?"Đang kiểm tra…":"Kiểm tra"}</button>
-              ${m.custom?`<button class="ghost capstest" data-m="${esc(m.id)}" ${capsBusy?"disabled":""} title="Dùng Key của bạn để gửi yêu cầu hình ảnh / âm thanh / PDF tối thiểu, đo thực tế các phương thức đầu vào mà mô hình thực sự hỗ trợ（kết quả được ưu tiên cao nhất）">${capsBusy?"Đang đo thực tế…":"Kiểm tra năng lực thực tế"}</button>`:""}
-            </span>
+            <button class="mchoose ${isPrimary?"on":""}" data-primary="${esc(m.id)}" ${isPrimary?"disabled":""} title="Đặt làm mô hình mặc định, được chèn vào cấu hình của từng Agent">${isPrimary?"✓ Mặc định":"Đặt làm mặc định"}</button>
           </div>`;
         body += card.outerHTML;
       }
       body += `</div>`;
+    }
+    if(emptyGroups.length){
+      body += `<details class="mempty-chans"><summary>Kênh chưa có mô hình (${emptyGroups.length})</summary><div class="mempty-list">`
+        + emptyGroups.map(g=>`<div class="mempty-row"><span class="dot ${g.enabled?"on":"off"}"></span><span class="grow">${esc(g.meta.name)}</span>`
+          + (!g.enabled
+              ? `<span class="chcount">${g.roster||0} mô hình · Đã tắt</span><button class="ghost" data-en="${g.ch}">Bật</button>`
+              : `<span>Chưa có mô hình</span>`)
+          + `</div>`).join("")
+        + `</div></details>`;
     }
     if(!anyShown && (mf.q || mf.chan || mf.state)){
       body += `<div class="mempty">Không có mô hình nào khớp —— thử đổi điều kiện lọc xem</div>`;
     }
   }
 
-  el.innerHTML = `${toolbar}${hero}${sharedNote}${mview==="list"?listBody:body}`;
+  el.innerHTML = `${toolbar}${hero}${mview==="list"?listBody:body}`;
   el.querySelector("#m-count").textContent = `${totalShown}  kết quả · ${s.egress&&s.egress.ip ? `Đầu ra ${s.egress.ip}` : "Không rõ lối ra"}`;
 
   el.querySelector("#reprobe").onclick = async ()=>{ toast("Đang dò kiểm tra, làm mới sau…"); await api("/reprobe", {}); setTimeout(refresh, 4000); };
@@ -2234,13 +2280,6 @@ function renderModels(s){
       const j = await api("/models/visibility", { id: b.dataset.vis, hidden });
       if(j) toast(hidden ? "Đã ẩn, đang chèn lại vào các Agent đã bật" : "Đã chọn dùng, đang chèn lại vào các Agent đã bật");
       refresh();
-    };
-  });
-  el.querySelectorAll(".mblurb").forEach(b=>{
-    b.onclick = ()=>{
-      b.classList.toggle("open");
-      const key = b.dataset.bk;
-      if(b.classList.contains("open")) openBlurbs.add(key); else openBlurbs.delete(key);
     };
   });
   el.querySelectorAll(".m-eff").forEach(ch=>{

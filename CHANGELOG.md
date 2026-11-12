@@ -41,6 +41,8 @@ phát triển (UTC+7).
 - Trang "Cập nhật" riêng: so commit đang chạy với `master`, hiển thị checkout
   nguồn, lệnh `git pull`/build/cài/restart cho Linux và nút sao chép. Bản
   Linux không còn quảng cáo "một chạm"; mục Cập nhật trong Cài đặt được gỡ.
+- Nút chuyển giao diện sáng/tối nằm ngay trên nút Thu gọn thanh bên; bỏ mục
+  trùng lặp trong Cài đặt.
 - Ẩn kênh WorkBuddy khỏi bảng kênh, bộ lọc và các nút cấu hình cache của nó.
 - Tách cấu hình mạng khỏi trang Cài đặt: proxy thượng nguồn, danh sách proxy
   tĩnh, cổng LAN và luân phiên đăng ký sing-box nằm ở trang "Mạng" riêng, có

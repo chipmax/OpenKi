@@ -977,6 +977,7 @@
       </div>
       <nav class="nav" id="nav"></nav>
       <div style="flex:1"></div>
+      <button class="collapse-btn" id="theme-toggle" title="Chuyển giao diện sáng/tối"></button>
       <button class="collapse-btn" id="side-toggle" title="Thu gọn / Mở rộng thanh bên"></button>
       <div class="side-foot"><span class="mono" id="egress-foot">Không rõ lối ra</span></div>
     </aside>
@@ -1087,6 +1088,8 @@ const ICONS = {
   settings: '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
   chevLeft: '<path d="m11 17-5-5 5-5"/><path d="m18 17-5-5 5-5"/>',
   chevRight: '<path d="m13 17 5-5-5-5"/><path d="m6 17 5-5-5-5"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
   terminal: '<polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>',
   code: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
   bot: '<path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>',
@@ -1162,6 +1165,12 @@ function nav(){
       side.classList.contains("collapsed") ? "open" : "collapsed");
     applySide();
   };
+  const themeToggle = document.getElementById("theme-toggle");
+  if (themeToggle) {
+    themeToggle.onclick = () => setTheme(
+      document.documentElement.dataset.theme === "light" ? "dark" : "light");
+    syncThemeToggle();
+  }
   applySide();
   document.querySelectorAll(".page").forEach(p=>p.classList.toggle("on", p.id==="page-"+cur));
 }
@@ -4603,11 +4612,6 @@ function renderSettings(s){
           <button class="act off" id="tg-tray">Đóng</button></div>
         <div class="switch"><div><span class="nm">Thông báo hệ thống</span><div class="ds">Khi cửa sổ bị ẩn, hiện thông báo Windows: mô hình không khả dụng/khôi phục, giới hạn lane, phiên bản mới</div></div>
           <button class="act off" id="tg-notify">Đóng</button></div>
-        <div class="switch"><div><span class="nm">Chủ đề giao diện</span><div class="ds">Ban ngày dùng phối màu xám trắng nhạt, ban đêm dùng phối màu xám đậm; chuyển đổi có hiệu lực ngay và được ghi nhớ</div></div>
-          <div class="seg" id="theme-seg">
-            <button data-t="dark" class="">Ban đêm</button>
-            <button data-t="light" class="">Ban ngày</button>
-          </div></div>
         <div class="switch"><div><span class="nm">Tự khởi động cùng hệ thống</span><div class="ds">Ghi khoá Run vào registry của người dùng hiện tại (HKCU), trỏ tới đường dẫn exe hiện tại</div></div>
           <button class="act off" id="tg-autostart">Đóng</button></div>
       </div>
@@ -4769,15 +4773,6 @@ function renderSettings(s){
       const j = await api("/tags/retag", {});
       if(j && j.ok) toast("Đã xếp hàng " + (j.queued||0) + "  mô hình, đang gắn nhãn ở nền…");
     };
-  }
-  const tseg = el.querySelector("#theme-seg");
-  if (tseg){
-    const cur = document.documentElement.dataset.theme;
-    tseg.querySelectorAll("button").forEach(b=>b.classList.toggle("on", b.dataset.t===cur));
-    if(!tseg.dataset.bound){
-      tseg.dataset.bound = "1";
-      tseg.querySelectorAll("button").forEach(b=>b.onclick = ()=> setTheme(b.dataset.t));
-    }
   }
 }
 
@@ -4958,11 +4953,19 @@ function makeDropdown(container, options, value, onChange){
 makeDropdown.seq = 1;
 
 /* ---- theme ---- */
+function syncThemeToggle(){
+  const btn = document.getElementById("theme-toggle");
+  if (!btn) return;
+  const dark = document.documentElement.dataset.theme !== "light";
+  const label = dark ? "Giao diện sáng" : "Giao diện tối";
+  btn.innerHTML = icon(dark ? "sun" : "moon") + `<span class="lbl">${label}</span>`;
+  btn.title = dark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối";
+  btn.setAttribute("aria-label", btn.title);
+}
 function setTheme(t){
   document.documentElement.dataset.theme = t;
   localStorage.setItem("loimo.theme", t);
-  const seg = document.getElementById("theme-seg");
-  if (seg) seg.querySelectorAll("button").forEach(b=>b.classList.toggle("on", b.dataset.t===t));
+  syncThemeToggle();
 }
 
 /* ---- window controls ---- */

@@ -3,6 +3,15 @@
 Các thay đổi của fork `chipmax/OpenKi` so với upstream. Ngày theo giờ máy
 phát triển (UTC+7).
 
+## 2026-11-13
+
+### Sửa lỗi
+
+- systemd (WSL/VPS): thêm `AF_NETLINK` vào `RestrictAddressFamilies`. Thiếu
+  family này, sing-box sidecar thoát ngay với `create netlink socket: address
+  family not supported by protocol`; dashboard vẫn báo `configured=true` nhưng
+  `running=false`, `alive=0`, nên bật luân phiên đăng ký không có đầu ra.
+
 ## 2026-11-12
 
 ### Repo

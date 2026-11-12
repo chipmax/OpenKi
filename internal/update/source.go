@@ -176,7 +176,12 @@ func CheckSource(client getJSONer, build Build) SourceStatus {
 				return st
 			}
 		} else if !isNotFound(err) {
+			// Transport failure or a non-404 status: there is no point issuing
+			// the head request, which would just hit the same dead proxy and
+			// double the page's wait. Keep the local facts and surface the
+			// error.
 			st.Error = err.Error()
+			return st
 		}
 	}
 

@@ -93,3 +93,24 @@ func TestCheckTreatsMissingReleaseAsNoUpdate(t *testing.T) {
 		t.Fatal("404 release must not advertise an update")
 	}
 }
+
+type blockingTransport struct{}
+
+func (blockingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	<-req.Context().Done()
+	return nil, req.Context().Err()
+}
+
+func TestGetDeadlineAppliesToProvidedClient(t *testing.T) {
+	h := HTTP{
+		Timeout: 30 * time.Millisecond,
+		Client:  &http.Client{Transport: blockingTransport{}},
+	}
+	start := time.Now()
+	if _, err := h.Get("https://example.invalid/feed"); err == nil {
+		t.Fatal("a stalled provided client must time out")
+	}
+	if elapsed := time.Since(start); elapsed > 2*time.Second {
+		t.Fatalf("timeout took %v, want the 30ms request deadline", elapsed)
+	}
+}

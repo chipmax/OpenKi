@@ -6,6 +6,7 @@
 package update
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -208,6 +209,13 @@ func (h HTTP) fetch(url string, client *http.Client) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	// A caller-provided client (the gateway passes the proxy-aware shared
+	// client) may have no Timeout; without a request deadline a stalled proxy
+	// exit hangs the admin handler indefinitely. The context is the only cap
+	// that applies to both shared and fallback clients.
+	ctx, cancel := context.WithTimeout(req.Context(), h.timeout())
+	defer cancel()
+	req = req.WithContext(ctx)
 	if client == nil {
 		client = &http.Client{Timeout: h.timeout()}
 	}

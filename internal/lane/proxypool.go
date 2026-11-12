@@ -285,6 +285,41 @@ func (p *ProxyPool) evictOldestSticky() {
 	}
 }
 
+// ProxyExit is the dashboard view of one static pool endpoint. Addr is the
+// redacted endpoint (userinfo removed by parsePoolNode construction), never the
+// proxy password.
+type ProxyExit struct {
+	ID        string `json:"id"`
+	Scheme    string `json:"scheme"`
+	Addr      string `json:"addr"`
+	DeadUntil int64  `json:"deadUntil,omitempty"`
+}
+
+// Snapshot lists configured static-pool endpoints and their transport parks.
+// It is read-only and lock-safe; the dashboard uses it to explain why an exit
+// is not receiving traffic.
+func (p *ProxyPool) Snapshot() []ProxyExit {
+	if p == nil {
+		return nil
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	out := make([]ProxyExit, 0, len(p.nodes))
+	for _, n := range p.nodes {
+		var deadUntil int64
+		if t := p.deadUntil[n.id]; !t.IsZero() {
+			deadUntil = t.UnixMilli()
+		}
+		out = append(out, ProxyExit{
+			ID:        n.id,
+			Scheme:    n.scheme,
+			Addr:      n.addr,
+			DeadUntil: deadUntil,
+		})
+	}
+	return out
+}
+
 // Healthy reports exits that are not parked for transport reasons. It does not
 // run probes: a static endpoint is judged by real traffic, and the first dial
 // failure is a cheaper signal than a synthetic request per boot.

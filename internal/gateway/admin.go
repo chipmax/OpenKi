@@ -80,6 +80,10 @@ func (s *Server) handleAdmin(w http.ResponseWriter, r *http.Request, rest string
 		}
 		has, ver := s.updateCheck()
 		writeJSON(w, 200, map[string]any{"ok": true, "has": has, "version": ver})
+	case rest == "update/source" && r.Method == http.MethodGet:
+		build := update.BuildInfo(Version)
+		st := update.CheckSource(update.HTTP{Timeout: 12 * time.Second, Client: lane.Client()}, build)
+		writeJSON(w, 200, st)
 	case rest == "key/rotate" && r.Method == http.MethodPost:
 		key := store.GenerateKey("")
 		s.Store.Mutate(func(cfg *store.Config) { cfg.MainKey = key })
@@ -539,6 +543,7 @@ func (s *Server) adminState(w http.ResponseWriter) {
 		"probeTotal":          probeTotal,
 		"providers":           s.providerViews(),
 		"channels":            s.Store.ChannelViews(),
+		"proxyPoolStatus":     proxyPoolStatus(),
 		"modelPrefs":          s.Store.Config().ModelPrefs,
 		"providerPresets":     relay.Presets,
 		"subscriptions":       s.subsState(),
@@ -1663,6 +1668,17 @@ func (s *Server) adminSubsSingBox(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, 200, map[string]any{"ok": true})
+}
+
+// proxyPoolStatus exposes the installed static pool's endpoint list. It is a
+// type assertion rather than a concrete import so the gateway keeps using the
+// Rotator interface and subscription rotators simply return an empty list.
+func proxyPoolStatus() []lane.ProxyExit {
+	r := lane.CurrentRotator()
+	if s, ok := r.(interface{ Snapshot() []lane.ProxyExit }); ok {
+		return s.Snapshot()
+	}
+	return []lane.ProxyExit{}
 }
 
 // subsState builds the 订阅轮询 view for the dashboard: config, sidecar health

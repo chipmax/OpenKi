@@ -87,7 +87,7 @@ type NodeHealth struct {
 	// as opposed to when it was last probed. A probe is a sample and a served
 	// request is proof, so this is what clears a cooldown / a ban.
 	LastOKMs  int64 `json:"lastOkMs,omitempty"`
-	CoolUntil int64 `json:"-"`
+	CoolUntil int64 `json:"coolUntil,omitempty"`
 }
 
 // NewManager builds the manager; logging goes through log (may be nil).

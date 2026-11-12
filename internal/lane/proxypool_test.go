@@ -245,3 +245,37 @@ func TestProxyPoolDialThroughUnknownNode(t *testing.T) {
 		t.Fatal("DialThrough accepted an unknown node id")
 	}
 }
+
+func TestProxyPoolSnapshotListsRedactedEndpointsAndParks(t *testing.T) {
+	p := newTestPool(t,
+		"http://alice:s3cret@127.0.0.1:7890",
+		"socks5h://bob:hunter2@127.0.0.1:1080",
+	)
+	if len(p.nodes) != 2 {
+		t.Fatalf("nodes = %d, want 2", len(p.nodes))
+	}
+	first := p.nodes[0].id
+	p.mu.Lock()
+	p.deadUntil[first] = time.Now().Add(2 * time.Minute)
+	p.mu.Unlock()
+
+	snap := p.Snapshot()
+	if len(snap) != 2 {
+		t.Fatalf("snapshot len = %d, want 2", len(snap))
+	}
+	if snap[0].ID != first || snap[0].Scheme != "http" || snap[0].Addr != "127.0.0.1:7890" {
+		t.Fatalf("first snapshot row = %+v", snap[0])
+	}
+	if snap[0].DeadUntil == 0 {
+		t.Fatal("parked endpoint did not carry deadUntil")
+	}
+	if snap[1].DeadUntil != 0 {
+		t.Fatalf("healthy endpoint has deadUntil = %d", snap[1].DeadUntil)
+	}
+	for _, row := range snap {
+		if strings.Contains(row.Addr, "s3cret") || strings.Contains(row.Addr, "hunter2") ||
+			strings.Contains(row.Addr, "alice") || strings.Contains(row.Addr, "bob") {
+			t.Fatalf("snapshot leaked proxy credentials: %+v", row)
+		}
+	}
+}

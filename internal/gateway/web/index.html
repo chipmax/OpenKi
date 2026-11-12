@@ -203,6 +203,16 @@
   th,td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--hairline-soft); vertical-align:top; }
   th { color:var(--ink-mute); font-weight:500; font-size:11.5px; letter-spacing:.04em; }
   tr:last-child td { border-bottom:0; }
+  .exit-wrap { overflow-x:auto; border-radius:10px; }
+  .exit-wrap .exit-table { min-width:790px; }
+  .exit-wrap .exit-table td { padding:8px 10px; }
+  .exit-wrap .exit-table tr:hover td { background:var(--panel-2); }
+  .exit-wrap .exit-table .ep { font-family:var(--mono); font-size:11.5px; word-break:break-all; }
+  .exit-wrap .exit-table .ep-sub { color:var(--ink-mute); font-size:11px; margin-top:2px; word-break:break-all; }
+  .exit-wrap .exit-table .last { font-size:11.5px; color:var(--ink-mute); white-space:nowrap; }
+  .exit-wrap .exit-table .note { font-size:11.5px; color:var(--ink-mute); line-height:1.45; }
+  .sumstrip #net-summary { margin-bottom:12px; }
+  .sumstrip .v.mono { font-size:20px; }
   #page-usage table tr:hover td { background:var(--panel-2); }
   .pill { display:inline-block; padding:1px 9px; border-radius:999px; font-size:11.5px; }
   .pill.ok { background:var(--ok-bg); color:var(--ok); }
@@ -978,6 +988,7 @@
       <div class="page" id="page-usage"></div>
       <div class="page" id="page-logs"></div>
       <div class="page" id="page-network"></div>
+      <div class="page" id="page-update"></div>
       <div class="page" id="page-settings"></div>
     </main>
   </div>
@@ -987,7 +998,7 @@
 
 <script>
 const $ = s => document.querySelector(s);
-const PAGES = [["dash","Tổng quan","dash"],["agents","Tương thích Agent","agents"],["models","Mô hình","models"],["providers","Kênh","providers"],["usage","Mức sử dụng","usage"],["logs","Nhật ký","logs"],["network","Mạng","cloud"],["settings","Cài đặt","settings"]];
+const PAGES = [["dash","Tổng quan","dash"],["agents","Tương thích Agent","agents"],["models","Mô hình","models"],["providers","Kênh","providers"],["usage","Mức sử dụng","usage"],["logs","Nhật ký","logs"],["network","Mạng","cloud"],["update","Cập nhật","rotateCw"],["settings","Cài đặt","settings"]];
 let cur = localStorage.getItem("zengate.page") || "dash";
 if (!PAGES.some(p=>p[0]===cur)) cur = "dash";
 let STATE = null;
@@ -1127,7 +1138,7 @@ function initSegs(){
 }
 window.addEventListener("resize", ()=> initSegs());
 
-const NAV_GROUPS = [["Gateway",0,4],["Dữ liệu",4,6],["Hệ thống",6,8]];
+const NAV_GROUPS = [["Gateway",0,4],["Dữ liệu",4,6],["Hệ thống",6,9]];
 function nav(){
   let html = "";
   for(const [title, from, to] of NAV_GROUPS){
@@ -1201,6 +1212,7 @@ function render(){ if(!STATE){ skeleton(); return; } const s=STATE;
   else if (cur === "usage") renderUsage(s);
   else if (cur === "logs") renderLogs();
   else if (cur === "network") renderNetwork(s);
+  else if (cur === "update") renderUpdate(s);
   else if (cur === "settings") renderSettings(s);
   if (cur !== "models" && tickTimer) { clearInterval(tickTimer); tickTimer = 0; }
   // Con trượt của điều khiển phân đoạn phải nhờ JS đo chiều rộng mới vào đúng vị trí: phiên bản đăng nhập ở trang「API tuỳ chỉnh」, chế độ nhiệt ở trang tổng quan,
@@ -1292,13 +1304,12 @@ function renderDash(s){
   const on = s.agents.filter(a=>a.enabled).length;
   const todayKey = Object.keys(s.stats.days||{}).sort().pop();
   const day = todayKey ? s.stats.days[todayKey] : null;
-  // Cập nhật một chạm chỉ tồn tại ở nơi binary có thể tự thay thế tại chỗ; other
-  // builds (the macOS .app) just link to the release page.
-  const updAct = s.settings.updateSelfUpdate ? `<button class="act" id="upd-apply">Cập nhật một chạm</button>` : "";
+  // Windows builds can replace the running binary; Linux/macOS send the user
+  // to the update page and release page instead.
   const banner = s.settings.updateAvailable ? `
     <div class="card updbar">
-      <span class="txt">Phát hiện phiên bản mới <b>${esc(s.settings.updateVersion)}</b>（hiện tại ${esc(s.version)}）</span>
-      <span class="acts">${updAct}<a href="${esc(safeHref(s.settings.updateURL))}" target="_blank">Trang phát hành →</a></span>
+      <span class="txt">Có bản cập nhật <b>${esc(s.settings.updateVersion)}</b>（hiện tại ${esc(s.version)}）</span>
+      <span class="acts"><a href="#" id="upd-open">Chi tiết →</a><a href="${esc(safeHref(s.settings.updateURL))}" target="_blank">Trang phát hành →</a></span>
     </div>` : "";
   // Thẻ thông báo luôn hiển thị ở Tổng quan: tô màu theo mức critical/warn/info, làm nổi bật mục chưa đọc + có thể đánh dấu đã đọc;
   // Thẻ chỉ hiển thị 2 mục mới nhất, xem tất cả trong cửa sổ bật lên 「Thông báo trước đây」 (bao gồm cả lưu trữ đã kết thúc).
@@ -1753,7 +1764,6 @@ const foldedChans = new Set(JSON.parse(localStorage.getItem("zengate.mfold") || 
 const CHAN_META = {
   zen:       { name: "OpenCode Zen lane", desc: "Pool miễn phí không cần đăng nhập, hạn mức theo IP đầu ra", mark: "Z" },
   kilo:      { name: "Pool miễn phí Kilo",       desc: "Không cần thông tin xác thực, có trong danh sách là dùng được",           mark: "K" },
-  workbuddy: { name: "Kênh tài khoản WorkBuddy", desc: "Sau khi đăng nhập tài khoản sẽ xuất hiện mô hình",           mark: "W" },
   codearts:  { name: "Kênh tài khoản CodeArts",  desc: "Tài khoản Huawei, bao gồm mô hình phúc lợi luân phiên",   mark: "C" },
   qoder:     { name: "Kênh tài khoản Qoder",     desc: "Gateway tích hợp sẵn + pool tài khoản, có thể thêm nhiều tài khoản", mark: "Q" },
   zcode:     { name: "Kênh tài khoản ZCode",     desc: "Tài khoản 智谱, sau khi uỷ quyền qua trình duyệt sẽ xuất hiện mô hình", mark: "Z" },
@@ -1773,7 +1783,6 @@ const CHAN_META = {
 const CHAN_ICONS = {
   kilo: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20width%3D%2224%22%20height%3D%2224%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22%236C4DF6%22%2F%3E%3Cpath%20d%3D%22M9%206.2V17.8%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M15.6%206.4%209.9%2012.1%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M9.9%2012.1%2015.9%2017.8%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E",
   codearts: "data:image/png;base64,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",
-  workbuddy: "data:image/png;base64,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",
   qoder: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0Ij48cmVjdCB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHJ4PSI1IiBmaWxsPSIjMWYyYTNmIi8+PGNpcmNsZSBjeD0iMTEiIGN5PSIxMSIgcj0iNC42IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMS44Ii8+PHBhdGggZD0iTTEzLjkgMTMuOSAxNyAxN2EwLjk1IDAuOTUgMCAwIDEtMS4zNSAxLjM1bC0zLjEtMy4xIiBmaWxsPSIjZmZmIi8+PC9zdmc+",
   zen: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNSIgZmlsbD0iIzEyMTYxZCIvPjxwYXRoIGQ9Ik02LjUgOC41IDEwLjUgMTJsLTQgMy41IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMS44IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTIuNSAxNmg1IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMS44IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=",
   zcode: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAgklEQVR42u3XsRGAIAyF4UxgYe0g7j+FpZtgRwN36stLAhruqP+v4ICIdNaybsViy92yCj+CeMW7CO94gwgFRMUrIgFTAPbzgPe/Aa5nAInTAGicAtDE1QBtXAVgxGEAeuIpAFYYArDj81xEoQDLd+A1ID8k3wTkXDDEaDbEcBo1nl/XXoK4yMqvMgAAAABJRU5ErkJggg==",
@@ -1915,7 +1924,7 @@ function renderModels(s){
         ${sorted.filter(m=>!m.hidden&&!m.systemOne).map(m=>`<option value="${esc(m.id)}" ${s.settings.defaultModel===m.id?"selected":""}>Mặc định：${esc(m.id)}</option>`).join("")}
       </select>
       <span class="mchip ${!mf.chan?"on":""}" data-chan="">Kênh</span>
-      ${["zen","kilo","workbuddy","codearts"].map(c=>chip("chan",c,c,cnt(s.models,m=>!m.custom&&(m.channel||"zen")===c))).join("")}
+      ${["zen","kilo","codearts"].map(c=>chip("chan",c,c,cnt(s.models,m=>!m.custom&&(m.channel||"zen")===c))).join("")}
       ${chip("chan","custom","Tuỳ chỉnh",customModels.length)}
       <span class="mchip ${!mf.state?"on":""}" data-state="">Trạng thái</span>
       ${chip("state","available","Khả dụng",stateCounts.available)}
@@ -2566,27 +2575,6 @@ function renderProviders(s){
                 <div class="prose" id="ca-body">Đang tải…</div>
               </div>
 
-              <div class="chan-pane" data-chan="workbuddy">
-                <div class="chead">
-                  <div class="ct"><span class="cnm">Kênh tài khoản WorkBuddy</span><span class="cmeta" id="wb-state">Đang kiểm tra…</span></div>
-                  <div class="cact">
-                    <button class="act" id="wb-login" title="Đăng nhập một tài khoản WorkBuddy trong trình duyệt, thông tin xác thực sẽ trực tiếp vào nhóm tài khoản, có thể lặp lại nhiều lần để thêm tài khoản">Đăng nhập uỷ quyền</button>
-                    <button class="act off" id="tg-workbuddy">Đóng</button>
-                  </div>
-                </div>
-                <div class="prose" id="wb-body">Đang tải…</div>
-                <div id="wb-accounts" class="acc-list"></div>
-                <div class="oprow">
-                  <span class="k">Phiên bản đăng nhập</span>
-                  <div class="seg" id="wb-realm">
-                    <button data-v="intl" class="on">Bản quốc tế workbuddy.ai</button>
-                    <button data-v="cn">Bản nội địa codebuddy.cn</button>
-                  </div>
-                  <button class="ghost" id="wb-checkin" style="display:none">Điểm danh ngay (tất cả CN)</button>
-                  <button class="ghost" id="wb-logout">Đăng xuất tất cả</button>
-                </div>
-              </div>
-
               <div class="chan-pane" data-chan="zcode">
                 <div class="chead">
                   <div class="ct"><span class="cnm">Kênh tài khoản ZCode (智谱)</span><span class="cmeta" id="zc-state">Đang kiểm tra…</span></div>
@@ -2798,8 +2786,6 @@ function renderProviders(s){
   pvPresetsAll = s.providerPresets || [];
   pvRenderPresets();
   renderProviderList(s);
-  renderWorkBuddyCard();
-  bindWorkBuddyCard();
   bindCodeartsCard();
   renderQoderCard();
   bindQoderCard();
@@ -2865,7 +2851,7 @@ async function loadWallChannels(){
   wallChannelsFetching = true;
   try{
     const j = await fetch("/admin/api/channel/wall").then(r=>r.json());
-    wallChannels = Array.isArray(j.channels) ? j.channels : [];
+    wallChannels = (Array.isArray(j.channels) ? j.channels : []).filter(c => c && c.id !== "workbuddy");
     wallChannelsErr = j.error || "";
   }catch(e){
     wallChannels = [];
@@ -3049,7 +3035,6 @@ function chanModalOpen(target){
   modal.querySelectorAll(".chan-pane").forEach(p=> p.hidden = p !== pane);
   // Mỗi lần mở đều làm mới trạng thái của khối này một lượt: số liệu trên thẻ có thể đã cũ so với lần mở cửa sổ trước.
   if(key === "qoder") renderQoderCard();
-  else if(key === "workbuddy") renderWorkBuddyCard();
   else if(key === "codearts") renderCodeartsCard();
   else if(key === "zcode") renderZCodeCard();
   else if(key === "trae") renderTraeCard();
@@ -3478,241 +3463,6 @@ function pvRenderPresets(){
   el.querySelectorAll("#pv-ptab button").forEach(b=>b.classList.toggle("on", b.dataset.v===pvTab));
   const cnt = el.querySelector("#pv-pcount");
   if(cnt) cnt.textContent = q ? `${list.length}/${presets.length}  kết quả khớp` : `${list.length}  preset`;
-}
-
-/* Thẻ kênh tài khoản WorkBuddy: trạng thái đọc từ /admin/api/workbuddy/status, đăng nhập đi theo polling state
-   （trang uỷ quyền mở trong tab mới, ở đây hai giây dò kiểm tra một lần, lấy được token là dừng và làm mới）. */
-let wbPollTimer = null;
-async function renderWorkBuddyCard(){
-  const st = await fetch("/admin/api/workbuddy/status").then(r=>r.json()).catch(()=>null);
-  wallStatus.workbuddy = st;
-  const state = $("#wb-state"), body = $("#wb-body"), list = $("#wb-accounts");
-  if(!state || !body || !st){ if(state) state.textContent = "Lấy trạng thái thất bại"; return; }
-  const accts = st.accounts || [];
-  const anyEnabled = accts.some(a => a.enabled);
-  setToggle("#tg-workbuddy", anyEnabled);
-  const tg = $("#tg-workbuddy");
-  // No account, no channel switch: a switch that governs nothing is noise.
-  if(tg) tg.style.display = accts.length ? "" : "none";
-  const lg = $("#wb-logout");
-  if(lg) lg.style.display = accts.length ? "" : "none";
-  const ck = $("#wb-checkin");
-  if(ck) ck.style.display = accts.some(a => a.canCheckin) ? "" : "none";
-
-  if(!accts.length){
-    state.textContent = "Chưa đăng nhập";
-    body.innerHTML = 'Sau khi uỷ quyền bằng tài khoản WorkBuddy / CodeBuddy, các mô hình miễn phí（hy4-preview-f / hy3 / deepseek-v4.1-flash）sẽ trực tiếp vào trang「Mô hình」và tất cả bộ chọn Agent.' +
-      'Có thể đăng nhập nhiều tài khoản: sau khi một tài khoản dùng hết hạn mức miễn phí, cùng một yêu cầu sẽ tự động chuyển sang tài khoản tiếp theo để trả lời tiếp.' +
-      'Bản quốc tế mỗi tài khoản hằng ngày tự động gửi một cuộc trò chuyện cực nhỏ để nhận điểm hoạt động, bản nội địa mỗi tài khoản hằng ngày tự động điểm danh.' +
-      'Mô hình miễn phí áp dụng giới hạn theo cửa sổ 24h; prompt có thể bị phía upstream ghi lại, đừng gửi nội dung bí mật.';
-    if(list) list.innerHTML = "";
-    return;
-  }
-
-  // Tổng số trong nhóm chỉ dám công bố khi nói rõ được「ai chưa đọc được」: trong ba dòng có hai dòng đọc thất bại, lấy số đã đọc được của
-  // hai dòng cộng lại làm tổng số, thẻ sẽ báo một số dư không tồn tại.
-  const known = accts.filter(a => a.creditsKnown);
-  let creditLine = "";
-  if(known.length){
-    const sum = Math.round(known.reduce((s, a) => s + (Number(a.credits) || 0), 0) * 100) / 100;
-    creditLine = " · điểm " + sum + (known.length < accts.length ? `（${accts.length - known.length}  chưa đọc được）` : "");
-  } else if(accts.length){
-    creditLine = " · điểm —";
-  }
-  state.textContent = (anyEnabled ? "Đã bật · " + accts.length + "  tài khoản" : "Đã tắt") + creditLine;
-  body.innerHTML = 'Sau khi hạn mức miễn phí của một tài khoản dùng hết sẽ tự động chuyển sang tài khoản tiếp theo, client không cảm nhận được;' +
-    'Mỗi tài khoản tự động điểm danh / nhận điểm hoạt động hằng ngày. Tắt chỉ dừng nhận đơn, điểm danh và làm mới token vẫn như thường（nếu không nó sẽ không bao giờ quay lại được）.';
-  wbRenderAccounts(st);
-}
-
-// Giá trị hiện tại của điều khiển phân đoạn: lấy theo nút được nhấn làm chuẩn, dataset.value chỉ là giá trị dự phòng trước khi gắn kết.
-function wbRealmValue(){
-  const seg = $("#wb-realm");
-  if(!seg) return "intl";
-  const on = seg.querySelector("button.on");
-  return on ? on.dataset.v : (seg.dataset.value || "intl");
-}
-
-// Mỗi thẻ một tài khoản: danh tính（biệt danh/uid）+ huy hiệu trạng thái + miền phiên bản + chỉ số + thao tác.
-function wbStateBadge(a){
-  if(a.state === "auth") return {text:"Đăng nhập mất hiệu lực", cls:"bad"};
-  if(a.state === "unready") return {text:"Chưa đăng nhập", cls:"unknown"};
-  if(a.state === "disabled") return {text:"Đã tắt", cls:"unknown"};
-  if(a.state === "cooldown") return {text:"Đang bị giới hạn tốc độ", cls:"warn"};
-  // "ok" is what the pool actually publishes for a healthy account (see
-  // wbViews in the lane); the card used to know only "ready", so every usable
-  // account wore its raw English enum as the badge.
-  if(a.state === "ok" || a.state === "ready" || a.state === undefined || a.state === "") return {text:"Khả dụng", cls:"ok"};
-  return {text:"Trạng thái chưa rõ", cls:"unknown"};
-}
-
-// Điểm không phải một loại tiền tệ thông thường, mà là một loại tiền tệ có ngày hết hạn: thẻ ghi tách riêng hai phần.
-// Số ngày của cửa sổ lấy từ backend（creditsWindow）, chữ không viết cứng —— nhãn nói 15 ngày, quy tắc lại dùng một
-// số ngày khác, tức là đang công bố với người dùng một thời hạn mà chúng ta chưa từng thực thi.
-function wbCreditSplitChip(a){
-  if(!a.creditsKnown) return "";
-  const c = v => { const n = Math.round(Number(v || 0) * 100) / 100; return Number.isFinite(n) ? n : 0; };
-  const days = a.creditsWindow || 15;
-  const soon = c(a.creditsExpiring), rest = c(a.creditsPermanent), dead = c(a.creditsDead);
-  if(soon === 0 && rest === 0){
-    return `<span class="acc-chip${dead ? " warn" : ""}">Không có điểm khả dụng${dead ? ` · còn có ${dead}  đã hết hiệu lực` : ""}</span>`;
-  }
-  const parts = [];
-  if(soon > 0) parts.push(`${days}  ngày tới hết hạn <b>${soon}</b>`);
-  if(rest > 0) parts.push(`Vĩnh viễn <b>${rest}</b>`);
-  if(dead > 0) parts.push(` đã hết hiệu lực ${dead}`);
-  // 「Vĩnh viễn」là cách nói của sản phẩm: nó là「sau 15 ngày mới ngừng tính phí」, bao gồm cả các gói mà phía upstream chưa công bố thời hạn kết thúc.
-  const hint = `「Vĩnh viễn」= ${days}  ngày sau mới ngừng tính phí（bao gồm các gói phía upstream chưa công bố thời hạn kết thúc）`;
-  return `<span class="acc-chip${soon > 0 ? " warn" : ""}" title="${esc(hint)}">${parts.join(" · ")}</span>`;
-}
-
-function wbRenderAccounts(st){
-  const list = $("#wb-accounts");
-  if(!list) return;
-  const accts = st.accounts || [];
-  const active = st.activeId || "";
-  if(!accts.length){ list.innerHTML = ""; return; }
-  const num = v => (v === "" || v === undefined || v === null) ? "—" : esc(String(v));
-  list.innerHTML = accts.map((a, i) => {
-    const s = wbStateBadge(a);
-    const now = a.id === active;
-    const name = esc(a.nickname || a.uid || a.id || "-");
-    const uid = a.uid ? `<div class="acc-id" title="${esc(a.uid)}">uid ${esc(a.uid)}</div>` : "";
-    const exp = a.expiresAtMs ? new Date(a.expiresAtMs).toLocaleDateString() : "—";
-    const daily = a.realm === "cn"
-      ? `Lần điểm danh trước <b>${a.lastCheckinDate || "—"}</b>`
-      : `Lần hoạt động trước <b>${a.lastActivityDate || "—"}</b>`;
-    const credits = a.creditsKnown ? `<b>${num(a.credits)}</b>` : "<b>—</b>";
-    const meta = [
-      `Điểm ${credits}`,
-      daily,
-      `Có hiệu lực đến <b>${exp}</b>`,
-    ];
-    if(a.inFlight) meta.push(`Đang xử lý <b>${a.inFlight}</b>`);
-    if(a.state === "cooldown"){
-      if(a.cooldownModel) meta.push(`Mô hình bị giới hạn tốc độ <b>${esc(a.cooldownModel)}</b>`);
-      if(a.cooldownUntil) meta.push(`Khôi phục <b>${new Date(a.cooldownUntil).toLocaleTimeString().slice(0,5)}</b>`);
-    }
-    // Thời gian chờ của cổng nội dung: nói tách riêng với giới hạn tốc độ. Giới hạn tốc độ là「chờ cửa sổ」, cổng nội dung là「lô yêu cầu này đã bị đánh dấu」,
-    // cách xử lý hai thứ hoàn toàn khác nhau——cái trước thì chờ, cái sau thì đừng dùng tài khoản này gửi cùng nội dung đó nữa.
-    if(a.sanitizeUntil){
-      meta.push(`Thời gian chờ cổng nội dung <b>${new Date(a.sanitizeUntil).toLocaleTimeString().slice(0,5)}</b>`);
-    }
-    const chips = [`<span class="acc-chip">${a.realm === "cn" ? "Bản nội địa codebuddy.cn" : "Bản quốc tế workbuddy.ai"}</span>`];
-    const split = wbCreditSplitChip(a);
-    if(split) chips.push(split);
-    if(now) chips.push('<span class="acc-chip now">Đang nhận yêu cầu</span>');
-    if(a.noCheckin) chips.push('<span class="acc-chip">Tài khoản doanh nghiệp · không có điểm danh hằng ngày</span>');
-    if(!a.enabled) chips.push('<span class="acc-chip">Đã tắt · chỉ điểm danh, không nhận đơn</span>');
-    const noteText = a.detail || a.lastError;
-    const note = noteText
-      ? `<div class="acc-note${s.cls === "bad" ? " bad" : ""}">${esc(noteText)}</div>` : "";
-    return `<div class="acc${now ? " now" : ""}${a.enabled ? "" : " off"}" data-id="${esc(a.id)}">
-      <div class="acc-hd">
-        <span class="acc-idx">${i+1}</span>
-        <span class="acc-name" title="${name}">${name}</span>
-        <span class="pill ${s.cls} acc-badge">${s.text}</span>
-      </div>
-      ${uid}
-      ${note}
-      <div class="acc-meta">${meta.join(" · ")}</div>
-      <div class="acc-chips">${chips.join("")}</div>
-      <div class="acc-acts">
-        <button class="wb-act" data-act="primary" data-id="${esc(a.id)}"${now ? " disabled" : ""}>Ưu tiên sử dụng</button>
-        <button class="wb-act" data-act="toggle" data-id="${esc(a.id)}" data-enabled="${a.enabled ? "0" : "1"}">${a.enabled ? "Tắt" : "Bật"}</button>
-        <button class="wb-act danger" data-act="logout" data-id="${esc(a.id)}">Đăng xuất</button>
-      </div>
-    </div>`;
-  }).join("");
-}
-
-function bindWorkBuddyCard(){
-  const card = $("#wb-accounts");
-  if(!card || card.dataset.bound) return;
-  card.dataset.bound = "1";
-  // Phiên bản đăng nhập là lựa chọn một trong hai: điều khiển phân đoạn nhìn một cái là thấy cả hai tuỳ chọn, ít hơn một lần nhấn so với danh sách thả xuống bị thu gọn.
-  const realm = $("#wb-realm");
-  if(realm){
-    realm.querySelectorAll("button").forEach(b => b.onclick = () => {
-      realm.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
-      realm.dataset.value = b.dataset.v;
-    });
-    realm.dataset.value = realm.querySelector("button.on") ? realm.querySelector("button.on").dataset.v : "intl";
-  }
-  $("#wb-login").onclick = async () => {
-    const b = $("#wb-login");
-    b.disabled = true;
-    const j = await api("/workbuddy/login/start", { realm: wbRealmValue() });
-    b.disabled = false;
-    if (!j || !j.authUrl) return;
-    // Phía máy chủ đã mở trang uỷ quyền bằng trình duyệt mặc định của hệ thống（tái sử dụng trạng thái đăng nhập workbuddy.ai sẵn có của bạn）;
-    // Thẻ đồng thời đưa ra liên kết dự phòng, và bước vào vòng polling token hai giây một lần.
-    const state = $("#wb-state"), body = $("#wb-body");
-    state.textContent = "Đang chờ uỷ quyền…";
-    body.innerHTML = 'Trang uỷ quyền đã mở trong trình duyệt mặc định của bạn. Nếu bạn đã từng đăng nhập WorkBuddy trong trình duyệt, thường chỉ cần nhấn xác nhận một cái;' +
-      'Khi không tự động bật lên <a href="' + j.authUrl + '" target="_blank" rel="noopener">Nhấn vào đây để mở trang uỷ quyền</a>。' +
-      'Sau khi hoàn tất, ở đây sẽ tự động nhận được token（thời hạn hiệu lực tối đa 5 phút）. Tài khoản đã đăng nhập sẽ không bị thay thế, tài khoản mới sẽ được thêm vào nhóm tài khoản.';
-    const deadline = Date.now() + 5*60*1000;
-    if (wbPollTimer) clearInterval(wbPollTimer);
-    wbPollTimer = setInterval(async () => {
-      if (Date.now() > deadline) { clearInterval(wbPollTimer); wbPollTimer = null; renderWorkBuddyCard(); return; }
-      const p = await fetch("/admin/api/workbuddy/login/poll").then(r=>r.json()).catch(()=>null);
-      if (p && p.state === "ok") {
-        clearInterval(wbPollTimer); wbPollTimer = null;
-        toast("Tài khoản WorkBuddy đã được thêm vào nhóm tài khoản（đã tự động điểm danh bù cho hôm nay）");
-        renderWorkBuddyCard();
-      } else if (p && p.state === "error") {
-        clearInterval(wbPollTimer); wbPollTimer = null;
-        toast("Đăng nhập WorkBuddy chưa hoàn tất:" + (p.error || "Hãy thử lại"));
-        renderWorkBuddyCard();
-      }
-    }, 2000);
-  };
-  $("#wb-checkin").onclick = async () => {
-    const b = $("#wb-checkin");
-    b.disabled = true;
-    const j = await api("/workbuddy/checkin", {});
-    b.disabled = false;
-    if (!j) { renderWorkBuddyCard(); return; }
-    toast(j.skipped ? "Hôm nay đã điểm danh（mỗi tài khoản mỗi ngày một lần）" : "Điểm danh hằng ngày của bản nội địa đã hoàn tất（mỗi vòng tối đa 3 tài khoản）");
-    renderWorkBuddyCard();
-  };
-  $("#wb-logout").onclick = async () => {
-    if (!confirm("Đăng xuất tất cả tài khoản WorkBuddy?")) return;
-    const j = await api("/workbuddy/logout", {});
-    if (j) toast("Đã đăng xuất tất cả tài khoản WorkBuddy");
-    renderWorkBuddyCard();
-  };
-  // Per-account actions are delegated: the rows are re-rendered on every
-  // refresh, so binding to them directly would lose the handlers.
-  $("#wb-accounts").onclick = async (ev) => {
-    const btn = ev.target.closest(".wb-act");
-    if (!btn) return;
-    const id = btn.dataset.id;
-    const act = btn.dataset.act;
-    btn.disabled = true;
-    let j = null;
-    if (act === "primary") {
-      j = await api("/workbuddy/account/primary", { id });
-      if (j) toast("Đã đặt làm tài khoản ưu tiên");
-    } else if (act === "toggle") {
-      const enabled = btn.dataset.enabled === "1";
-      j = await api("/workbuddy/account/toggle", { id, enabled });
-      if (j) toast(enabled ? "Tài khoản này đã được bật" : "Tài khoản này đã bị tắt（điểm danh và làm mới vẫn như thường）");
-    } else if (act === "logout") {
-      if (!confirm("Đăng xuất tài khoản này? Các tài khoản khác không bị ảnh hưởng.")) { btn.disabled = false; return; }
-      j = await api("/workbuddy/logout", { id });
-      if (j) toast("Tài khoản này đã đăng xuất");
-    }
-    renderWorkBuddyCard();
-  };
-  const tgb = $("#tg-workbuddy");
-  tgb.onclick = async () => {
-    const on = tgb.dataset.on !== "1";
-    const j = await api("/settings", { workBuddyEnabled: on });
-    if(j){ setToggle("#tg-workbuddy", on); toast(on ? "Kênh WorkBuddy đã bật（tất cả tài khoản）" : "Kênh WorkBuddy đã tắt（tất cả tài khoản）"); }
-    renderWorkBuddyCard();
-  };
 }
 
 function hostOf(u){ try { return new URL(u).host; } catch(e){ return u; } }
@@ -4309,23 +4059,159 @@ const settingsDirty = new Set();
 function clearSettingsDirty(){ settingsDirty.clear(); }
 
 const netDirty = new Set();
+let netf = { q: "", state: "" };
+
+function relMs(ms){
+  const n = Number(ms) || 0;
+  if(!n) return "—";
+  const d = Math.max(0, Date.now() - n);
+  if(d < 60_000) return "vừa xong";
+  if(d < 3_600_000) return Math.floor(d/60_000) + " phút trước";
+  if(d < 86_400_000) return Math.floor(d/3_600_000) + " giờ trước";
+  return Math.floor(d/86_400_000) + " ngày trước";
+}
+
+// netExitRows flattens the three sources the gateway actually knows:
+// the current path, subscription nodes (with probed IP/latency), and the
+// static pool (endpoint + transport park state). It never invents a public IP
+// for a static endpoint: that needs traffic or a probe.
+function netExitRows(s){
+  const now = Date.now();
+  const rows = [];
+  const eg = s.egress || {};
+  rows.push({
+    key: "current", tone: eg.ip ? "ok" : "unknown",
+    status: eg.ip ? "Đang dùng" : "Chưa rõ",
+    endpoint: eg.ip || "Chưa rõ lối ra", name: "IP hiện tại",
+    source: "Hiện tại", proto: proxyLabel(s.settings.proxyMode, s.settings.proxyURL),
+    country: eg.country || "—", latency: "—", last: "—",
+    note: "Đường ra đang phục vụ các yêu cầu mới",
+  });
+  const nodes = (s.subscriptions && s.subscriptions.singbox && s.subscriptions.singbox.nodes) || [];
+  for(const n of nodes){
+    const cooling = (Number(n.coolUntil) || 0) > now;
+    const tone = cooling ? "warn" : (n.alive ? "ok" : "bad");
+    rows.push({
+      key: "sub:" + (n.id || n.name),
+      tone,
+      status: cooling ? "Đang làm mát" : (n.alive ? "Khả dụng" : "Lỗi"),
+      endpoint: n.ip || "Chưa dò IP",
+      name: n.name || n.id || "Node đăng ký",
+      source: "Đăng ký", proto: n.proto || "—",
+      country: n.country || "—",
+      latency: n.latencyMs ? n.latencyMs + " ms" : "—",
+      last: relMs(n.lastOkMs || n.lastCheck),
+      note: cooling
+        ? "Còn " + Math.max(1, Math.ceil(((Number(n.coolUntil) || now) - now) / 60000)) + " phút; hết làm mát tự quay lại"
+        : n.alive
+          ? (n.lastOkMs ? "Đã phục vụ lưu lượng thật" : "Mới dò, chưa có lưu lượng")
+          : "Dò thất bại; bấm「Dò lại node đăng ký」để thử lại",
+    });
+  }
+  for(const p of (s.proxyPoolStatus || [])){
+    const parked = (Number(p.deadUntil) || 0) > now;
+    rows.push({
+      key: "pool:" + (p.id || p.addr),
+      tone: parked ? "warn" : "unknown",
+      status: parked ? "Tạm dừng" : "Chưa dò",
+      endpoint: p.addr || p.id || "—",
+      name: "Proxy tĩnh",
+      source: "Tĩnh", proto: p.scheme || "—",
+      country: "—", latency: "—", last: "—",
+      note: parked
+        ? "Tạm dừng đến " + new Date(Number(p.deadUntil)).toLocaleTimeString("vi-VN", {hour:"2-digit", minute:"2-digit"})
+        : "Chưa có lưu lượng; IP công khai chỉ biết sau lần dò đầu tiên",
+    });
+  }
+  const rank = { "": -1, warn: 0, bad: 1, ok: 2, unknown: 3 };
+  return rows.sort((a,b) => (a.key === "current" ? -1 : b.key === "current" ? 1 : rank[a.tone] - rank[b.tone]));
+}
+
+function paintNetworkExits(s){
+  const el = $("#page-network"); if(!el) return;
+  const rows = netExitRows(s);
+  const configured = rows.filter(r => r.source !== "Hiện tại");
+  const nodes = (s.subscriptions && s.subscriptions.singbox && s.subscriptions.singbox.nodes) || [];
+  const pools = s.proxyPoolStatus || [];
+  $("#net-total").textContent = String(configured.length);
+  $("#net-ok").textContent = String(configured.filter(r => r.tone === "ok").length);
+  $("#net-attn").textContent = String(configured.filter(r => r.tone === "bad" || r.tone === "warn").length);
+  $("#net-exit-sub").textContent = `${nodes.length} đăng ký · ${pools.length} tĩnh · 1 hiện tại`;
+  const needle = netf.q.trim().toLowerCase();
+  const shown = rows.filter(r => {
+    if(netf.state && r.tone !== netf.state) return false;
+    if(!needle) return true;
+    return [r.endpoint, r.name, r.source, r.proto, r.country, r.status, r.note].join(" ").toLowerCase().includes(needle);
+  });
+  const tbody = $("#net-exit-rows");
+  if(tbody){
+    tbody.innerHTML = shown.map(r => {
+      const name = r.name && r.name !== r.endpoint ? `<div class="ep-sub">${esc(r.name)}</div>` : "";
+      return `<tr>
+        <td><span class="pill ${r.tone}">${esc(r.status)}</span></td>
+        <td><div class="ep">${esc(r.endpoint)}</div>${name}</td>
+        <td>${esc(r.source)}</td>
+        <td class="mono">${esc(r.proto)}</td>
+        <td>${esc(r.country)}</td>
+        <td class="mono">${esc(r.latency)}</td>
+        <td class="last">${esc(r.last)}</td>
+        <td class="note">${esc(r.note)}</td>
+      </tr>`;
+    }).join("");
+  }
+  const empty = $("#net-exit-empty");
+  if(empty) empty.style.display = shown.length ? "none" : "";
+}
+
 function renderNetwork(s){
   const el = $("#page-network");
   if(!el.dataset.rendered){
     el.innerHTML = `
-      <h2 class="pt">Mạng <span class="sub">Proxy thượng nguồn, lối ra và luân phiên đăng ký——tách khỏi tham số cơ bản để không phải cuộn qua cấu hình mô hình</span></h2>
-      <div class="card" id="net-overview">
-        <h3>Lối ra hiện tại</h3>
-        <div class="sysinfo" style="grid-template-columns:repeat(auto-fit,minmax(210px,1fr))">
-          <div class="kv"><span class="k">IP đầu ra</span><span class="v mono" id="net-egress">—</span></div>
-          <div class="kv"><span class="k">Quốc gia</span><span class="v" id="net-country">—</span></div>
-          <div class="kv"><span class="k">Chế độ</span><span class="v" id="net-mode">—</span></div>
-          <div class="kv"><span class="k">Cổng nghe</span><span class="v mono">${s.port}</span></div>
-          <div class="kv"><span class="k">Địa chỉ LAN</span><span class="v mono" id="net-lan-url">—</span></div>
-        </div>
+      <h2 class="pt">Mạng <span class="sub">Đầu ra, trạng thái và phân bổ lưu lượng——cấu hình proxy nằm bên dưới</span></h2>
+      <div class="sumstrip" id="net-summary">
+        <div class="cell"><div class="v mono" id="net-egress">—</div><div class="l">IP đầu ra hiện tại</div></div>
+        <div class="cell"><div class="v" id="net-country">—</div><div class="l">Quốc gia</div></div>
+        <div class="cell"><div class="v" id="net-total">—</div><div class="l">Đầu ra đã cấu hình</div></div>
+        <div class="cell"><div class="v" id="net-ok">—</div><div class="l">Khả dụng</div></div>
+        <div class="cell"><div class="v" id="net-attn">—</div><div class="l">Cần chú ý</div></div>
+        <div class="cell"><div class="v" id="net-mode" style="font-size:14px;line-height:1.35">—</div><div class="l">Chế độ egress</div></div>
       </div>
-      <div class="card" id="net-proxy">
-        <h3>Proxy thượng nguồn</h3>
+      <div class="card" id="net-exits">
+        <div class="row" style="margin-bottom:8px">
+          <h3 style="margin:0">Đầu ra <span class="muted" id="net-exit-sub" style="font-size:11.5px;font-weight:400"></span></h3>
+          <span style="flex:1"></span>
+          <input type="search" id="net-exit-q" placeholder="Lọc theo IP, tên, quốc gia…" aria-label="Lọc đầu ra" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:7px;padding:6px 10px;min-width:210px;font-size:12px">
+        </div>
+        <div class="row" id="net-exit-filters" style="margin-bottom:8px;gap:6px">
+          <span class="mchip on" data-nf="">Tất cả</span>
+          <span class="mchip" data-nf="ok">Khả dụng</span>
+          <span class="mchip" data-nf="bad">Lỗi</span>
+          <span class="mchip" data-nf="warn">Chờ / làm mát</span>
+          <span class="mchip" data-nf="unknown">Chưa rõ</span>
+          <span style="flex:1"></span>
+          <button class="ghost" id="net-probe-subs" title="Dò IP, quốc gia và độ trễ của từng node đăng ký">Dò lại node đăng ký</button>
+          <button class="ghost" id="net-refresh" title="Đọc lại trạng thái từ gateway">Làm mới</button>
+        </div>
+        <div class="exit-wrap">
+          <table class="exit-table" aria-label="Danh sách đầu ra">
+            <thead><tr>
+              <th style="width:112px">Trạng thái</th>
+              <th>Đầu ra / IP</th>
+              <th style="width:82px">Nguồn</th>
+              <th style="width:86px">Giao thức</th>
+              <th style="width:72px">Quốc gia</th>
+              <th style="width:72px">Độ trễ</th>
+              <th style="width:96px">Lần cuối</th>
+              <th style="width:170px">Ghi chú</th>
+            </tr></thead>
+            <tbody id="net-exit-rows"></tbody>
+          </table>
+        </div>
+        <div id="net-exit-empty" class="muted" style="display:none;font-size:12px;padding:14px 2px">Không có đầu ra nào khớp bộ lọc.</div>
+        <div class="muted" style="font-size:11.5px;margin-top:8px" id="net-lan-line">Đang chỉ nghe loopback (127.0.0.1).</div>
+      </div>
+      <details class="card fold" id="net-proxy">
+        <summary>Proxy thượng nguồn <span class="sub">Chế độ, danh sách tĩnh, giới hạn token và fingerprint</span></summary>
         <div class="row">
           <div class="dim" style="display:inline-flex; align-items:center; gap:8px">Chế độ proxy <span id="set-proxy"></span></div>
           <input type="text" id="set-proxy-url" placeholder="http://127.0.0.1:7890" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:220px;font-family:var(--mono)">
@@ -4357,7 +4243,7 @@ function renderNetwork(s){
           <button class="act" id="net-save">Lưu proxy</button>
           <span class="muted" style="font-size:12px">Lưu là áp dụng nóng ngay cho các yêu cầu suy luận/danh sách/dò kiểm tra.</span>
         </div>
-      </div>
+      </details>
       <div class="card" id="net-lan">
         <h3>Mạng LAN</h3>
         <div class="switch"><div><span class="nm">Cho phép truy cập API qua mạng LAN</span><div class="ds">Các máy khác cùng dải mạng có thể dùng <code class="k">http://&lt;IP của máy này&gt;:${s.port}/v1</code> để gọi interface, vẫn phải kèm API Key; bảng điều khiển quản trị và interface /admin không bị ảnh hưởng, luôn chỉ chấp nhận máy này. Chuyển đổi sẽ nghe lại, yêu cầu đang xuất theo luồng sẽ bị ngắt.</div></div>
@@ -4470,13 +4356,32 @@ function renderNetwork(s){
       if(j){ toast("Bắt đầu tải sing-box (qua proxy hiện tại), vài phút sau làm mới để xem"); setTimeout(refresh, 8000); }
       b.disabled = false; b.textContent = "Tải sing-box";
     };
+    const exitQ = el.querySelector("#net-exit-q");
+    exitQ.oninput = ()=>{ netf.q = exitQ.value; paintNetworkExits(STATE || s); };
+    el.querySelectorAll("#net-exit-filters .mchip").forEach(ch=>{
+      ch.onclick = ()=>{
+        netf.state = ch.dataset.nf || "";
+        el.querySelectorAll("#net-exit-filters .mchip").forEach(x=>x.classList.toggle("on", x === ch));
+        paintNetworkExits(STATE || s);
+      };
+    });
+    el.querySelector("#net-probe-subs").onclick = async ()=>{
+      if(!((s.subscriptions && s.subscriptions.singbox && (s.subscriptions.singbox.nodes||[]).length))){
+        toast("Chưa có node đăng ký nào để dò"); return;
+      }
+      toast("Đang dò IP, quốc gia và độ trễ của từng node…");
+      await api("/subs/probe", {});
+      refresh(); setTimeout(refresh, 8000);
+    };
+    el.querySelector("#net-refresh").onclick = ()=>refresh();
     el.dataset.rendered = "1";
   }
   const eg = s.egress || {};
   el.querySelector("#net-egress").textContent = eg.ip || "Không rõ";
   el.querySelector("#net-country").textContent = eg.country || "?";
   el.querySelector("#net-mode").textContent = proxyLabel(s.settings.proxyMode, s.settings.proxyURL);
-  el.querySelector("#net-lan-url").textContent = s.lanBaseURL || "Chỉ loopback";
+  el.querySelector("#net-lan-line").textContent = `Cổng ${s.port} · ${s.lanBaseURL ? "LAN: " + s.lanBaseURL : "Chỉ loopback (127.0.0.1)"}`;
+  paintNetworkExits(s);
   if(!netDirty.has("proxyMode")){
     makeDropdown(el.querySelector("#set-proxy"),
       [["system","Theo proxy hệ thống"],["env","Theo biến môi trường"],["direct","Kết nối trực tiếp"],["custom","URL tuỳ chỉnh"],["rotate","Luân phiên đăng ký proxy (sing-box)"],["pool","Xoay vòng danh sách proxy tĩnh"]],
@@ -4518,6 +4423,132 @@ function renderNetwork(s){
     ${nodes.map(n=>`<span>${esc(n.name||n.id)}</span><span class="muted">${esc(n.proto)}</span><span class="mono" style="font-size:11px">${esc(n.ip||"—")} ${esc(n.country||"")}</span><span class="muted">${n.latencyMs?n.latencyMs+"ms":"—"}</span><span>${n.alive?'<span class="pill ok">Khả dụng</span>':'<span class="pill bad">Thất bại</span>'}</span>`).join("")}
   </div>` : `<div class="muted" style="font-size:12px">${sub.enabled?"Chưa kéo được node nào——hãy thử bấm 「Làm mới đăng ký proxy」.":"Đang tắt."}</div>`;
 }
+let sourceUpd = null, sourceUpdAt = 0, sourceUpdBusy = false;
+function shQuote(p){
+  const s = String(p || "");
+  return /^[A-Za-z0-9_./:@%+=,-]+$/.test(s) ? s : "'" + s.replace(/'/g, "'\\''") + "'";
+}
+function renderUpdate(s){
+  const el = $("#page-update");
+  if(!el.dataset.rendered){
+    el.innerHTML = `
+      <h2 class="pt">Cập nhật <span class="sub">Bản dựng đang chạy, mã nguồn GitHub và cách cập nhật trên Linux——không có nút ghi đè một chạm</span></h2>
+      <div class="two">
+        <div>
+          <div class="card" id="upd-running"><h3>Bản dựng đang chạy</h3><div class="sysinfo" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))" id="upd-running-box"><div class="muted">Đang đọc thông tin bản dựng…</div></div></div>
+          <div class="card" id="upd-source"><h3>Mã nguồn GitHub</h3><div id="upd-source-box"><div class="muted">Đang kiểm tra…</div></div></div>
+          <div class="card"><h3>Cập nhật thủ công trên Linux</h3>
+            <div class="muted" style="font-size:12px;margin-bottom:8px">Bản Linux không tự thay binary đang chạy. Chạy các lệnh dưới trong WSL, sau đó làm mới trang này.</div>
+            <pre id="upd-cmd" style="background:var(--panel-2);border:1px solid var(--hairline);border-radius:8px;padding:10px 12px;overflow:auto;font-family:var(--mono);font-size:12px;line-height:1.55;margin:0 0 8px"></pre>
+            <div class="row"><button class="ghost" id="upd-copy">Sao chép lệnh</button><span class="muted" id="upd-copy-note" style="font-size:11.5px"></span></div>
+            <div class="muted" style="font-size:11.5px;margin-top:8px">Service mặc định là <code class="k">zengate</code>; đổi tên trong lệnh nếu bạn đặt khác. Nếu chưa có checkout, lệnh clone sẽ được hiển thị thay thế.</div>
+          </div>
+        </div>
+        <div>
+          <div class="card"><h3>Quy trình</h3>
+            <ol class="muted" style="font-size:12px;line-height:1.65;margin:0;padding-left:18px">
+              <li>So sánh commit đang chạy với <code class="k">master</code> trên GitHub.</li>
+              <li><code class="k">git pull --ff-only</code> trong checkout nguồn.</li>
+              <li>Build headless tĩnh và cài vào <code class="k">/usr/local/bin/zen-gate</code>.</li>
+              <li>Restart service, rồi kiểm tra lại trang này.</li>
+            </ol>
+          </div>
+          <div class="card"><h3>Vì sao không có một chạm?</h3>
+            <div class="muted" style="font-size:12px;line-height:1.6">Tự tải và thay binary trên Linux cần quyền ghi vào thư mục cài đặt, xử lý service đang chạy và rollback khi bản mới lỗi. Bản dựng này giữ thao tác đó ngoài tiến trình gateway để tránh tự khoá mình giữa lúc cập nhật.</div>
+          </div>
+        </div>
+      </div>`;
+    el.dataset.rendered = "1";
+    if(!sourceUpd && !sourceUpdBusy) loadSourceUpdate(false);
+  }
+  paintUpdate(s);
+}
+async function loadSourceUpdate(force){
+  if(sourceUpdBusy) return;
+  if(!force && sourceUpd && Date.now() - sourceUpdAt < 300000){ paintUpdate(STATE); return; }
+  sourceUpdBusy = true;
+  const btn = $("#upd-check");
+  if(btn){ btn.disabled = true; btn.textContent = "Đang kiểm tra…"; }
+  try {
+    const j = await api("/update/source");
+    sourceUpd = j || { error: "Không đọc được trạng thái cập nhật" };
+    sourceUpdAt = Date.now();
+  } catch(err) {
+    sourceUpd = { error: err && err.message ? err.message : "Không đọc được trạng thái cập nhật" };
+  } finally {
+    sourceUpdBusy = false;
+    if(btn){ btn.disabled = false; btn.textContent = "Kiểm tra lại"; }
+  }
+  paintUpdate(STATE);
+}
+function paintUpdate(s){
+  const el = $("#page-update"); if(!el || !el.dataset.rendered) return;
+  const u = sourceUpd;
+  const ver = (u && u.version) || (s && s.version) || "dev";
+  const buildBox = $("#upd-running-box");
+  if(buildBox){
+    const rows = [
+      ["Phiên bản", ver],
+      ["Commit", u && u.current ? u.current.slice(0,12) + (u.currentDirty ? " (có thay đổi cục bộ)" : "") : "không xác định"],
+      ["Thời điểm build", u && u.currentTime ? new Date(u.currentTime).toLocaleString("vi-VN") : "không xác định"],
+      ["Nền tảng", platformLabel((s.system || {}).platform) + ((s.system && s.system.arch) ? " · " + s.system.arch : "")],
+    ];
+    buildBox.innerHTML = rows.map(([k,v])=>`<div class="kv"><span class="k">${esc(k)}</span><span class="v mono" style="word-break:break-all">${esc(v)}</span></div>`).join("");
+  }
+  const box = $("#upd-source-box");
+  if(box){
+    if(!u){
+      box.innerHTML = `<div class="muted">Đang kiểm tra GitHub…</div>`;
+    } else {
+      const repo = u.repo || "chipmax/zen-gate-vi";
+      const repoURL = "https://github.com/" + repo;
+      let status, detail = "";
+      if(u.error){
+        status = `<span class="pill bad">Không kiểm tra được</span>`;
+        detail = `<div class="muted" style="font-size:12px;margin-top:6px">${esc(u.error)}</div>`;
+      } else if(u.upToDate){
+        status = `<span class="pill ok">Đã cập nhật</span>`;
+        detail = `<div class="muted" style="font-size:12px;margin-top:6px">Commit đang chạy trùng đầu nhánh <code class="k">${esc(u.branch || "master")}</code>.</div>`;
+      } else if(u.behind > 0){
+        status = `<span class="pill warn">Có ${u.behind} commit mới</span>`;
+        detail = `<div class="muted" style="font-size:12px;margin-top:6px">${esc(u.latestSubject || "")}${u.latestShort ? " · " + esc(u.latestShort) : ""}${u.latestDate ? " · " + new Date(u.latestDate).toLocaleString("vi-VN") : ""}</div>`;
+      } else if(u.behind === 0){
+        status = `<span class="pill unknown">Cục bộ đi trước nhánh</span>`;
+        detail = `<div class="muted" style="font-size:12px;margin-top:6px">Không có commit mới để kéo; bản dựng có thay đổi chưa đẩy lên GitHub.</div>`;
+      } else {
+        status = `<span class="pill unknown">Không so sánh được</span>`;
+        detail = `<div class="muted" style="font-size:12px;margin-top:6px">Không xác định được commit cục bộ hoặc nhánh từ xa.</div>`;
+      }
+      box.innerHTML = `
+        <div class="row" style="align-items:center;gap:10px;flex-wrap:wrap">
+          ${status}
+          <a href="${esc(repoURL)}" target="_blank" rel="noreferrer" class="muted" style="font-size:12px">${esc(repo)} ↗</a>
+          <span style="flex:1"></span>
+          <button class="ghost" id="upd-check">Kiểm tra lại</button>
+        </div>
+        ${detail}
+        <div class="sysinfo" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-top:10px">
+          <div class="kv"><span class="k">Nhánh theo dõi</span><span class="v mono">${esc(u.branch || "master")}</span></div>
+          <div class="kv"><span class="k">Checkout nguồn</span><span class="v mono" style="word-break:break-all">${esc(u.sourceDir || "không tìm thấy")}</span></div>
+          <div class="kv"><span class="k">Lần kiểm tra</span><span class="v">${u.checkedAt ? new Date(u.checkedAt).toLocaleString("vi-VN") : "—"}</span></div>
+        </div>
+        ${u.sourceFound ? "" : `<div class="muted" style="font-size:12px;margin-top:8px">Chưa thấy checkout có <code class="k">.git</code>. Clone một lần bằng lệnh bên dưới; đặt <code class="k">ZEN_GATE_SOURCE</code> nếu muốn dùng thư mục khác.</div>`}`;
+      const chk = box.querySelector("#upd-check");
+      if(chk) chk.onclick = ()=>loadSourceUpdate(true);
+    }
+  }
+  const dir = u && u.sourceFound && u.sourceDir ? u.sourceDir : "/home/admin/src/zen-gate-vi";
+  const cmds = (u && u.sourceFound)
+    ? `cd ${shQuote(dir)}\ngit pull --ff-only\nCGO_ENABLED=0 go build -trimpath -tags headless \\\n  -ldflags "-X zen-gate/internal/gateway.Version=${shQuote(ver)} -X zen-gate/internal/update.Current=${shQuote(ver)}" \\\n  -o /tmp/zen-gate.new ./cmd/zen-gate\nsudo install -m 0755 /tmp/zen-gate.new /usr/local/bin/zen-gate\nsudo systemctl restart zengate`
+    : `git clone https://github.com/${(u && u.repo) || "chipmax/zen-gate-vi"}.git ${shQuote(dir)}\ncd ${shQuote(dir)}\nCGO_ENABLED=0 go build -trimpath -tags headless \\\n  -ldflags "-X zen-gate/internal/gateway.Version=${shQuote(ver)} -X zen-gate/internal/update.Current=${shQuote(ver)}" \\\n  -o /tmp/zen-gate.new ./cmd/zen-gate\nsudo install -m 0755 /tmp/zen-gate.new /usr/local/bin/zen-gate\nsudo systemctl restart zengate`;
+  const pre = $("#upd-cmd");
+  if(pre) pre.textContent = cmds;
+  const copy = $("#upd-copy");
+  if(copy) copy.onclick = async ()=>{
+    try { await navigator.clipboard.writeText(cmds); $("#upd-copy-note").textContent = "Đã sao chép"; }
+    catch(e) { $("#upd-copy-note").textContent = "Trình duyệt chặn clipboard, hãy chọn và sao chép thủ công"; }
+  };
+}
 function renderSettings(s){
   const el = $("#page-settings");
   if(!el.dataset.rendered){
@@ -4529,7 +4560,6 @@ function renderSettings(s){
         <span class="mchip" data-g="set-route">Định tuyến thông minh</span>
         <span class="mchip" data-g="set-desktop">Desktop</span>
         <span class="mchip" data-g="set-data">Dữ liệu</span>
-        <span class="mchip" data-g="set-update">Cập nhật</span>
       </div>
       <div class="card" id="set-base"><div class="row" style="row-gap:14px">
         <div class="dim" style="display:inline-flex; align-items:center; gap:8px">Mức suy luận mặc định <span id="set-effort"></span></div>
@@ -4565,8 +4595,6 @@ function renderSettings(s){
           </div></div>
         <div class="switch"><div><span class="nm">Tham chiếu dung lượng công khai</span><div class="ds">Dùng danh mục mô hình công khai không cần thông tin xác thực để bổ sung cửa sổ ngữ cảnh/dung lượng đầu ra tối đa cho các mô hình mới「hoàn toàn chưa có trong bảng năng lực cục bộ」, đồng bộ mỗi 6 giờ; chỉ ghi dung lượng, không ghi phương thức, nguồn được ghi là「Tuyên bố từ upstream」, các mô hình mà bảng biên soạn đã biết, cùng các mô hình đã được đo thực tế/gắn nhãn AI đều không bị động tới</div></div>
           <button class="act off" id="tg-openref">Đóng</button></div>
-        <div class="switch"><div><span class="nm">Cache tiền tố WorkBuddy</span><div class="ds">Thêm vào body yêu cầu của WorkBuddy <code class="k">prompt_cache_key</code>（=  id của phiên này），để upstream tái sử dụng tiền tố đã tính theo phiên. Cơ sở đo thực tế: bản triển khai tham chiếu cùng backend, trên tiền tố 8k, đã tăng lượng trúng từ 0 lên 7808, chi phí tính từ 0.34 giảm xuống 0.02. Mặc định tắt——kiểm soát rủi ro của kênh này sẽ xét nội dung yêu cầu, chưa đo thực tế trên máy này thì không thêm. CodeArts và nhà cung cấp tuỳ chỉnh không bị ảnh hưởng bởi công tắc này, gợi ý cache của chúng luôn bật</div></div>
-          <button class="act off" id="tg-wbcache">Đóng</button></div>
       </div>
 
       <div class="card" id="set-desktop">
@@ -4593,15 +4621,6 @@ function renderSettings(s){
           <input type="file" id="import-file" accept=".json" style="display:none">
           <button class="ghost" id="btn-csv">Xuất mức sử dụng (CSV)</button>
         </div>
-      </div>
-
-      <div class="card" id="set-update">
-        <h3>Cập nhật</h3>
-        <div class="row">
-          <button class="ghost" id="btn-check-update">Kiểm tra cập nhật</button>
-          <span class="muted" style="font-size:12px" id="cur-ver"></span>
-        </div>
-        <div class="muted" style="font-size:11.5px;margin-top:6px">Tự động kiểm tra mỗi lần khởi động và mỗi 6 giờ (qua URL nguồn cập nhật); khi phát hiện phiên bản mới, trang Tổng quan sẽ hiện 「Cập nhật bằng một cú nhấp」.</div>
       </div>
       `;
     el.querySelector("#save").onclick = async ()=>{
@@ -4632,17 +4651,6 @@ function renderSettings(s){
       const j = await api("/autostart", {enabled: on});
       if(j) toast(on ? "Đã thêm vào tự khởi động cùng hệ thống" : "Đã gỡ khỏi tự khởi động cùng hệ thống");
       refresh();
-    };
-    el.querySelector("#btn-check-update").onclick = async ()=>{
-      const b = el.querySelector("#btn-check-update");
-      b.disabled = true; b.textContent = "Đang kiểm tra…";
-      const j = await api("/update/check", {});
-      b.disabled = false; b.textContent = "Kiểm tra cập nhật";
-      if (j) {
-        if (j.has) toast("Phát hiện phiên bản mới " + (j.version||"") + "！Trang Tổng quan có thể cập nhật bằng một cú nhấp");
-        else toast("Đã là phiên bản mới nhất" + (j.version ? " v" + j.version : ""));
-        refresh();
-      }
     };
     el.querySelector("#btn-export").onclick = ()=>{ window.location.href = "/admin/api/export"; };
     el.querySelector("#btn-export-keys").onclick = ()=>{ if(confirm("File này chứa toàn bộ key dạng rõ và liên kết đăng ký, chỉ truyền qua kênh an toàn.")) window.location.href = "/admin/api/export?secrets=1"; };
@@ -4705,8 +4713,6 @@ function renderSettings(s){
     [["light","Light · Gọn nhẹ (2K)"],["balanced","Balanced · Cân bằng (8K)"],["deep","Deep · Suy nghĩ sâu (giới hạn tối đa của mô hình)"]],
     pick("#set-effort", "defaultEffort") || s.settings.defaultEffort || "balanced",
     ()=>settingsDirty.add("defaultEffort"));
-  const curVer = el.querySelector("#cur-ver");
-  if (curVer) curVer.textContent = "Phiên bản hiện tại v" + (s.version||"") + (s.settings.updateAvailable ? " · có phiên bản mới " + s.settings.updateVersion : "");
   setToggle("#tg-tray", s.settings.closeToTray);
   setToggle("#tg-notify", s.settings.notifications);
   setToggle("#tg-autostart", s.settings.autostart);
@@ -4727,7 +4733,6 @@ function renderSettings(s){
   setToggle("#tg-fallback", s.settings.laneFallbackToProviders);
   setToggle("#tg-autotag", s.settings.autoTagEnabled);
   setToggle("#tg-openref", s.settings.openRefEnabled);
-  setToggle("#tg-wbcache", s.settings.workBuddyCacheKey);
   const sseg = el.querySelector("#strategy-seg");
   if (sseg){
     const cur = s.settings.routingStrategy || "catalog";
@@ -4757,9 +4762,6 @@ function renderSettings(s){
   bindSettingToggle("#tg-fallback", "laneFallbackToProviders", "Fallback về API tuỳ chỉnh khi cạn đã bật (tiêu tốn hạn mức Key của bạn)", "Fallback về API tuỳ chỉnh khi cạn đã tắt");
   bindSettingToggle("#tg-autotag", "autoTagEnabled", "Gắn nhãn năng lực AI đã bật", "Gắn nhãn năng lực AI đã tạm dừng");
   bindSettingToggle("#tg-openref", "openRefEnabled", "Tham chiếu dung lượng công khai đã bật: mô hình mới sẽ tự động nhận dung lượng thượng nguồn", "Tham chiếu dung lượng công khai đã tạm dừng");
-  bindSettingToggle("#tg-wbcache", "workBuddyCacheKey",
-    "Yêu cầu WorkBuddy đã kèm prompt_cache_key——vào trang 「Mức sử dụng」 xem tỷ lệ hit có thực sự thay đổi không",
-    "Yêu cầu WorkBuddy trở lại body yêu cầu thuần (không kèm gợi ý cache)");
   const retagBtn = el.querySelector("#btn-retag");
   if(retagBtn && !retagBtn.dataset.bound){
     retagBtn.dataset.bound = "1";
@@ -4788,6 +4790,12 @@ function setToggle(sel, on){
 
 /* one-click update */
 document.addEventListener("click", e=>{
+  const open = e.target.closest("#upd-open");
+  if(open){
+    e.preventDefault();
+    cur = "update"; localStorage.setItem("zengate.page", cur); nav(); render();
+    return;
+  }
   const b = e.target.closest("#upd-apply");
   if(!b) return;
   b.disabled = true; b.textContent = "Đang tải…";

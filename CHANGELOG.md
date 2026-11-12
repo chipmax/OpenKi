@@ -7,6 +7,14 @@ phát triển (UTC+7).
 
 ### Giao diện
 
+- Trang "Mạng" có bảng đầu ra hợp nhất: IP hiện tại, node đăng ký và proxy
+  tĩnh trong cùng một chỗ, kèm trạng thái, quốc gia, độ trễ, lần phục vụ cuối,
+  lọc theo trạng thái/từ khoá và nút dò lại node. Cấu hình proxy thu gọn bên
+  dưới để phần trạng thái không bị đẩy xuống.
+- Trang "Cập nhật" riêng: so commit đang chạy với `master`, hiển thị checkout
+  nguồn, lệnh `git pull`/build/cài/restart cho Linux và nút sao chép. Bản
+  Linux không còn quảng cáo "một chạm"; mục Cập nhật trong Cài đặt được gỡ.
+- Ẩn kênh WorkBuddy khỏi bảng kênh, bộ lọc và các nút cấu hình cache của nó.
 - Tách cấu hình mạng khỏi trang Cài đặt: proxy thượng nguồn, danh sách proxy
   tĩnh, cổng LAN và luân phiên đăng ký sing-box nằm ở trang "Mạng" riêng, có
   nút lưu proxy độc lập.
@@ -22,6 +30,8 @@ phát triển (UTC+7).
 
 - Feed cập nhật trả 404 (chưa có release) được coi là "không có bản mới" thay
   vì ghi cảnh báo mỗi 6 giờ.
+- Trạng thái proxy tĩnh chỉ trả endpoint đã lược bỏ userinfo, kèm thời điểm
+  tạm dừng; không lộ mật khẩu proxy ra dashboard.
 
 ### Dọn dẹp
 

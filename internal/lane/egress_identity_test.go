@@ -31,13 +31,13 @@ func TestRecordStampsTransportEgressIdentity(t *testing.T) {
 	}
 
 	// A pool-planned turn can still be served by the equal-peer selector's
-	// Proton transport. The plan says "proxy"; the transport is the evidence
+	// relay transport. The plan says "proxy"; the transport is the evidence
 	// that actually served the bytes.
-	setEgressIdentity(ctx, "proton", "")
+	setEgressIdentity(ctx, "relay", "")
 	ctx = WithExitPlan(ctx, ExitPlan{Model: "glm-5.3-flash-free", NodeID: "pool-1"})
 	l.record(ctx, CallRecord{Model: "glm-5.3-flash-free", At: time.Now().UnixMilli()}, StreamResult{}, nil, 0)
-	if got.ExitKind != "proton" {
-		t.Fatalf("ExitKind = %q, want the transport's proton label", got.ExitKind)
+	if got.ExitKind != "relay" {
+		t.Fatalf("ExitKind = %q, want the transport's relay label", got.ExitKind)
 	}
 
 	// The equal-peer selector resets before each peer. A relay that follows a

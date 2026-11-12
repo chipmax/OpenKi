@@ -1995,7 +1995,7 @@ func (l *Lane) record(ctx context.Context, rec CallRecord, result StreamResult, 
 		// The plan names the rotator slot ("proxy"/"singbox") before the
 		// transport runs. The winning transport is the stronger evidence: a
 		// pool fallback can still be wrapped by the equal-peer selector, so a
-		// request planned as "proxy" may actually leave through Proton/relay.
+		// request planned as "proxy" may actually leave through relay/WARP/sing-box.
 		if peer != "" {
 			rec.ExitKind = peer
 		}

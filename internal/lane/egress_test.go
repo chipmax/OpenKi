@@ -102,14 +102,73 @@ func TestEgressEmptyModesRestoresLegacy(t *testing.T) {
 }
 
 func TestNormalizeEgressModes(t *testing.T) {
-	got, err := NormalizeEgressModes([]string{" WARP ", "relay", "warp", "proton", ""})
+	got, err := NormalizeEgressModes([]string{" WARP ", "relay", "warp", ""})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Join(got, ",") != "warp,relay,proton" {
+	if strings.Join(got, ",") != "warp,relay" {
 		t.Fatalf("normalized = %v", got)
 	}
-	if _, err := NormalizeEgressModes([]string{"socks"}); err == nil {
-		t.Fatal("unknown mode must fail validation")
+	if _, err := NormalizeEgressModes([]string{"socks", "proton"}); err == nil {
+		t.Fatal("unknown or removed mode must fail validation")
+	}
+}
+
+// A 429 is one exit's answer, not the turn's: the selector must close that
+// response and ask the next equal peer before the lane applies quota rules.
+func TestEgressSelectorRetries429OnNextPeer(t *testing.T) {
+	var hits []string
+	peer := func(name string, status int, body string) egressPeer {
+		return egressPeer{name: name, rt: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			hits = append(hits, name)
+			return &http.Response{
+				StatusCode: status,
+				Header:     make(http.Header),
+				Body:       io.NopCloser(strings.NewReader(body)),
+				Request:    req,
+			}, nil
+		})}
+	}
+	sel := &egressSelector{peers: []egressPeer{
+		peer("limited", http.StatusTooManyRequests, `{"error":"limited"}`),
+		peer("good", http.StatusOK, `{"ok":true}`),
+	}}
+	req, err := http.NewRequest(http.MethodPost, "https://upstream.example/v1/chat/completions", strings.NewReader(`{"model":"m"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := sel.RoundTrip(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want the next peer's 200", resp.StatusCode)
+	}
+	if strings.Join(hits, ",") != "limited,good" {
+		t.Fatalf("peer order = %v, want limited then good", hits)
+	}
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
+// A config saved before Proton was removed must not silently fall back to the
+// machine's own IP. SetEgress installs a transport that refuses the request so
+// the operator sees the error and fixes config.json.
+func TestSetEgressFailsClosedOnRemovedMode(t *testing.T) {
+	SetEgress(EgressOptions{Modes: []string{"proton"}, BaseMode: "direct"})
+	t.Cleanup(func() { SetEgress(EgressOptions{BaseMode: "direct"}) })
+
+	if EgressExplicit() {
+		t.Fatal("a rejected mode must not install an egress selector")
+	}
+	req, err := http.NewRequest(http.MethodGet, "https://upstream.example/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := laneHTTP.Transport.RoundTrip(req); err == nil {
+		t.Fatal("a removed egress mode fell back to a working transport")
 	}
 }

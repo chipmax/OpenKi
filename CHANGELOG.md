@@ -5,6 +5,13 @@ phát triển (UTC+7).
 
 ## 2026-11-13
 
+### Thay đổi
+
+- Xóa egress **Proton VPN** khỏi repo: `egressModes` chỉ còn `relay`, `singbox`
+  và `warp`; bỏ `protonSocks5`, thẻ pVPN cùng các test/UI liên quan. Cấu hình cũ
+  còn `"proton"` sẽ bị từ chối (fail closed) thay vì lặng lẽ đi trực tiếp; sửa
+  `config.json` trước khi nâng cấp.
+
 ### Sửa lỗi
 
 - systemd (WSL/VPS): thêm `AF_NETLINK` vào `RestrictAddressFamilies`. Thiếu

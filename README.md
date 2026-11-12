@@ -16,8 +16,7 @@ mã nguồn.
 |---|---|
 | **Làn miễn phí** | Đóng gói OpenCode Zen thành `/v1/chat/completions`, `/v1/responses`, `/v1/messages`; tự chuyển mô hình khi bị giới hạn. |
 | **Tự inject Agent** | OpenCode, Codex, Claude Code, DeepSeek Harness, omp (Windows và WSL là hai mục riêng); sao lưu trước khi sửa, tắt là khôi phục. |
-| **Egress nhiều peer** | `relay`, `singbox`, `warp`, `proton` là các peer ngang hàng; mỗi request chọn một peer, lỗi transport hoặc 429/403 tự chuyển peer kế tiếp. |
-| **Proton VPN** | Dùng listener SOCKS5 do client Proton/pVPN mở sẵn; OpenKi không giữ mật khẩu Proton và không tự quản lý tunnel. |
+| **Egress nhiều peer** | `relay`, `singbox`, `warp` là các peer ngang hàng; mỗi request chọn một peer, lỗi transport hoặc 429/403 tự chuyển peer kế tiếp. |
 | **Pool tĩnh / xoay đăng ký** | `proxyPool` cho http(s)/socks5(h)/direct; hoặc sidecar sing-box biến subscription thành pool socks và xoay mỗi request. |
 | **Hạn mức theo exit** | 429 bắt đầu 90 giây, tăng dần đến 15 phút; governor token mỗi exit (mặc định 300k/phút, `0` = tắt). |
 | **Cache & thống kê** | Prefix cache, ước tính quota ngày, heatmap 365 ngày, xuất CSV. |
@@ -60,44 +59,6 @@ Tải release tại [chipmax/OpenKi/releases](https://github.com/chipmax/OpenKi/
 hoặc build theo `deploy/windows/README.md`. Chạy một bản OpenKi trên một cổng;
 không chạy đồng thời bản Windows và WSL nếu dùng chung cổng.
 
-## Proton VPN
-
-Proton không có API gateway cho mô hình; cách tích hợp an toàn là dùng SOCKS5 mà
-client Proton (hoặc wrapper pVPN) đã mở:
-
-```bash
-# Kiểm tra listener trước khi bật trong OpenKi
-curl --proxy socks5h://127.0.0.1:1080 https://www.cloudflare.com/cdn-cgi/trace
-```
-
-Trong **Mạng → Đầu ra & Proton VPN**, tích `Proton VPN`, nhập URL
-`socks5h://127.0.0.1:1080` (hoặc địa chỉ tunnel của pVPN), bấm **Kiểm tra
-listener**, rồi bấm **Lưu thay đổi** trên thanh lưu duy nhất ở cuối trang. Thẻ
-**VPN (pVPN)** ngay dưới đó chỉ đọc trạng thái tunnel (`pvpnctl status`), không
-phải IP mà OpenKi đang dùng; nút **Dò tất cả đầu ra** lấy mẫu IP thật qua
-transport hiện tại. Hoặc sửa `config.json`:
-
-```json
-{
-  "egressModes": ["proton"],
-  "protonSocks5": "socks5h://127.0.0.1:1080"
-}
-```
-
-Có thể ghép `"proton"` với `"warp"`, `"relay"` hoặc `"singbox"` để dự phòng.
-Listener phải bind loopback hoặc địa chỉ tunnel riêng (pVPN có thể nghe trên
-`192.168.110.88:1080` thay vì loopback); không mở SOCKS5 không xác thực ra LAN.
-Kiểm tra bằng `ss -ltnp` và chặn cổng đó bằng firewall nếu máy có interface
-khác.
-
-OpenKi đọc trạng thái pVPN bằng helper root-owned `/opt/pvpn/pvpnctl` (hoặc
-`OPENKI_PVPNCTL` nếu đặt ở nơi khác). Lệnh là argv cố định, không qua shell;
-OpenKi không đọc mật khẩu, không đăng nhập và không bật/tắt tunnel. Trạng thái
-được cache 15 giây để dashboard 10 giây không fork helper liên tục.
-
-Chi tiết triển khai: [docs/OPERATIONS.md](docs/OPERATIONS.md) và
-[docs/DEPLOY.md](docs/DEPLOY.md).
-
 ## Docker / headless
 
 ```bash
@@ -116,8 +77,7 @@ go test ./...
 ```
 
 Kiểm tra fingerprint upstream: `openki -gate-check` (xem
-[docs/GATE-AB.md](docs/GATE-AB.md)). Kiểm tra Proton trên dashboard bằng nút
-**Kiểm tra listener**.
+[docs/GATE-AB.md](docs/GATE-AB.md)).
 
 ## Cập nhật
 

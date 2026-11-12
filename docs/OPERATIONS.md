@@ -11,8 +11,7 @@ và một VPS headless chỉ lộ API qua Caddy TLS. Cài đặt ban đầu nằ
 - Trang quản trị chỉ nghe loopback. Trên VPS, `/admin*` bị Caddy chặn; chỉ vào
   bằng SSH tunnel.
 - `egressModes` là **tập peer được bật**, không phải chuỗi ưu tiên. `relay`,
-  `singbox`, `warp`, `proton` ngang hàng; có thể bật một hoặc nhiều cái cùng
-  lúc.
+  `singbox`, `warp` ngang hàng; có thể bật một hoặc nhiều cái cùng lúc.
 - Thay đổi cấu hình bằng dashboard khi dịch vụ đang chạy. Nếu sửa tay
   `config.json`, dừng dịch vụ trước rồi mới sửa, tránh instance ghi đè khi lưu.
 
@@ -188,7 +187,7 @@ thức và allowlist nằm trong [`RELAY.md`](RELAY.md).
 ### Cấu hình
 
 `egressModes` là mảng, nhận bất kỳ giá trị nào trong `relay`, `singbox`,
-`warp`, `proton`, theo thứ tự nào cũng được. Bỏ trống mảng này thì giữ nguyên
+`warp`, theo thứ tự nào cũng được. Bỏ trống mảng này thì giữ nguyên
 hành vi cũ theo `proxyMode` (`env`, `system`, `direct`, `custom`, `rotate`,
 `pool`, `warp`) cùng `warpEnabled`/`subsEnabled`.
 
@@ -219,28 +218,9 @@ Ví dụ bật relay + WARP cùng lúc (hai peer ngang hàng):
 }
 ```
 
-`proton` dùng listener SOCKS5 do client Proton VPN hoặc wrapper pVPN mở sẵn.
-OpenKi không giữ tài khoản Proton và không quản lý tunnel; nó chỉ dial listener:
-
-```json
-{
-  "egressModes": ["proton"],
-  "protonSocks5": "socks5h://127.0.0.1:1080"
-}
-```
-
-- Listener phải là `socks5://` hoặc `socks5h://`; `socks5h` được khuyến nghị để
-  DNS đi qua tunnel.
-- Listener phải bind loopback hoặc địa chỉ tunnel riêng của Proton/pVPN. Một
-  SOCKS5 không xác thực mở ra LAN cho phép máy khác dùng chung tài khoản
-  Proton; kiểm tra `ss -ltnp` và chặn bằng firewall.
-- Có thể ghép `proton` với peer khác; request lỗi transport/429/403 sẽ chuyển
-  peer kế tiếp.
-- `protonSocks5` để trống sẽ dùng `socks5h://127.0.0.1:1080`.
-
 Tắt toàn bộ egress peer: bỏ `egressModes`, đặt `proxyMode: "direct"`,
 `warpEnabled: false`, `subsEnabled: false`. Không thêm giá trị lạ vào
-`egressModes`; chỉ bốn giá trị trên được hiểu.
+`egressModes`; chỉ ba giá trị trên được hiểu.
 
 ### Nguyên tắc kiểm tra độc lập
 
@@ -259,7 +239,7 @@ curl -fsS http://127.0.0.1:8787/v1/chat/completions \
 ```
 
 Khi `egressModes` đang bật, response có header `X-OpenKi-Egress` cho biết peer
-đã phục vụ request (`relay`, `warp`, `singbox` hoặc `proton`):
+đã phục vụ request (`relay`, `warp` hoặc `singbox`):
 
 ```bash
 curl -sS -D - -o /dev/null http://127.0.0.1:8787/v1/chat/completions \

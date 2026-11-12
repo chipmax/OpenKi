@@ -277,7 +277,6 @@ func main() {
 		Modes:        cfg.EgressModeList(),
 		Relays:       cfg.RelayEndpoints(),
 		WarpPoolSize: cfg.WarpPoolSize,
-		ProtonURL:    cfg.ProtonSocks5,
 		BaseMode:     cfg.ProxyMode,
 		BaseURL:      cfg.ProxyURL,
 	}); note != "" {

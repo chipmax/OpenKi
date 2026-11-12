@@ -112,11 +112,11 @@ OPENKI_HEADLESS=1 OPENKI_HOME=/var/lib/openki \
 `egressModes` là mảng trong `config.json`, chứa một hoặc nhiều giá trị:
 
 ```json
-{ "egressModes": ["relay", "singbox", "warp", "proton"] }
+{ "egressModes": ["relay", "singbox", "warp"] }
 ```
 
-- Giá trị hợp lệ: `relay`, `singbox`, `warp`, `proton`.
-- **Bốn chế độ là đồng cấp**, không có thứ hạng ưu tiên cố định: không peer nào
+- Giá trị hợp lệ: `relay`, `singbox`, `warp`.
+- **Ba chế độ là đồng cấp**, không có thứ hạng ưu tiên cố định: không peer nào
   mặc định đứng trước hay là "dự phòng" của peer khác. Có thể chọn một mình
   hoặc kết hợp.
 - Khi kết hợp, request luân phiên bắt đầu ở từng peer; lỗi transport hoặc
@@ -126,10 +126,6 @@ OPENKI_HEADLESS=1 OPENKI_HOME=/var/lib/openki \
 - `relay` dùng các mục trong `relayPool` (xem dưới).
 - `singbox` dùng sidecar sing-box do người dùng tự cài (`singBoxPath`).
 - `warp` dùng pool WARP userspace tích hợp trong gateway.
-- `proton` dùng listener SOCKS5 của Proton VPN/pVPN tại `protonSocks5`
-  (mặc định `socks5h://127.0.0.1:1080`). Listener phải bind loopback hoặc địa
-  chỉ tunnel riêng, chạy trước khi gateway nhận request; OpenKi không quản lý
-  tài khoản Proton.
 
 ### `relayPool`
 

@@ -1,11 +1,11 @@
 package lane
 
-// Equal egress peers: relay, sing-box, WARP and Proton VPN.
+// Equal egress peers: relay, sing-box and WARP.
 //
 // Historically each of these was a proxy mode (or a wrapper) that won over the
 // others: WarpEnabled overrode ProxyMode, "rotate" was the only subscription
 // path, and a relay did not exist. The user can now tick any combination of
-// the four. They are equal peers: each request starts at the next peer in a
+// the three. They are equal peers: each request starts at the next peer in a
 // round-robin, a transport failure moves to the next peer, and a 429/403 moves
 // to the next peer before the lane's own quota retry sees the response. An
 // empty mode list keeps the legacy single-choice behaviour untouched.
@@ -14,8 +14,7 @@ package lane
 //   - relay is a RoundTripper that rewrites the URL to a Bun relay;
 //   - WARP is a RoundTripper that swaps the dialer for a Cloudflare lease;
 //   - sing-box is a dialer-level Rotator (via rotateDialContext), wrapped in a
-//     transport so it can sit next to the other peers;
-//   - Proton is a transport that dials one operator-managed SOCKS5 listener.
+//     transport so it can sit next to the other peers.
 //
 // Making them all RoundTrippers is what lets the selector choose one per
 // request and fall back without knowing how the peer reaches the network.
@@ -50,7 +49,6 @@ type EgressOptions struct {
 	Modes        []string
 	Relays       []RelayEndpoint
 	WarpPoolSize int
-	ProtonURL    string
 	BaseMode     string
 	BaseURL      string
 }
@@ -68,10 +66,11 @@ var egressExplicit atomic.Bool
 func SetEgress(o EgressOptions) (note string) {
 	modes, err := normalizeEgressModes(o.Modes)
 	if err != nil {
-		// A bad mode is a programming/config validation error, not a reason to
-		// leave the previous transport in place silently.
+		// A bad mode is a config validation error. Fail closed: an old config
+		// that still names a removed peer must not silently fall back to the
+		// machine's own IP. The dashboard and logs show the note instead.
 		clearEgress()
-		setProxyTransport("direct", "")
+		laneHTTP.Transport = blockedTransport{err: err}
 		return err.Error()
 	}
 	if len(modes) == 0 {
@@ -109,16 +108,6 @@ func SetEgress(o EgressOptions) (note string) {
 		case "warp":
 			strict := len(modes) > 1 // with alternatives, a dead pool must move on
 			peers = append(peers, egressPeer{name: "warp", rt: newWarpPeer(base, o.WarpPoolSize, strict)})
-		case "proton":
-			rt, err := NewProtonTransport(o.ProtonURL)
-			if err != nil {
-				notes = append(notes, "proton đã bật nhưng SOCKS5 chưa dùng được: "+err.Error())
-				continue
-			}
-			// The selector only knows the peer was tried; the transport label
-			// is what lets CallRecord say "proton" instead of the generic
-			// "peer" after a successful turn.
-			peers = append(peers, egressPeer{name: "proton", rt: labeledTransport{name: "proton", rt: rt}})
 		}
 	}
 	if len(peers) == 0 {
@@ -152,6 +141,15 @@ func clearEgress() {
 	egressActive.Store(false)
 }
 
+// blockedTransport is installed when the saved egress config cannot be
+// validated. Returning an error is deliberate: falling back to a direct
+// connection would leak traffic after a peer was removed or mistyped.
+type blockedTransport struct{ err error }
+
+func (b blockedTransport) RoundTrip(*http.Request) (*http.Response, error) {
+	return nil, b.err
+}
+
 // NormalizeEgressModes validates and deduplicates the mode strings for the
 // settings handler. It is exported so the gateway does not need a second
 // whitelist that can drift from the lane's.
@@ -168,7 +166,7 @@ func normalizeEgressModes(in []string) ([]string, error) {
 			continue
 		}
 		switch m {
-		case "relay", "singbox", "warp", "proton":
+		case "relay", "singbox", "warp":
 		default:
 			return nil, fmt.Errorf("egress mode không xác định: %s", raw)
 		}
@@ -364,7 +362,7 @@ type egressPeer struct {
 
 // labeledTransport stamps the peer name onto the attempt context before the
 // underlying RoundTripper runs. WARP already does this itself because it also
-// learns the lease IP; relay/proton/sing-box only need the name.
+// learns the lease IP; relay/sing-box only need the name.
 type labeledTransport struct {
 	name string
 	rt   http.RoundTripper

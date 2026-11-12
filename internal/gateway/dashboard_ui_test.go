@@ -31,70 +31,6 @@ func TestDashboardDisablesBrowserCache(t *testing.T) {
 	}
 }
 
-// Proton must be a first-class, visible part of the network page, not a
-// checkbox buried inside the collapsed upstream-proxy fold. The card is the
-// only place these controls may live: duplicate ids would bind only the first
-// one and leave the visible form inert.
-func TestProtonControlsLiveInVisibleNetworkCard(t *testing.T) {
-	html := string(dashboardHTML)
-	card := indexAfter(t, html, `id="net-egress-card"`)
-	exits := indexAfter(t, html, `id="net-exits"`)
-	fold := indexAfter(t, html, `id="net-proxy"`)
-	// The coexistence warning must be visible on the page, not tucked inside
-	// the collapsed legacy-proxy fold where a static pool looks active.
-	warn := indexAfter(t, html, `id="net-legacy-warn"`)
-	if !(exits < warn && warn < fold) {
-		t.Fatalf("expected legacy-layer warning between the exit table and the fold (exits=%d warn=%d fold=%d)", exits, warn, fold)
-	}
-	if !(card < exits && exits < fold) {
-		t.Fatalf("expected egress card before the exit table and the fold (card=%d exits=%d fold=%d)", card, exits, fold)
-	}
-	visible := html[card:exits]
-	for _, id := range []string{`id="set-proton-url"`, `id="btn-proton-test"`} {
-		if !strings.Contains(visible, id) {
-			t.Errorf("%s is not inside the visible network card", id)
-		}
-	}
-	if strings.Count(html, `id="set-proton-url"`) != 1 {
-		t.Errorf("set-proton-url is declared %d times; duplicate ids bind only the first control", strings.Count(html, `id="set-proton-url"`))
-	}
-	if !strings.Contains(visible, `value="proton"`) {
-		t.Error("the visible card has no Proton egress checkbox")
-	}
-	// One sticky save owns every network field. A second save button inside
-	// the card or the fold would send a different (usually complete) payload.
-	if strings.Count(html, `id="net-save-all"`) != 1 {
-		t.Errorf("network page has %d save buttons, want exactly one", strings.Count(html, `id="net-save-all"`))
-	}
-	for _, stale := range []string{`id="btn-proton-save"`, `id="net-save-legacy"`, `id="net-save"`} {
-		if strings.Contains(html, stale) {
-			t.Errorf("stale network save control remains: %s", stale)
-		}
-	}
-}
-
-// The tunnel card is status-only by design: the gateway runs unprivileged and
-// pvpnctl needs root. The copy button is not a tunnel control.
-func TestVPNCardIsReadOnly(t *testing.T) {
-	html := string(dashboardHTML)
-	vpn := indexAfter(t, html, `id="net-vpn"`)
-	end := strings.Index(html[vpn:], `id="net-exits"`)
-	if end < 0 {
-		t.Fatal("vpn card is not followed by the exit table")
-	}
-	card := html[vpn : vpn+end]
-	for _, want := range []string{`id="vpn-state"`, `id="vpn-ip"`, `id="vpn-server"`, `id="vpn-copy"`} {
-		if !strings.Contains(card, want) {
-			t.Errorf("vpn card is missing %s", want)
-		}
-	}
-	for _, forbidden := range []string{`id="vpn-connect"`, `id="vpn-disconnect"`, `id="vpn-restart"`} {
-		if strings.Contains(card, forbidden) {
-			t.Errorf("vpn card exposes a tunnel control: %s", forbidden)
-		}
-	}
-}
-
 func TestDashboardUsesOpenKiBranding(t *testing.T) {
 	html := string(dashboardHTML)
 	if !strings.Contains(html, "<title>OpenKi") {
@@ -106,13 +42,4 @@ func TestDashboardUsesOpenKiBranding(t *testing.T) {
 	if !strings.Contains(html, `OPEN<span class="tick">—</span>KI`) {
 		t.Error("dashboard sidebar/window mark is not OpenKi")
 	}
-}
-
-func indexAfter(t *testing.T, s, marker string) int {
-	t.Helper()
-	i := strings.Index(s, marker)
-	if i < 0 {
-		t.Fatalf("dashboard is missing %s", marker)
-	}
-	return i
 }

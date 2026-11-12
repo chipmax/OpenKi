@@ -4196,10 +4196,13 @@ function netExitRows(s){
   const peer = eg.peer ? egressPeerName(eg.peer) : "Chưa rõ peer";
   let tone = "unknown", status = "Chưa rõ", when = 0;
   let note = "Chưa có mẫu IP; bấm「Dò tất cả đầu ra」để lấy bằng chứng đầu tiên";
+  const usingSample = !lastIP && !!sampleIP;
   if(lastFresh){
     tone = "ok"; status = "Đang phục vụ"; when = lastAt;
     note = `Lưu lượng thành công gần nhất qua ${peer}`;
-    if(sampleIP && lastIP && sampleIP !== lastIP){
+    if(usingSample){
+      note += "; IP hiển thị lấy từ mẫu gần nhất, không phải IP do lượt đó trả về";
+    } else if(sampleIP && lastIP && sampleIP !== lastIP){
       note += `; mẫu định kỳ thấy ${sampleIP} (${relMs(checkedAt)})`;
     }
   } else if(sampleFresh && ip){
@@ -4212,7 +4215,9 @@ function netExitRows(s){
   const rows = [{
     key: "current", tone, status,
     endpoint: ip || "Chưa rõ",
-    name: lastFresh ? "Lưu lượng gần nhất" : (sampleIP ? "Mẫu IP định kỳ" : "Chưa có mẫu"),
+    name: lastFresh
+      ? (usingSample ? "Lưu lượng gần nhất · IP mẫu" : "Lưu lượng gần nhất")
+      : (sampleIP ? "Mẫu IP định kỳ" : "Chưa có mẫu"),
     source: "Hiện tại", proto: eg.peer ? peer : "—",
     country: eg.country || "—", latency: "—",
     last: relMs(when), note,
@@ -4283,7 +4288,8 @@ function networkHealth(s, configured){
     const reserve = configured.length
       ? `${ok}/${configured.length} đầu ra dự phòng đã xác minh${unknown ? ` · ${unknown} chưa dò` : ""}`
       : "chưa cấu hình đầu ra dự phòng";
-    return {label:"Ổn định", tone:"ok", detail:`Lưu lượng ${relMs(lastAt)} · ${reserve}`};
+    const label = configured.length && unknown > 0 ? "Đang chạy" : "Ổn định";
+    return {label, tone:"ok", detail:`Lưu lượng ${relMs(lastAt)} · ${reserve}`};
   }
   if(lastFresh){
     return {label:"Có cảnh báo", tone:"warn", detail:`Lưu lượng ${relMs(lastAt)} · ${bad} lỗi, ${warn} cần chú ý, ${unknown} chưa dò trong ${configured.length} đầu ra`};

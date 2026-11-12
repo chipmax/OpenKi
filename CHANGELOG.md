@@ -66,7 +66,8 @@ phát triển (UTC+7).
   transport đã thắng, kể cả khi kế hoạch chọn slot proxy; dashboard phân biệt
   "đang phục vụ" với mẫu IP định kỳ thay vì gán nhãn peer theo cấu hình.
 - Đánh bóng trang Mạng: nhãn sức khoẻ nói rõ số đầu ra dự phòng đã xác minh
-  và số chưa dò, tránh "0/8 khả dụng" bị hiểu là tất cả đều hỏng.
+  và số chưa dò, chỉ gọi "Ổn định" khi mọi dự phòng đã xác minh; hàng hiện tại
+  nói rõ khi IP hiển thị lấy từ mẫu định kỳ thay vì IP của lượt thành công.
 - Trang "Cập nhật" riêng: so commit đang chạy với `master`, hiển thị checkout
   nguồn, lệnh `git pull`/build/cài/restart cho Linux và nút sao chép. Bản
   Linux không còn quảng cáo "một chạm"; mục Cập nhật trong Cài đặt được gỡ.

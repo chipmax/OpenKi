@@ -16,6 +16,8 @@ phát triển (UTC+7).
 - WSL dùng NAT + `localhostForwarding` thay cho relay/nft/portproxy, nên
   `http://127.0.0.1:8787` trên Windows vào thẳng gateway; bỏ dịch vụ relay cục
   bộ và firewall đi kèm.
+- Kiểm tra source trên dashboard dùng HTTP client trực tiếp thay vì lane proxy
+  (hết timeout khi proxy pool chưa sẵn sàng) và nhận checkout `~/src/OpenKi`.
 
 ### Thương hiệu
 

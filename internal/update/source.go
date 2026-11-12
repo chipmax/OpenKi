@@ -91,6 +91,8 @@ func SourceDir() string {
 	}
 	if home, err := os.UserHomeDir(); err == nil && home != "" {
 		candidates = append(candidates,
+			filepath.Join(home, "src", "OpenKi"),
+			filepath.Join(home, "OpenKi"),
 			filepath.Join(home, "src", "loimo"),
 			filepath.Join(home, "loimo"),
 			filepath.Join(home, "src", "loimo-source"),

@@ -82,7 +82,7 @@ func (s *Server) handleAdmin(w http.ResponseWriter, r *http.Request, rest string
 		writeJSON(w, 200, map[string]any{"ok": true, "has": has, "version": ver})
 	case rest == "update/source" && r.Method == http.MethodGet:
 		build := update.BuildInfo(Version)
-		st := update.CheckSource(update.HTTP{Timeout: 12 * time.Second, Client: lane.Client()}, build)
+		st := update.CheckSource(update.HTTP{Timeout: 12 * time.Second, Client: &http.Client{Timeout: 12 * time.Second}}, build)
 		writeJSON(w, 200, st)
 	case rest == "key/rotate" && r.Method == http.MethodPost:
 		key := store.GenerateKey("")

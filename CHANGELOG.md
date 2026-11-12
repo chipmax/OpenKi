@@ -3,6 +3,31 @@
 Các thay đổi của fork `chipmax/zen-gate-vi` so với upstream. Ngày theo giờ máy
 phát triển (UTC+7).
 
+## 2026-11-12
+
+### Giao diện
+
+- Tách cấu hình mạng khỏi trang Cài đặt: proxy thượng nguồn, danh sách proxy
+  tĩnh, cổng LAN và luân phiên đăng ký sing-box nằm ở trang "Mạng" riêng, có
+  nút lưu proxy độc lập.
+- Thẻ "Thông tin hệ thống" luôn hiển thị trên Tổng quan: hệ điều hành/nhân,
+  CPU/RAM, tiến trình, cổng nghe và lối ra; gateway trong WSL hiện rõ nền tảng
+  WSL thay vì chỉ "Linux".
+- Trang Agent chia hai nhóm Windows và WSL/Linux, đếm số đã cài/đang bật và
+  dùng chung logo thương hiệu cho các biến thể `-windows` (trước đây rơi về
+  biểu tượng mặc định).
+- Chỉ dựng lại trang đang xem mỗi 10 giây thay vì toàn bộ dashboard.
+
+### Sửa lỗi
+
+- Feed cập nhật trả 404 (chưa có release) được coi là "không có bản mới" thay
+  vì ghi cảnh báo mỗi 6 giờ.
+
+### Dọn dẹp
+
+- Xoá logo Agent không còn dùng trong bundle và hai icon 48/64 px không được
+  tham chiếu.
+
 ## 2026-11-11
 
 ### Giao diện

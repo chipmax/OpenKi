@@ -118,6 +118,11 @@
   .sysinfo .kv { display:flex; justify-content:space-between; gap:8px; border-bottom:1px dashed var(--hairline-soft); padding:4px 0; }
   .sysinfo .kv .k { color:var(--ink-mute); }
   .sysinfo .kv .v { color:var(--ink); text-align:right; word-break:break-all; font-variant-numeric:tabular-nums; }
+  .sysgrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px; }
+  .syssec { background:var(--panel-2); border:1px solid var(--hairline); border-radius:10px; padding:11px 13px; min-width:0; }
+  .syssec h4 { margin:0 0 6px; font-size:11px; font-weight:650; letter-spacing:.35px; text-transform:uppercase; color:var(--ink-mute); }
+  .membar { height:6px; border-radius:3px; background:var(--hairline); overflow:hidden; margin:3px 0 5px; }
+  .membar i { display:block; height:100%; background:var(--accent); border-radius:3px; }
 
   .cgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:10px; }
   .ccard { background:var(--panel-2); border:1px solid var(--hairline-soft); border-radius:var(--r-md); padding:12px 14px;
@@ -972,6 +977,7 @@
       <div class="page" id="page-providers"></div>
       <div class="page" id="page-usage"></div>
       <div class="page" id="page-logs"></div>
+      <div class="page" id="page-network"></div>
       <div class="page" id="page-settings"></div>
     </main>
   </div>
@@ -981,7 +987,7 @@
 
 <script>
 const $ = s => document.querySelector(s);
-const PAGES = [["dash","Tổng quan","dash"],["agents","Tương thích Agent","agents"],["models","Mô hình","models"],["providers","Kênh","providers"],["usage","Mức sử dụng","usage"],["logs","Nhật ký","logs"],["settings","Cài đặt","settings"]];
+const PAGES = [["dash","Tổng quan","dash"],["agents","Tương thích Agent","agents"],["models","Mô hình","models"],["providers","Kênh","providers"],["usage","Mức sử dụng","usage"],["logs","Nhật ký","logs"],["network","Mạng","cloud"],["settings","Cài đặt","settings"]];
 let cur = localStorage.getItem("zengate.page") || "dash";
 if (!PAGES.some(p=>p[0]===cur)) cur = "dash";
 let STATE = null;
@@ -1086,24 +1092,17 @@ const ICONS = {
 
 /* Agent id → key biểu tượng thẻ (key trong ICONS), id không rõ sẽ quay về biểu tượng phích cắm */
 const AGENT_ICONS = {
-  zcode:"terminal", opencode:"code", codex:"bot", claude:"sparkles", dsh:"waves",
-  crush:"heart", chatbox:"messageSquare", aider:"squareTerminal", qwen:"cloud", continue:"rotateCw",
-  workbuddy:"briefcase",
+  opencode:"code", codex:"bot", claude:"sparkles", dsh:"waves", omp:"terminal",
 };
 
-/* Logo thương hiệu chính thức của từng Agent (SVG nhúng) */
+/* Logo thương hiệu chính thức của từng Agent (SVG nhúng). The Windows variants
+   share the same brand: the old lookup used the full id and every "-windows"
+   card fell back to a generic icon. */
 const BRAND_LOGOS = {
-  zcode: { svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30"><path fill="#2D2D2D" stroke="#FFFFFF" stroke-width="0.6317" d="M24.51,28.51H5.49c-2.21,0-4-1.79-4-4V5.49c0-2.21,1.79-4,4-4h19.03c2.21,0,4,1.79,4,4v19.03 C28.51,26.72,26.72,28.51,24.51,28.51z"/><g fill="#FFFFFF"><path d="M15.47,7.1l-1.3,1.85c-0.2,0.29-0.54,0.47-0.9,0.47h-7.1V7.09C6.16,7.1,15.47,7.1,15.47,7.1z"/><polygon points="24.3,7.1 13.14,22.91 5.7,22.91 16.86,7.1 "/><path d="M14.53,22.91l1.31-1.86c0.2-0.29,0.54-0.47,0.9-0.47h7.09v2.33H14.53z"/></g></svg>`, neutral:false, wide:false },
   opencode: { svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#131010"></rect> <path d="M320 224V352H192V224H320Z" fill="#5A5858"></path> <path fill-rule="evenodd" clip-rule="evenodd" d="M384 416H128V96H384V416ZM320 160H192V352H320V160Z" fill="#FFFFFF"></path></svg>`, neutral:false, wide:false },
   codex: { svg:`<svg fill="currentColor" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>OpenAI</title><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>`, neutral:true, wide:false },
   claude: { svg:`<svg fill="#D97757" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Claude</title><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></svg>`, neutral:false, wide:false },
   dsh: { svg:`<svg fill="#5786FE" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>DeepSeek</title><path d="M23.748 4.651c-.254-.124-.364.113-.512.233-.051.04-.094.09-.137.137-.372.397-.806.657-1.373.626-.829-.046-1.537.214-2.163.848-.133-.782-.575-1.248-1.247-1.548-.352-.155-.708-.311-.955-.65-.172-.24-.219-.509-.305-.774-.055-.16-.11-.323-.293-.35-.2-.031-.278.136-.356.276-.313.572-.434 1.202-.422 1.84.027 1.436.633 2.58 1.838 3.393.137.094.172.187.129.323-.082.28-.18.553-.266.833-.055.179-.137.218-.328.14a5.5 5.5 0 0 1-1.737-1.179c-.857-.828-1.631-1.743-2.597-2.46a12 12 0 0 0-.689-.47c-.985-.957.13-1.743.387-1.836.27-.098.094-.433-.778-.428-.872.003-1.67.295-2.687.685a3 3 0 0 1-.465.136 9.6 9.6 0 0 0-2.883-.101c-1.885.21-3.39 1.1-4.497 2.622C.082 8.776-.231 10.854.152 13.02c.403 2.284 1.568 4.175 3.36 5.653 1.857 1.533 3.997 2.284 6.438 2.14 1.482-.085 3.132-.284 4.994-1.86.47.234.962.328 1.78.398.629.058 1.235-.031 1.705-.129.735-.155.684-.836.418-.961-2.155-1.004-1.682-.595-2.112-.926 1.095-1.295 2.768-3.598 3.284-6.733.05-.346.115-.834.108-1.114-.004-.171.035-.238.23-.257a4.2 4.2 0 0 0 1.545-.475c1.397-.763 1.96-2.016 2.093-3.517.02-.23-.004-.467-.247-.588M11.58 18.168c-2.088-1.642-3.101-2.183-3.52-2.16-.39.024-.32.472-.234.763.09.288.207.487.371.74.114.167.192.416-.113.603-.673.416-1.842-.14-1.897-.168-1.361-.801-2.5-1.86-3.301-3.306-.775-1.393-1.225-2.888-1.299-4.482-.02-.385.094-.522.477-.592a4.7 4.7 0 0 1 1.53-.038c2.131.311 3.946 1.264 5.467 2.774.868.86 1.525 1.887 2.202 2.89.72 1.066 1.494 2.082 2.48 2.915.348.291.626.513.892.677-.802.09-2.14.109-3.055-.615zm1.001-6.44a.306.306 0 0 1 .415-.287.3.3 0 0 1 .113.074.3.3 0 0 1 .086.214c0 .17-.136.307-.308.307a.303.303 0 0 1-.306-.307m3.11 1.596c-.2.081-.4.151-.591.16a1.25 1.25 0 0 1-.798-.254c-.274-.23-.47-.358-.551-.758a1.7 1.7 0 0 1 .015-.588c.07-.327-.007-.537-.238-.727-.188-.156-.426-.199-.689-.199a.6.6 0 0 1-.254-.078.253.253 0 0 1-.114-.358 1 1 0 0 1 .192-.21c.356-.202.767-.136 1.146.016.352.144.618.408 1.001.782.392.451.462.576.685.915.176.264.336.536.446.848.066.194-.02.353-.25.45"/></svg>`, neutral:false, wide:false },
-  crush: { svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 15"><path fill="#AC3EC4" d="M11 4h1v1h-1zM6 5h1v1h-1zM12 7h1v1h-1zM12 8h1v1h-1zM10 9h1v1h-1zM0 10h2v1h-2zM9 10h1v1h-1zM7 11h1v1h-1z"/><path fill="#F858F5" d="M8 4h3v1h-3zM2 5h4v1h-4zM7 5h4v1h-4zM1 6h11v1h-11zM1 7h11v1h-11zM1 8h3v1h-3zM5 8h2v1h-2zM8 8h2v1h-2zM11 8h1v1h-1zM2 9h2v1h-2zM8 9h1v1h-1zM3 10h2v1h-2zM6 10h3v1h-3z"/><path fill="#9330A5" d="M11 9h2v1h-2zM10 10h1v1h-1zM9 11h1v1h-1zM3 12h6v1h-6zM4 13h1v1h-1z"/><path fill="#CA4EDE" d="M2 4h3v1h-3zM7 4h1v1h-1zM1 5h1v1h-1zM11 5h2v1h-2zM0 6h1v1h-1zM12 6h1v1h-1zM0 7h1v1h-1zM0 8h1v1h-1zM10 8h1v1h-1zM0 9h2v1h-2zM4 9h4v1h-4zM9 9h1v1h-1zM2 10h1v1h-1zM5 10h1v1h-1zM4 11h3v1h-3z"/><path fill="#9B33AF" d="M11 10h1v1h-1zM1 11h3v1h-3zM11 11h1v1h-1zM2 12h1v1h-1zM3 13h1v1h-1zM5 13h2v1h-2zM5 14h3v1h-3z"/></svg>`, neutral:false, wide:false },
-  chatbox: { svg:`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M17.0674 3.26367L17.0674 2.26367H17.0674V3.26367ZM17.0674 18.0566V19.0566H17.0674L17.0674 18.0566ZM7.66211 18.0566V17.0566C7.42949 17.0566 7.20415 17.1377 7.02487 17.286L7.66211 18.0566ZM4.41895 20.7383H3.41895C3.41895 21.1256 3.64261 21.4781 3.99306 21.6431C4.3435 21.808 4.75768 21.7558 5.05618 21.509L4.41895 20.7383ZM4.41895 17.165H5.41895C5.41895 16.8637 5.28308 16.5785 5.04912 16.3886L4.41895 17.165ZM6.93359 3.26367V2.26367H6.93357L6.93359 3.26367ZM17.0674 3.26367L17.0674 4.26367C18.721 4.26372 20.0615 5.6042 20.0615 7.25781H21.0615H22.0615C22.0615 4.49957 19.8256 2.26375 17.0674 2.26367L17.0674 3.26367ZM21.0615 7.25781H20.0615V14.0625H21.0615H22.0615V7.25781H21.0615ZM21.0615 14.0625H20.0615C20.0615 15.7161 18.721 17.0566 17.0674 17.0566L17.0674 18.0566L17.0674 19.0566C19.8256 19.0566 22.0615 16.8207 22.0615 14.0625H21.0615ZM17.0674 18.0566V17.0566H7.66211V18.0566V19.0566H17.0674V18.0566ZM7.66211 18.0566L7.02487 17.286L3.78171 19.9676L4.41895 20.7383L5.05618 21.509L8.29934 18.8273L7.66211 18.0566ZM4.41895 20.7383H5.41895V17.165H4.41895H3.41895V20.7383H4.41895ZM4.41895 17.165L5.04912 16.3886C4.37038 15.8377 3.93945 15.0007 3.93945 14.0625H2.93945H1.93945C1.93945 15.6296 2.66288 17.0277 3.78877 17.9415L4.41895 17.165ZM2.93945 14.0625H3.93945V7.25781H2.93945H1.93945V14.0625H2.93945ZM2.93945 7.25781H3.93945C3.93945 5.6042 5.27994 4.26372 6.93362 4.26367L6.93359 3.26367L6.93357 2.26367C4.17542 2.26375 1.93945 4.49957 1.93945 7.25781H2.93945ZM6.93359 3.26367V4.26367H17.0674V3.26367V2.26367H6.93359V3.26367Z" fill="#228BE6"/> <path d="M9.13379 9.29883C9.83353 9.29883 10.4014 9.86667 10.4014 10.5664C10.4012 11.266 9.83346 11.833 9.13379 11.833C8.43421 11.8329 7.86731 11.266 7.86719 10.5664C7.86719 9.86673 8.43414 9.29893 9.13379 9.29883ZM14.8662 9.29883C15.566 9.29883 16.1338 9.86667 16.1338 10.5664C16.1337 11.266 15.5659 11.833 14.8662 11.833C14.1666 11.8329 13.5997 11.266 13.5996 10.5664C13.5996 9.86673 14.1666 9.29893 14.8662 9.29883Z" fill="#228BE6"/> </svg>`, neutral:false, wide:false },
-  aider: { svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60"><style>@font-face{font-family:G;src:url(data:font/woff2;base64,AAEAAAAKAIAAAwAgT1MvMlazYLcAAAEoAAAAVmNtYXAA/gE1AAABkAAAAExnYXNwAC8ABwAABiAAAAAMZ2x5Zs9YpfUAAAHsAAAEFGhlYWTupA6bAAAArAAAADZoaGVhBQwBxAAAAOQAAAAkaG10eAH0AFMAAAGAAAAADmxvY2ED2AKwAAAB3AAAAA5tYXhwABMAcQAAAQgAAAAgcG9zdP+XABQAAAYAAAAAIAABAAAAAUzMa9pTUl8PPPUACwPoAAAAAMb6vv4AAAAAxvq+/gAAADIBkAK8AAAACAACAAAAAAAAAAEAAAMg/2oAWgH0AAAAZAGQAAEAAAAAAAAAAAAAAAAAAAABAAEAAAAGAHAADAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAQH0AfQABQAAAooCvAAAAIwCigK8AAAB4AAxAQIAAAIABgkAAAAAAAAAAAABAAAAAAAAAAAAAAAAUGZFZABAAGEAcgMg/zgAWgMgAJYAAAABAAAAAAAAAfQAIQAAAAAAAAAyAAAAAAAAAAIAAAADAAAAFAADAAEAAAAUAAQAOAAAAAoACAACAAIAYQBlAGkAcv//AAAAYQBkAGkAcv///6D/nv+b/5MAAQAAAAAAAAAAAAAAAAAAAGsA+gFjAbYCCgAAAAYAAAAyAZAB9AAPABkAIQAxADkASQAANzQ3NjMyFxYVFAcGIyInJjY0NjMyFhQGIyIkNDYyFhQGIjc0NzYzMhcWFRQHBiMiJyY2NDYyFhQGIiU0NzYzMhcWFRQHBiMiJyYyDxaKlxAIDxaKlxAIyBoxMhkZMjH+7BM+ExM+Hw8WipcQCA8WipcQCPoTPhMTPv7zDxN0gQ4HDxN0gQ4HSw8EBgkEDA8EBgkEXyIICCIICSAJCSAJfQ8EBgkEDA8EBgkEYCAJCSAJfRAEBQkEDBAEBQkEAAAKAAAAMgGQArwADwAZACEAKQAxADsAQwBTAFsAYwAANzQ3NjMyFxYVFAcGIyInJjY0NjMyFhQGIyIkNDYyFhQGIiQ0NjIWFAYiJDQ2MhYUBiI2NDYzMhYUBiMiJDQ2MhYUBiI3NDc2MzIXFhUUBwYjIicmNjQ2MhYUBiImNDYyFhQGIjIPFoqXEAgPFoqXEAjIGjEyGRkyMf7sEz4TEz4BGRM+ExM+/sETPhMTPucaMTIZGTIx/uwTPhMTPh8PFoqXEAgPFoqXEAj6Ez4TEz4TEz4TEz5LDwQGCQQMDwQGCQRfIggIIggJIAkJIAltIAkJIAkJIAkJIAlsIggIIggJIAkJIAl9DwQGCQQMDwQGCQRgIAkJIAltIAkJIAkABgAAADIBkAH0AA8AFwAnAC8ANwBHAAA3NDc2MzIXFhUUBwYjIicmJjQ2MhYUBiInNDc2MzIXFhUUBwYjIicmJDQ2MhYUBiIkNDYyFhQGIjc0NzYzMhcWFRQHBiMiJyYyDxN0gQ4HDxN0gQ4HMhM+ExM+Ew8Yoa0SCQ8Yoa0SCQEsEz4TEz7+wRM+ExM+Hw8TdIEOBw8TdIEOB0sQBAUJBAwQBAUJBGAgCQkgCX0PBAYJBAwPBAYJBGAgCQkgCQkgCQkgCX0QBAUJBAwQBAUJBAAABgAyADIBXgK8AA8AFwAfACcALwA3AAA3NDc2MzIXFhUUBwYjIicmNjQ2MhYUBiImNDYyFhQGIiY0NjIWFAYiJjQ2MhYUBiI2NDYyFhQGIjIPE3SBDgcPE3SBDgdkEz4TEz4TEz4TEz4TEz4TEz5FGmIaGmIYEz4TEz5LEAQFCQQMEAQFCQRgIAkJIAltIAkJIAltIAkJIAlsIggIIgjRIAkJIAkAAAcAAAAyAZAB9AAHAA8AFwAfACcALwA3AAA2NDYyFhQGIiY0NjIWFAYiJjQ2MhYUBiI2NDYyFhQGIiQ0NjIWFAYiNjQ2MhYUBiImNDYyFhQGIjITPhMTPhMTPhMTPhMTPhMTPucTPhMTPv7zGmIaGmJKIIggIIi2Ez4TEz47IAkJIAltIAkJIAltIAkJIAltIAkJIAkIIggIIghsIggIIggJIAkJIAkAAAMAAAAAAAD/lAATAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAACADAAA///AAI=) format("woff2")}text{font-family:G,monospace;font-size:60px;fill:#14B014;text-anchor:middle;dominant-baseline:middle;filter:url(#g)}</style><defs><filter id="g" x="-40%" y="-30%" width="180%" height="160%"><feGaussianBlur stdDeviation="7 1" result="b"/><feColorMatrix in="b" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0" result="l"/><feComposite in="SourceGraphic" in2="l" operator="over"/></filter></defs><text x="100" y="37.2">aider</text></svg>`, neutral:false, wide:true },
-  qwen: { svg:`<svg fill="#6950EF" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>QWen</title><path d="M23.919 14.545 20.817 9.17l1.47-2.544a.56.56 0 0 0 0-.566l-1.633-2.83a.57.57 0 0 0-.49-.283h-6.207L12.487.402a.57.57 0 0 0-.49-.284H8.732a.56.56 0 0 0-.49.284L5.139 5.775h-2.94a.56.56 0 0 0-.49.284L.077 8.887a.56.56 0 0 0 0 .567L3.18 14.83l-1.47 2.545a.56.56 0 0 0 0 .566l1.634 2.83a.57.57 0 0 0 .49.283h6.205l1.47 2.545a.57.57 0 0 0 .49.284h3.266a.57.57 0 0 0 .49-.284l3.104-5.375h2.94a.57.57 0 0 0 .49-.283l1.634-2.828a.55.55 0 0 0-.004-.568M8.733.686l1.634 2.828-1.634 2.828H21.8L20.164 9.17H7.425L5.63 6.06Zm1.306 19.801-6.205-.002 1.634-2.83h3.265L2.201 6.344h3.267q3.182 5.517 6.367 11.032zm10.124-5.66L18.53 12l-6.532 11.315-1.634-2.83c2.129-3.673 4.25-7.351 6.373-11.028h3.592l3.102 5.374z"/></svg>`, neutral:false, wide:false },
-  continue: { svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="28 29 51 47" fill="currentColor"><path d="M68.6,34.7l-2.7,4.7l6.8,11.9c0.1,0.1,0.1,0.2,0.1,0.3s0,0.2-0.1,0.3l-6.8,11.9l2.7,4.7l9.7-16.9L68.6,34.7 L68.6,34.7z M64.9,38.8l2.7-4.7h-5.4l-2.7,4.7H64.9L64.9,38.8z M59.4,40l6.3,11h5.4l-6.3-11H59.4z M64.9,63.1l6.3-11h-5.4l-6.3,11 H64.9z M59.4,64.4l2.7,4.7h5.4l-2.7-4.7H59.4L59.4,64.4z M41.1,70.2c-0.1,0-0.2,0-0.3-0.1s-0.2-0.1-0.2-0.2L33.7,58h-5.4L38,74.9 h19.5l-2.7-4.7H41.1L41.1,70.2z M55.8,69.6l2.7,4.7l2.7-4.7l-2.7-4.7L55.8,69.6L55.8,69.6z M57.5,64.3H44.8L42.1,69h12.6L57.5,64.3z M43.8,63.7l-6.3-11l-2.7,4.7l6.3,11C41.1,68.4,43.8,63.7,43.8,63.7z M28.3,56.8h5.4l2.7-4.7H31C31,52.1,28.3,56.8,28.3,56.8z M40.5,33.3c0-0.1,0.1-0.2,0.2-0.2c0.1,0,0.2-0.1,0.3-0.1h13.7l2.7-4.7H38l-9.7,16.9h5.4L40.5,33.3L40.5,33.3z M36.4,51.1l-2.7-4.7 h-5.4l2.7,4.7C31,51.1,36.4,51.1,36.4,51.1z M41,34.8l-6.3,11l2.7,4.7l6.3-11L41,34.8z M54.8,34.2H42.1l2.7,4.7h12.7L54.8,34.2z M58.5,38.3l2.7-4.7l-2.7-4.7l-2.7,4.7L58.5,38.3z"/> <path d="M176.5,42.5c-3.6,0-6.5,1.7-8.4,4.7h-0.5v-3.7h-4.4v26.7h4.4V54.6c0-4.7,3.9-8.1,8.4-8.1s7.3,3.3,7.3,7.8v16 h4.4v-16C187.6,47.5,183.3,42.5,176.5,42.5L176.5,42.5z"/> <path d="M144.5,42.4c-8.4,0-14.4,6-14.4,14.4s5.9,14.5,14.4,14.5s14.4-6,14.4-14.5S152.8,42.4,144.5,42.4z M144.5,67.3 c-5.8,0-10-4.4-10-10.5s4.1-10.4,10-10.4s9.9,4.4,9.9,10.4S150.2,67.3,144.5,67.3z"/> <path d="M122.1,58.7c-1.8,5-7,8.7-12.7,8.7c-8.4,0-14.5-6.6-14.5-15.8s6-15.7,14.5-15.7c5.9,0,11.2,3.9,12.8,9.3h4.9 c-1.8-7.8-9.3-13.6-17.7-13.6c-11.2,0-19.3,8.4-19.3,20c-0.1,11.6,8.1,20,19.3,20c8.4,0,15.8-5.4,17.6-12.9L122.1,58.7L122.1,58.7z" /> <path d="M199.5,63.2V47h6.9v-3.5h-6.9l0.1-8.6h-3.4l-1,8.6h-4.3V47h4.3v16.4c0,4.7,2.9,7.9,7.4,7.9 c1.3,0,3.1-0.3,4.3-0.7V67c-1,0.3-2.4,0.5-3.2,0.5C201.1,67.5,199.5,65.7,199.5,63.2L199.5,63.2z"/> <path d="M274.7,59.1c0,4.7-3.9,8.1-8.4,8.1s-7.2-3.2-7.2-7.8V43.5h-4.4v15.9c0,6.8,4.3,11.8,11.1,11.8 c3.5,0,6.5-1.7,8.4-4.6h0.5v3.7h4.4V43.5h-4.4L274.7,59.1L274.7,59.1z"/> <path d="M238.1,42.5c-3.6,0-6.5,1.7-8.4,4.7h-0.5v-3.7h-4.4v26.7h4.4V54.6c0-4.7,3.9-8.1,8.4-8.1s7.3,3.3,7.3,7.8v16 h4.4v-16C249.3,47.5,244.9,42.5,238.1,42.5L238.1,42.5z"/> <rect x="212.9" y="43.5" width="4.4" height="26.7"/> <path d="M311.7,56.6c0-8.2-5.9-14.1-14-14.1s-14.2,5.9-14.2,14.1c0,8.6,6,14.8,14.4,14.8c5.9,0,10.8-2.8,12.9-7.3 l-3.6-1.8c-1.7,3.2-5.2,5.2-9.2,5.2c-5.5,0-9.4-3.6-10-9h23.7C311.7,57.7,311.7,57.1,311.7,56.6z M288,54.5c0.7-4.8,4.5-8,9.4-8 s8.8,3.2,9.6,8H288L288,54.5z"/> <path d="M215.1,32.2c-1.9,0-3.2,1.3-3.2,3.1s1.3,3.2,3.2,3.2s3.1-1.3,3.1-3.2S216.9,32.2,215.1,32.2z"/></svg>`, neutral:true, wide:false },
-  workbuddy: { svg:`<svg fill="#6C4DFF" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>CodeBuddy</title><path d="M18.636.289a1 1 0 0 0-.11 0c-.18.01-.195.02-.442.24-.716.636-1.722 2.546-2.703 5.137l-.274.72-.499.16c-1.554.498-2.934 1.128-4.157 1.893-1.174.73-1.81 1.207-2.768 2.056l-.578.51-.262-.045c-2.528-.447-4.8-.612-5.843-.43-.414.077-.757.216-.862.35-.092.12-.138.263-.138.474 0 .182.034.414.098.727.265 1.236.952 2.854 2.035 4.78l.7 1.236-.023.466c-.027.499 0 1.27.06 1.793.036.319.031.327-.135.516-.565.647-.708 1.676-.408 2.84h5.364l-.33-.57c-.64-1.108-.96-1.663-1.134-2.177a5.46 5.46 0 0 1 1.564-5.84c.408-.358.962-.678 2.072-1.32l6.38-3.683c1.11-.64 1.665-.96 2.18-1.134A5.46 5.46 0 0 1 24 10.275V6.462l-.117-.06-.504-.25-.357-.662c-.924-1.702-2.41-3.696-3.477-4.666-.4-.364-.655-.517-.91-.535M11.57 17.634a1.26 1.26 0 0 1 1.722.462l1.358 2.35c.842 1.455-1.341 2.717-2.183 1.262l-1.358-2.352a1.26 1.26 0 0 1 .461-1.722m6.802-3.926a1.26 1.26 0 0 1 1.721.46l1.358 2.352c.84 1.455-1.343 2.715-2.183 1.26l-1.358-2.35a1.26 1.26 0 0 1 .462-1.722"/></svg>`, neutral:false, wide:false },
 };
 
 /* Khối chỉ thị trượt của điều khiển phân đoạn: di chuyển mượt theo nút được chọn */
@@ -1191,16 +1190,102 @@ function render(){ if(!STATE){ skeleton(); return; } const s=STATE;
   $("#side-models").textContent = lane.filter(m=>m.state==="available").length + "/" + lane.length;
   $("#side-ver").textContent = s.version || "";
   $("#egress-foot").textContent = s.egress&&s.egress.ip ? `${s.egress.ip} (${s.egress.country||"?"})` : "Không rõ lối ra";
-  renderDash(s); renderAgents(s); renderModels(s); renderProviders(s); renderUsage(s); renderSettings(s);
+  // Only the visible page is rebuilt. The old all-pages pass constructed the
+  // full model grid, provider wall and agent cards every ten seconds even when
+  // the user was reading the log or settings page; switching pages still calls
+  // render() and paints the destination from the same STATE snapshot.
+  if (cur === "dash") { renderDash(s); renderDashExtras(s); }
+  else if (cur === "agents") renderAgents(s);
+  else if (cur === "models") renderModels(s);
+  else if (cur === "providers") renderProviders(s);
+  else if (cur === "usage") renderUsage(s);
+  else if (cur === "logs") renderLogs();
+  else if (cur === "network") renderNetwork(s);
+  else if (cur === "settings") renderSettings(s);
+  if (cur !== "models" && tickTimer) { clearInterval(tickTimer); tickTimer = 0; }
   // Con trượt của điều khiển phân đoạn phải nhờ JS đo chiều rộng mới vào đúng vị trí: phiên bản đăng nhập ở trang「API tuỳ chỉnh」, chế độ nhiệt ở trang tổng quan,
   // trước đây chỉ trang nhật ký/cài đặt mới gọi nó, seg trên các trang khác cứ luôn đội con trượt mặc định 40px.
   initSegs();
-  if (cur === "logs") renderLogs();
   logTimer = syncLogTimer(logTimer);
-  renderDashExtras(s);
 }
 
 /* ---- Tổng quan ---- */
+function fmtBytes(n){
+  n = Number(n);
+  if(!isFinite(n) || n <= 0) return "—";
+  const units = ["B","KB","MB","GB","TB"];
+  let i = 0;
+  while(n >= 1024 && i < units.length-1){ n /= 1024; i++; }
+  return (i===0 ? n.toFixed(0) : n.toFixed(1)) + " " + units[i];
+}
+function platformLabel(p){
+  return {windows:"Windows", wsl:"WSL / Linux", linux:"Linux", darwin:"macOS"}[p] || p || "—";
+}
+/* Thẻ thông tin hệ thống: gom các trường máy chủ/mạng vốn rải rác trong phần
+   thu gọn cũ thành bốn khối đọc được, để người dùng WSL thấy ngay gateway
+   đang chạy ở đâu và tài nguyên nào đang bị chiếm. */
+function systemInfoCard(s){
+  const sys = s.system || {};
+  const total = Number(sys.memoryTotal) || 0;
+  const avail = Number(sys.memoryAvailable) || 0;
+  const used = total > 0 ? Math.max(0, total - avail) : 0;
+  const pct = total > 0 ? Math.min(100, Math.round(used / total * 100)) : 0;
+  const started = sys.startedAt || "—";
+  const kv = (k,v,mono)=>`<div class="kv"><span class="k">${esc(k)}</span><span class="v${mono?" mono":""}">${v==null||v===""?"—":esc(String(v))}</span></div>`;
+  return `<div class="card" id="sysinfo-card">
+    <h3>Thông tin hệ thống <span class="muted" style="font-size:11px">${sys.platform==="wsl"?"Gateway đang chạy trong WSL · Agent Windows và WSL được tách riêng":"Thông số máy đang chạy gateway"}</span></h3>
+    <div class="sysgrid">
+      <section class="syssec">
+        <h4>Hệ điều hành</h4>
+        <div class="sysinfo" style="grid-template-columns:1fr">
+          ${kv("Nền tảng", platformLabel(sys.platform))}
+          ${kv("Hệ điều hành", sys.os)}
+          ${kv("Phiên bản", sys.osVersion)}
+          ${kv("Nhân", sys.kernel, true)}
+          ${kv("Kiến trúc", sys.arch, true)}
+          ${sys.platform==="wsl"?kv("Bản WSL", sys.wslDistro || "WSL 2"):""}
+          ${kv("Hostname", sys.hostname, true)}
+          ${kv("Người dùng", sys.user)}
+        </div>
+      </section>
+      <section class="syssec">
+        <h4>Phần cứng</h4>
+        <div class="sysinfo" style="grid-template-columns:1fr">
+          ${kv("CPU", sys.cpu || sys.cpuModel)}
+          ${kv("Số luồng", sys.cpuThreads)}
+          ${kv("RAM", fmtBytes(total))}
+          ${kv("Khả dụng", fmtBytes(avail))}
+          ${kv("Đã dùng", total>0?`${fmtBytes(used)} (${pct}%)`:"—")}
+          ${total>0?`<div class="membar"><i style="width:${pct}%"></i></div>`:""}
+          ${kv("Go", sys.goVersion, true)}
+          ${kv("GOMAXPROCS", sys.gomaxprocs)}
+        </div>
+      </section>
+      <section class="syssec">
+        <h4>Tiến trình</h4>
+        <div class="sysinfo" style="grid-template-columns:1fr">
+          ${kv("Phiên bản", s.version, true)}
+          ${kv("PID", sys.pid)}
+          ${kv("Khởi động", started)}
+          <div class="kv"><span class="k">Đã chạy</span><span class="v" id="uptime-val">${s.uptimeSec!=null?fmtUptime(s.uptimeSec):esc(s.uptime||"—")}</span></div>
+          ${kv("Thư mục dữ liệu", s.dataDir, true)}
+          ${kv("Tệp cấu hình", sys.configPath, true)}
+        </div>
+      </section>
+      <section class="syssec">
+        <h4>Mạng</h4>
+        <div class="sysinfo" style="grid-template-columns:1fr">
+          ${kv("Cổng nghe", s.port)}
+          ${kv("Địa chỉ LAN", s.lanBaseURL || "Chỉ loopback (127.0.0.1)")}
+          ${kv("Lối ra", s.egress&&s.egress.ip ? `${s.egress.ip} (${s.egress.country||"?"})` : "Không rõ")}
+          ${kv("Proxy", proxyLabel(s.settings.proxyMode, s.settings.proxyURL))}
+          ${kv("Phạm vi Agent", s.settings.agentScope)}
+          ${kv("Mở LAN", s.settings.allowLan?"Bật":"Tắt")}
+        </div>
+      </section>
+    </div>
+  </div>`;
+}
 function renderDash(s){
   const laneModels = s.models.filter(m=>!m.custom);
   const avail = laneModels.filter(m=>m.state==="available" && !m.hidden).length;
@@ -1308,19 +1393,9 @@ function renderDash(s){
           <h3>Mức sử dụng mô hình hôm nay</h3>
           <div id="dash-today"></div>
         </div>
-        <details class="card fold">
-          <summary>Thông tin hệ thống</summary>
-          <div class="sysinfo" style="grid-template-columns:1fr">
-            <div class="kv"><span class="k">Phiên bản</span><span class="v mono">${esc(s.version)}</span></div>
-            <div class="kv"><span class="k">Đã chạy</span><span class="v" id="uptime-val">${s.uptimeSec!=null ? fmtUptime(s.uptimeSec) : esc(s.uptime)}</span></div>
-            <div class="kv"><span class="k">Thư mục dữ liệu</span><span class="v mono" style="font-size:11px">${esc(s.dataDir)}</span></div>
-            <div class="kv"><span class="k">Đầu ra</span><span class="v mono">${esc(s.egress&&s.egress.ip ? s.egress.ip+" ("+(s.egress.country||"?")+")" : "Không rõ")}</span></div>
-            <div class="kv"><span class="k">Proxy</span><span class="v">${esc(proxyLabel(s.settings.proxyMode, s.settings.proxyURL))}</span></div>
-            <div class="kv"><span class="k">Khay hệ thống / Thông báo</span><span class="v">${s.settings.closeToTray?"Bật":"Tắt"} / ${s.settings.notifications?"Bật":"Tắt"}</span></div>
-          </div>
-        </details>
       </div>
-    </div>`;
+    </div>
+    ${systemInfoCard(s)}`;
 
   // Bàn làm việc nhiệm vụ bước tiếp theo: trạng thái suy ra từ dữ liệu thực, làm xong sẽ tự động đánh dấu tích.
   const agentsOn = s.agents.filter(a=>a.enabled).length;
@@ -1472,40 +1547,92 @@ function renderDashExtras(s){
 }
 
 /* ---- Tuỳ biến Agent ---- */
+function agentBaseID(id){ return String(id||"").replace(/-windows$/, ""); }
+function agentBrand(id){
+  const base = agentBaseID(id);
+  return BRAND_LOGOS[base] || BRAND_LOGOS[id] || null;
+}
+function agentIcon(id){
+  const base = agentBaseID(id);
+  return AGENT_ICONS[base] || AGENT_ICONS[id] || "agents";
+}
+const AGENT_GROUP_META = {
+  windows: { label: "Windows", note: "Agent cài trên Windows; cấu hình nằm trong hồ sơ Windows" },
+  wsl:     { label: "WSL / Linux", note: "Agent cài trong WSL; cấu hình nằm trong Linux" },
+  linux:   { label: "Linux", note: "Agent cài trên máy Linux này" },
+  darwin:  { label: "macOS", note: "Agent cài trên máy macOS này" },
+  host:    { label: "Máy này", note: "Agent cài trên máy đang chạy gateway" },
+};
+function agentGroupOf(a, s){
+  if(a.platform) return a.platform;
+  if(String(a.id||"").endsWith("-windows")) return "windows";
+  return (s.system && s.system.platform) || "host";
+}
 function renderAgents(s){
   const el = $("#page-agents");
   el.innerHTML = `<h2 class="pt">Tương thích Agent <span class="sub">Sau khi bật, bộ chọn mô hình của Agent tương ứng sẽ xuất hiện mô hình miễn phí; file cấu hình được sao lưu trước, tắt đi sẽ khôi phục lại</span></h2>
-    <div class="agrid" id="agent-list"></div>`;
+    <div id="agent-list"></div>`;
   const box = el.querySelector("#agent-list");
+  const hostPlatform = (s.system && s.system.platform) || "";
+  let order;
+  if(hostPlatform === "wsl") order = ["windows", "wsl"];
+  else if(hostPlatform) order = [hostPlatform];
+  else order = [...new Set(s.agents.map(a=>agentGroupOf(a,s)))];
   for(const a of s.agents){
-    const d = document.createElement("div");
-    d.className = "acard" + (a.enabled?" st-on":"") + (!a.installed?" st-noinst":"");
-    const lg = BRAND_LOGOS[a.id];
-    d.innerHTML = `
-      <div class="ahead">
-        <div class="aicon${lg?(lg.wide?" lg-wide":"")+(lg.neutral?" lg-neutral":""):""}">${lg?lg.svg:icon(AGENT_ICONS[a.id]||"agents")}</div>
-        <div class="att">
-          <div class="aname">${esc(a.name)}</div>
-          ${a.version?`<div class="aver">${esc(a.version)}</div>`:""}
+    const p = agentGroupOf(a, s);
+    if(!order.includes(p)) order.push(p);
+  }
+  let html = "";
+  for(const platform of order){
+    const meta = AGENT_GROUP_META[platform] || { label: platform, note: "" };
+    const list = s.agents.filter(a=>agentGroupOf(a,s)===platform)
+      .sort((a,b)=>Number(b.installed)-Number(a.installed) || String(a.name).localeCompare(String(b.name)));
+    if(!list.length && hostPlatform !== "wsl") continue;
+    const installed = list.filter(a=>a.installed).length;
+    const enabled = list.filter(a=>a.enabled).length;
+    html += `<div class="msec"><span class="dot ${enabled?"on":"off"}"></span>
+      <span class="chname">${esc(meta.label)}</span>
+      <span class="chdesc">${esc(meta.note)}</span>
+      <span class="chcount">${installed}/${list.length} đã cài · ${enabled} đang bật</span></div>`;
+    if(!list.length){
+      html += `<div class="muted" style="font-size:12px;padding:4px 2px var(--gap-card)">Không phát hiện Agent nào trên ${esc(meta.label)}.</div>`;
+      continue;
+    }
+    html += `<div class="agrid">`;
+    for(const a of list){
+      const lg = agentBrand(a.id);
+      html += `<div class="acard${a.enabled?" st-on":""}${a.installed?"":" st-noinst"}">
+        <div class="ahead">
+          <div class="aicon${lg?(lg.wide?" lg-wide":"")+(lg.neutral?" lg-neutral":""):""}">${lg?lg.svg:icon(agentIcon(a.id))}</div>
+          <div class="att">
+            <div class="aname">${esc(a.name)}</div>
+            ${a.version?`<div class="aver">${esc(a.version)}</div>`:""}
+          </div>
         </div>
-      </div>
-      <div class="ads">${esc(a.detail||"")}</div>
-      ${a.warn?`<div class="warnline">⚠ ${esc(a.warn)}</div>`:""}
-      <div class="afoot">
-        ${a.enabled?`<span class="pill ok">Đã bật</span>`:(a.installed?`<span class="pill unknown">Chưa bật</span>`:`<span></span>`)}
-        <button class="tgl${a.enabled?" on":""}" role="switch" aria-checked="${a.enabled?"true":"false"}"
-          title="${a.installed?(a.enabled?"Đóng":"Bật"):("Chưa phát hiện "+esc(a.name))}"></button>
+        <div class="ads">${esc(a.detail||"")}</div>
+        ${a.warn?`<div class="warnline">⚠ ${esc(a.warn)}</div>`:""}
+        <div class="afoot">
+          ${a.enabled?`<span class="pill ok">Đã bật</span>`:(a.installed?`<span class="pill unknown">Chưa bật</span>`:`<span></span>`)}
+          <button class="tgl${a.enabled?" on":""}" role="switch" aria-checked="${a.enabled?"true":"false"}"
+            data-agent-id="${esc(a.id)}" data-enabled="${a.enabled?1:0}" data-installed="${a.installed?1:0}"
+            title="${a.installed?(a.enabled?"Đóng":"Bật"):("Chưa phát hiện "+esc(a.name))}"></button>
+        </div>
       </div>`;
-    const btn = d.querySelector(".tgl");
-    btn.disabled = !a.installed;
+    }
+    html += `</div>`;
+  }
+  box.innerHTML = html;
+  box.querySelectorAll("[data-agent-id]").forEach(btn=>{
+    btn.disabled = btn.dataset.installed !== "1";
     btn.onclick = async ()=>{
+      const id = btn.dataset.agentId;
+      const wasEnabled = btn.dataset.enabled === "1";
       btn.disabled = true;
-      const j = await api(`/agent/${a.id}/${a.enabled?"disable":"enable"}`);
-      if(j){ toast(a.enabled?"Đã tắt, cấu hình đã khôi phục":"Đã bật, có hiệu lực sau khi khởi động lại Agent tương ứng"); refresh(); }
+      const j = await api(`/agent/${encodeURIComponent(id)}/${wasEnabled?"disable":"enable"}`);
+      if(j){ toast(wasEnabled?"Đã tắt, cấu hình đã khôi phục":"Đã bật, có hiệu lực sau khi khởi động lại Agent tương ứng"); refresh(); }
       else { btn.disabled = false; }
     };
-    box.appendChild(d);
-  }
+  });
 }
 
 /* ---- Mô hình ---- */
@@ -4181,6 +4308,216 @@ function logQuery(){
 const settingsDirty = new Set();
 function clearSettingsDirty(){ settingsDirty.clear(); }
 
+const netDirty = new Set();
+function renderNetwork(s){
+  const el = $("#page-network");
+  if(!el.dataset.rendered){
+    el.innerHTML = `
+      <h2 class="pt">Mạng <span class="sub">Proxy thượng nguồn, lối ra và luân phiên đăng ký——tách khỏi tham số cơ bản để không phải cuộn qua cấu hình mô hình</span></h2>
+      <div class="card" id="net-overview">
+        <h3>Lối ra hiện tại</h3>
+        <div class="sysinfo" style="grid-template-columns:repeat(auto-fit,minmax(210px,1fr))">
+          <div class="kv"><span class="k">IP đầu ra</span><span class="v mono" id="net-egress">—</span></div>
+          <div class="kv"><span class="k">Quốc gia</span><span class="v" id="net-country">—</span></div>
+          <div class="kv"><span class="k">Chế độ</span><span class="v" id="net-mode">—</span></div>
+          <div class="kv"><span class="k">Cổng nghe</span><span class="v mono">${s.port}</span></div>
+          <div class="kv"><span class="k">Địa chỉ LAN</span><span class="v mono" id="net-lan-url">—</span></div>
+        </div>
+      </div>
+      <div class="card" id="net-proxy">
+        <h3>Proxy thượng nguồn</h3>
+        <div class="row">
+          <div class="dim" style="display:inline-flex; align-items:center; gap:8px">Chế độ proxy <span id="set-proxy"></span></div>
+          <input type="text" id="set-proxy-url" placeholder="http://127.0.0.1:7890" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:220px;font-family:var(--mono)">
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="ghost" id="btn-proxy-test">Kiểm tra kết nối thượng nguồn</button>
+          <span class="muted" style="font-size:12px" id="proxy-test-result"></span>
+        </div>
+        <div style="margin-top:12px">
+          <div class="dim" style="margin-bottom:6px">Danh sách proxy tĩnh (mỗi dòng một URL; dùng với chế độ 「Xoay vòng danh sách proxy tĩnh」)</div>
+          <textarea id="set-proxy-pool" rows="3" placeholder="socks5h://127.0.0.1:13001&#10;http://user:pass@127.0.0.1:7890&#10;direct" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:100%;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
+          <div class="muted" style="font-size:11.5px;margin-top:5px">Mỗi hội thoại bám một đầu ra (giữ cache tiền tố); khi đầu ra bị giới hạn, yêu cầu tự thử đầu ra khác. Hỗ trợ <code class="k">http(s)://</code>, <code class="k">socks5(h)://</code>, <code class="k">direct</code>.</div>
+        </div>
+        <div class="row" style="margin-top:12px; gap:14px; flex-wrap:wrap">
+          <label class="dim" style="display:inline-flex; align-items:center; gap:6px" title="Mặc định 300.000 token/phút mỗi exit; 0 = tắt governor">Token/phút mỗi exit
+            <input type="number" id="set-exit-tpm" min="0" max="1000000" step="1000" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:120px;font-family:var(--mono)">
+          </label>
+          <label class="dim" style="display:inline-flex; align-items:center; gap:6px">Fingerprint
+            <select id="set-fingerprint" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px">
+              <option value="auto">auto (chỉ làn Zen)</option>
+              <option value="off">off (tắt tiêm)</option>
+              <option value="force">force (mọi kênh)</option>
+            </select>
+          </label>
+        </div>
+        <div class="muted" style="font-size:11.5px;margin-top:5px">0 = tắt governor token theo exit. Fingerprint đổi nóng; dùng <code class="k">gateprobe</code> trước khi chuyển sang <code class="k">off</code>.</div>
+        <div class="muted" style="font-size:11.5px;margin-top:3px">Fingerprint hash: <code class="k" id="net-fp-hash">—</code></div>
+        <div class="row" style="margin-top:12px">
+          <button class="act" id="net-save">Lưu proxy</button>
+          <span class="muted" style="font-size:12px">Lưu là áp dụng nóng ngay cho các yêu cầu suy luận/danh sách/dò kiểm tra.</span>
+        </div>
+      </div>
+      <div class="card" id="net-lan">
+        <h3>Mạng LAN</h3>
+        <div class="switch"><div><span class="nm">Cho phép truy cập API qua mạng LAN</span><div class="ds">Các máy khác cùng dải mạng có thể dùng <code class="k">http://&lt;IP của máy này&gt;:${s.port}/v1</code> để gọi interface, vẫn phải kèm API Key; bảng điều khiển quản trị và interface /admin không bị ảnh hưởng, luôn chỉ chấp nhận máy này. Chuyển đổi sẽ nghe lại, yêu cầu đang xuất theo luồng sẽ bị ngắt.</div></div>
+          <button class="act off" id="tg-lan">Đóng</button></div>
+        <div id="net-lan-box" style="margin-top:8px"></div>
+      </div>
+      <div class="card" id="net-subs">
+        <h3>Luân phiên đăng ký proxy <span class="muted" style="font-size:11px">Sidecar sing-box · mỗi yêu cầu đổi một IP đầu ra</span></h3>
+        <div class="row" style="align-items:center; gap:10px; flex-wrap:wrap">
+          <span id="subs-status"></span>
+          <label class="dim" style="display:inline-flex; align-items:center; gap:6px">Đường dẫn sing-box
+            <input type="text" id="subs-path" placeholder="Để trống sẽ dùng bản chính thức được tải tự động" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:250px;font-family:var(--mono)">
+          </label>
+          <button class="ghost" id="btn-subs-path">Lưu đường dẫn</button>
+          <button class="ghost" id="btn-subs-download">Tải sing-box</button>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div style="flex:1">
+            <div class="dim" style="font-size:12px;margin-bottom:4px">URL đăng ký proxy (mỗi dòng một URL, hỗ trợ node vless / vmess / ss / trojan / anytls / hy2 / tuic)</div>
+            <textarea id="subs-urls" rows="3" style="width:100%;background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;font-family:var(--mono);font-size:12px" placeholder="https://example.com/api/v1/client/subscribe?token=..."></textarea>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px; gap:10px; flex-wrap:wrap">
+          <button class="act" id="btn-subs-apply">Lưu và bật luân phiên</button>
+          <button class="ghost" id="btn-subs-refresh">Làm mới đăng ký proxy</button>
+          <button class="ghost" id="btn-subs-probe">Dò kiểm tra lại node</button>
+          <button class="ghost" id="btn-subs-disable">Tắt</button>
+        </div>
+        <div id="subs-nodes" style="margin-top:10px"></div>
+        <div class="muted" style="font-size:11.5px;margin-top:6px">Luân phiên = mỗi yêu cầu đổi sang một đầu ra trong số các node khoẻ mạnh (hạn mức tính theo IP đầu ra, mỗi node là một hạn mức độc lập); node quay số thất bại sẽ tự đổi node tiếp theo. Bật sẽ chuyển chế độ proxy thượng nguồn sang 「Luân phiên đăng ký proxy」; tắt sẽ khôi phục 「Theo biến môi trường」.</div>
+      </div>`;
+    const urlInput = el.querySelector("#set-proxy-url");
+    urlInput.addEventListener("input", ()=>netDirty.add("proxyUrl"));
+    el.querySelector("#set-proxy-pool").addEventListener("input", ()=>netDirty.add("proxyPool"));
+    el.querySelector("#set-exit-tpm").addEventListener("input", ()=>netDirty.add("exitTpm"));
+    el.querySelector("#set-fingerprint").addEventListener("change", ()=>netDirty.add("fingerprint"));
+    el.querySelector("#net-save").onclick = async ()=>{
+      const j = await api("/settings", {
+        proxyMode: el.querySelector("#set-proxy").dataset.value,
+        proxyURL: el.querySelector("#set-proxy-url").value.trim(),
+        proxyPool: el.querySelector("#set-proxy-pool").value.split("\n").map(x=>x.trim()).filter(Boolean),
+        exitTokensPerMinute: parseInt(el.querySelector("#set-exit-tpm").value)||0,
+        fingerprintMode: el.querySelector("#set-fingerprint").value || "auto",
+      });
+      if(j){
+        netDirty.clear();
+        toast(j.note ? j.note : "Đã lưu cài đặt mạng (áp dụng nóng ngay)");
+        refresh();
+      }
+    };
+    el.querySelector("#btn-proxy-test").onclick = async () => {
+      const box = el.querySelector("#proxy-test-result");
+      box.textContent = "Đang kiểm tra…"; box.style.color = "var(--ink-mute)";
+      try {
+        const r = await fetch("/admin/api/proxy-test", {method:"POST", headers:{"content-type":"application/json"},
+          body: JSON.stringify({mode: el.querySelector("#set-proxy").dataset.value, url: el.querySelector("#set-proxy-url").value})});
+        const j = await r.json();
+        if (j.ok) {
+          box.innerHTML = `✓ Kết nối được · HTTP ${j.status} · ${j.latencyMs}ms · đầu ra ${esc(j.egressIP||"?")} (${esc(j.egressCountry||"?")})`;
+          box.style.color = "var(--mint)";
+        } else {
+          box.innerHTML = `✗ ${esc(j.error||"Không thông")}`;
+          box.style.color = "var(--bad)";
+        }
+      } catch(err) { box.textContent = "Kiểm tra thất bại: " + err.message; box.style.color = "var(--bad)"; }
+    };
+    const lanBtn = el.querySelector("#tg-lan");
+    lanBtn.onclick = async ()=>{
+      const on = lanBtn.dataset.on !== "1";
+      const j = await api("/settings", { allowLan: on });
+      if(!j) return;
+      setToggle("#tg-lan", on);
+      toast(on ? "API qua mạng LAN đã mở (cùng dải mạng có thể kết nối, nhớ giữ kỹ Key chính)" : "API qua mạng LAN đã đóng, chỉ máy này dùng được");
+      const back = async () => { try { return (await fetch("/health")).ok; } catch(e){ return false; } };
+      for(let i=0;i<20 && !(await back());i++){ await new Promise(r=>setTimeout(r,200)); }
+      refresh();
+    };
+    // --- Luân phiên đăng ký proxy ---
+    const subUrls = ()=> el.querySelector("#subs-urls").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+    const subItems = urls => urls.map(u=>({ id:"sub-"+(u.length+"|"+u).split("").reduce((a,c)=>((a<<5)-a+c.charCodeAt(0))|0,0).toString(16), url:u, name:"", enabled:true }));
+    el.querySelector("#btn-subs-apply").onclick = async ()=>{
+      const urls = subUrls();
+      if(!urls.length){ toast("Hãy điền ít nhất một URL đăng ký proxy trước"); return; }
+      const j = await api("/subs/save", { enabled:true, items: subItems(urls) });
+      if(j){ toast("Đã lưu đăng ký proxy, đang kéo node…"); refresh(); setTimeout(refresh, 6000); }
+    };
+    el.querySelector("#btn-subs-disable").onclick = async ()=>{
+      const j = await api("/subs/save", { enabled:false, items: (STATE.subscriptions?.items||[]) });
+      if(j){ toast("Luân phiên đăng ký proxy đã tắt, proxy khôi phục theo biến môi trường"); refresh(); }
+    };
+    el.querySelector("#btn-subs-refresh").onclick = async ()=>{
+      toast("Đang kéo đăng ký proxy…");
+      await api("/subs/refresh", {});
+      refresh(); setTimeout(refresh, 6000);
+    };
+    el.querySelector("#btn-subs-probe").onclick = async ()=>{
+      toast("Đang dò kiểm tra đầu ra của từng node…");
+      await api("/subs/probe", {});
+      refresh(); setTimeout(refresh, 8000);
+    };
+    el.querySelector("#btn-subs-path").onclick = async ()=>{
+      const p = el.querySelector("#subs-path").value.trim();
+      const j = await api("/subs/singbox", { path: p });
+      if(j){ toast(p ? "Đã lưu đường dẫn sing-box" : "Đã xoá đường dẫn, chuyển sang dùng bản tải tự động"); refresh(); }
+    };
+    el.querySelector("#btn-subs-download").onclick = async ()=>{
+      const b = el.querySelector("#btn-subs-download");
+      b.disabled = true; b.textContent = "Đang tải…";
+      const j = await api("/subs/singbox", { download: true });
+      if(j){ toast("Bắt đầu tải sing-box (qua proxy hiện tại), vài phút sau làm mới để xem"); setTimeout(refresh, 8000); }
+      b.disabled = false; b.textContent = "Tải sing-box";
+    };
+    el.dataset.rendered = "1";
+  }
+  const eg = s.egress || {};
+  el.querySelector("#net-egress").textContent = eg.ip || "Không rõ";
+  el.querySelector("#net-country").textContent = eg.country || "?";
+  el.querySelector("#net-mode").textContent = proxyLabel(s.settings.proxyMode, s.settings.proxyURL);
+  el.querySelector("#net-lan-url").textContent = s.lanBaseURL || "Chỉ loopback";
+  if(!netDirty.has("proxyMode")){
+    makeDropdown(el.querySelector("#set-proxy"),
+      [["system","Theo proxy hệ thống"],["env","Theo biến môi trường"],["direct","Kết nối trực tiếp"],["custom","URL tuỳ chỉnh"],["rotate","Luân phiên đăng ký proxy (sing-box)"],["pool","Xoay vòng danh sách proxy tĩnh"]],
+      s.settings.proxyMode || "env",
+      ()=>netDirty.add("proxyMode"));
+  }
+  const url = el.querySelector("#set-proxy-url");
+  if(!netDirty.has("proxyUrl") && document.activeElement !== url) url.value = s.settings.proxyURL || "";
+  const pool = el.querySelector("#set-proxy-pool");
+  if(!netDirty.has("proxyPool") && document.activeElement !== pool) pool.value = (s.settings.proxyPool||[]).join("\n");
+  const tpm = el.querySelector("#set-exit-tpm");
+  if(!netDirty.has("exitTpm") && document.activeElement !== tpm) tpm.value = s.settings.exitTokensPerMinute ?? 300000;
+  const fp = el.querySelector("#set-fingerprint");
+  if(!netDirty.has("fingerprint") && document.activeElement !== fp) fp.value = s.settings.fingerprintMode || "auto";
+  el.querySelector("#net-fp-hash").textContent = s.settings.fingerprintHash || "—";
+  setToggle("#tg-lan", s.settings.allowLan);
+  const lanBox = el.querySelector("#net-lan-box");
+  lanBox.innerHTML = s.lanBaseURL
+    ? `<div class="row" style="margin-top:6px"><span class="dim">Base URL mạng LAN</span><code class="k">${esc(s.lanBaseURL)}</code><button class="ghost" data-copy="${esc(s.lanBaseURL)}">Sao chép</button></div>
+       <div class="muted" style="font-size:11.5px">Khi mạng LAN không kết nối được, trước tiên hãy cho phép trong tường lửa cổng ${s.port} chiều vào.</div>`
+    : `<div class="muted" style="font-size:12px">Đang chỉ nghe loopback (127.0.0.1).</div>`;
+  const sub = s.subscriptions || {items:[], singbox:{}};
+  const ta = el.querySelector("#subs-urls");
+  if(ta && document.activeElement !== ta) ta.value = (sub.items||[]).map(i=>i.url).join("\n");
+  const sp = el.querySelector("#subs-path");
+  if(sp && document.activeElement !== sp) sp.value = sub.singbox?.path || "";
+  const sb = sub.singbox || {};
+  const stEl = el.querySelector("#subs-status");
+  if (!sub.enabled) {
+    stEl.innerHTML = `<span class="pill hidsync">Chưa bật</span>`;
+  } else if (sb.running) {
+    stEl.innerHTML = `<span class="pill ok">Sidecar đang chạy${sb.version ? " · sing-box "+esc(sb.version) : ""}</span> <span class="muted" style="font-size:11px">${sb.alive||0}/${(sb.nodes||[]).length} Node khoẻ mạnh</span>${sb.lastErr?` <span class="muted" style="font-size:11px">Một số đăng ký proxy thất bại: ${esc(sb.lastErr)}</span>`:""}`;
+  } else {
+    stEl.innerHTML = `<span class="pill warn">Sidecar chưa chạy</span>${sb.lastErr?` <span class="muted" style="font-size:11px">${esc(sb.lastErr)}</span>`:""}`;
+  }
+  const ndEl = el.querySelector("#subs-nodes");
+  const nodes = sb.nodes || [];
+  ndEl.innerHTML = nodes.length ? `<div style="display:grid; grid-template-columns:1fr 60px 1fr 90px 70px; gap:4px 10px; font-size:12px">
+    ${nodes.map(n=>`<span>${esc(n.name||n.id)}</span><span class="muted">${esc(n.proto)}</span><span class="mono" style="font-size:11px">${esc(n.ip||"—")} ${esc(n.country||"")}</span><span class="muted">${n.latencyMs?n.latencyMs+"ms":"—"}</span><span>${n.alive?'<span class="pill ok">Khả dụng</span>':'<span class="pill bad">Thất bại</span>'}</span>`).join("")}
+  </div>` : `<div class="muted" style="font-size:12px">${sub.enabled?"Chưa kéo được node nào——hãy thử bấm 「Làm mới đăng ký proxy」.":"Đang tắt."}</div>`;
+}
 function renderSettings(s){
   const el = $("#page-settings");
   if(!el.dataset.rendered){
@@ -4191,7 +4528,6 @@ function renderSettings(s){
         <span class="mchip" data-g="set-switch">Chuyển đổi mô hình</span>
         <span class="mchip" data-g="set-route">Định tuyến thông minh</span>
         <span class="mchip" data-g="set-desktop">Desktop</span>
-        <span class="mchip" data-g="set-net">Mạng</span>
         <span class="mchip" data-g="set-data">Dữ liệu</span>
         <span class="mchip" data-g="set-update">Cập nhật</span>
       </div>
@@ -4248,69 +4584,6 @@ function renderSettings(s){
           <button class="act off" id="tg-autostart">Đóng</button></div>
       </div>
 
-      <div class="card" id="set-net">
-        <h3>Mạng</h3>
-        <div class="row">
-          <div class="dim" style="display:inline-flex; align-items:center; gap:8px">Proxy thượng nguồn <span id="set-proxy"></span></div>
-          <input type="text" id="set-proxy-url" placeholder="http://127.0.0.1:7890" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:220px;font-family:var(--mono)">
-        </div>
-        <div class="row" style="margin-top:10px">
-          <button class="ghost" id="btn-proxy-test">Kiểm tra kết nối thượng nguồn</button>
-          <span class="muted" style="font-size:12px" id="proxy-test-result"></span>
-        </div>
-        <div style="margin-top:12px">
-          <div class="dim" style="margin-bottom:6px">Danh sách proxy tĩnh (mỗi dòng một URL; dùng với chế độ 「Xoay vòng danh sách proxy tĩnh」)</div>
-          <textarea id="set-proxy-pool" rows="3" placeholder="socks5h://127.0.0.1:13001&#10;http://user:pass@127.0.0.1:7890&#10;direct" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:100%;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
-          <div class="muted" style="font-size:11.5px;margin-top:5px">Mỗi hội thoại bám một đầu ra (giữ cache tiền tố); khi đầu ra bị giới hạn, yêu cầu tự thử đầu ra khác. Hỗ trợ <code class="k">http(s)://</code>, <code class="k">socks5(h)://</code>, <code class="k">direct</code>.</div>
-        </div>
-        <div class="row" style="margin-top:12px; gap:14px; flex-wrap:wrap">
-          <label class="dim" style="display:inline-flex; align-items:center; gap:6px" title="Mặc định 300.000 token/phút mỗi exit; 0 = tắt governor">Token/phút mỗi exit
-            <input type="number" id="set-exit-tpm" min="0" max="1000000" step="1000" value="${s.settings.exitTokensPerMinute ?? 300000}" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:120px;font-family:var(--mono)">
-          </label>
-          <label class="dim" style="display:inline-flex; align-items:center; gap:6px">Fingerprint
-            <select id="set-fingerprint" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px">
-              <option value="auto" ${(s.settings.fingerprintMode||"auto")==="auto"?"selected":""}>auto (chỉ làn Zen)</option>
-              <option value="off" ${s.settings.fingerprintMode==="off"?"selected":""}>off (tắt tiêm)</option>
-              <option value="force" ${s.settings.fingerprintMode==="force"?"selected":""}>force (mọi kênh)</option>
-            </select>
-          </label>
-        </div>
-        <div class="muted" style="font-size:11.5px;margin-top:5px">0 = tắt governor token theo exit. Fingerprint đổi nóng; dùng <code class="k">gateprobe</code> trước khi chuyển sang <code class="k">off</code>.</div>
-        <div class="muted" style="font-size:11.5px;margin-top:3px">Fingerprint hash: <code class="k">${esc(s.settings.fingerprintHash||"—")}</code></div>
-        ${s.settings.freeTierGateAt ? `<div class="muted" style="font-size:11.5px;margin-top:5px;color:var(--warn)">Cổng free-tier từ chối gần nhất: ${new Date(s.settings.freeTierGateAt).toLocaleString("vi-VN")}. Nếu lặp lại, chạy <code class="k">gateprobe</code> và so hash trước khi đổi <code class="k">fingerprintMode</code>.</div>` : ""}
-        <div class="muted" style="font-size:12px;margin-top:8px">Lưu proxy là áp dụng nóng ngay (ảnh hưởng các yêu cầu suy luận/danh sách/dò kiểm tra tới thượng nguồn).</div>
-        <div class="switch" style="margin-top:12px"><div><span class="nm">Cho phép truy cập API qua mạng LAN</span><div class="ds">các máy khác cùng dải mạng đều có thể dùng <code class="k">http://&lt;IP của máy này&gt;:${s.port}/v1</code> để gọi interface, vẫn phải kèm API Key; bảng điều khiển quản trị và interface /admin không bị ảnh hưởng, luôn chỉ chấp nhận máy này. Chuyển đổi sẽ nghe lại, yêu cầu đang xuất theo luồng sẽ bị ngắt</div></div>
-          <button class="act off" id="tg-lan">Đóng</button></div>
-        ${s.lanBaseURL ? `<div class="row" style="margin-top:6px"><span class="dim">Base URL mạng LAN</span><code class="k">${s.lanBaseURL}</code><button class="ghost" data-copy="${s.lanBaseURL}">Sao chép</button></div>` : ""}
-        ${s.lanBaseURL ? `<div class="muted" style="font-size:11.5px">Khi mạng LAN không kết nối được, trước tiên hãy cho phép trong tường lửa Windows ${s.port} cổng chiều vào.</div>` : ""}
-      </div>
-
-      <div class="card" id="set-subs">
-        <h3>Luân phiên đăng ký proxy <span class="muted" style="font-size:11px">Sidecar sing-box · mỗi yêu cầu đổi một IP đầu ra</span></h3>
-        <div class="row" style="align-items:center; gap:10px; flex-wrap:wrap">
-          <span id="subs-status"></span>
-          <label class="dim" style="display:inline-flex; align-items:center; gap:6px">Đường dẫn sing-box
-            <input type="text" id="subs-path" placeholder="Để trống sẽ dùng bản chính thức được tải tự động (macOS cũng có thể điền file thực thi đã cài trên máy này)" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:250px;font-family:var(--mono)">
-          </label>
-          <button class="ghost" id="btn-subs-path">Lưu đường dẫn</button>
-          <button class="ghost" id="btn-subs-download">Tải sing-box</button>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <div style="flex:1">
-            <div class="dim" style="font-size:12px;margin-bottom:4px">URL đăng ký proxy (mỗi dòng một URL, hỗ trợ node vless / vmess / ss / trojan / anytls / hy2 / tuic)</div>
-            <textarea id="subs-urls" rows="3" style="width:100%;background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;font-family:var(--mono);font-size:12px" placeholder="https://example.com/api/v1/client/subscribe?token=..."></textarea>
-          </div>
-        </div>
-        <div class="row" style="margin-top:8px; gap:10px; flex-wrap:wrap">
-          <button class="act" id="btn-subs-apply">Lưu và bật luân phiên</button>
-          <button class="ghost" id="btn-subs-refresh">Làm mới đăng ký proxy</button>
-          <button class="ghost" id="btn-subs-probe">Dò kiểm tra lại node</button>
-          <button class="ghost" id="btn-subs-disable">Tắt</button>
-        </div>
-        <div id="subs-nodes" style="margin-top:10px"></div>
-        <div class="muted" style="font-size:11.5px;margin-top:6px">Luân phiên=Mỗi yêu cầu sẽ đổi sang một đầu ra trong số các node khoẻ mạnh (hạn mức tính theo IP đầu ra, mỗi node là một hạn mức độc lập); một node quay số thất bại sẽ tự động đổi sang node tiếp theo để thử lại. Sau khi bật, chế độ proxy thượng nguồn chuyển sang 「Luân phiên đăng ký proxy」, tắt đi sẽ khôi phục 「Theo biến môi trường」.</div>
-      </div>
-
       <div class="card" id="set-data">
         <h3>Dữ liệu</h3>
         <div class="row">
@@ -4331,24 +4604,13 @@ function renderSettings(s){
         <div class="muted" style="font-size:11.5px;margin-top:6px">Tự động kiểm tra mỗi lần khởi động và mỗi 6 giờ (qua URL nguồn cập nhật); khi phát hiện phiên bản mới, trang Tổng quan sẽ hiện 「Cập nhật bằng một cú nhấp」.</div>
       </div>
       `;
-    const proxyURLInput = el.querySelector("#set-proxy-url");
-    if(proxyURLInput){
-      proxyURLInput.addEventListener("input", ()=>settingsDirty.add("proxyUrl"));
-    }
     el.querySelector("#save").onclick = async ()=>{
-      const j = await api("/settings", { proxyMode: el.querySelector("#set-proxy").dataset.value,
-      proxyURL: el.querySelector("#set-proxy-url").value.trim(),
-      proxyPool: (el.querySelector("#set-proxy-pool")?.value||"").split("\n").map(x=>x.trim()).filter(Boolean),
-      exitTokensPerMinute: parseInt(el.querySelector("#set-exit-tpm")?.value)||0,
-      fingerprintMode: el.querySelector("#set-fingerprint")?.value || "auto",
+      const j = await api("/settings", {
       defaultEffort: document.getElementById("set-effort").dataset.value,
       defaultMaxTokens: parseInt($("#set-max").value)||undefined,
       probeIntervalMinutes: parseInt($("#set-probe").value)||undefined });
       if(j){
-        // Gateway giải thích vì sao một lượt luân phiên đăng ký proxy đã lưu vẫn chưa quay số (no
-        // sidecar / no healthy node); swallowing that note is how the mode
-        // looked applied while the egress never moved (#121).
-        toast(j.note ? j.note : "Đã lưu (cài đặt proxy áp dụng nóng ngay)");
+        toast("Đã lưu tham số cơ bản");
         clearSettingsDirty();
         refresh();
       }
@@ -4394,63 +4656,6 @@ function renderSettings(s){
       if(j){ toast("Đã nhập cấu hình (cổng giữ nguyên; bản xuất đã ẩn key sẽ giữ lại key trên máy này)"); refresh(); }
       e.target.value = "";
     };
-    el.querySelector("#btn-proxy-test").onclick = async () => {
-      const box = el.querySelector("#proxy-test-result");
-      box.textContent = "Đang kiểm tra…"; box.style.color = "var(--ink-mute)";
-      try {
-        const r = await fetch("/admin/api/proxy-test", {method:"POST", headers:{"content-type":"application/json"},
-          body: JSON.stringify({mode: el.querySelector("#set-proxy").dataset.value, url: el.querySelector("#set-proxy-url").value})});
-        const j = await r.json();
-        if (j.ok) {
-          box.innerHTML = `✓ Kết nối được · HTTP ${j.status} · ${j.latencyMs}ms · đầu ra ${esc(j.egressIP||"?")} (${esc(j.egressCountry||"?")})`;
-          box.style.color = "var(--mint)";
-        } else {
-          box.innerHTML = `✗ ${esc(j.error||"Không thông")}`;
-          box.style.color = "var(--bad)";
-        }
-      } catch(err) { box.textContent = "Kiểm tra thất bại: " + err.message; box.style.color = "var(--bad)"; }
-    };
-    el.querySelector("#rotate").onclick = async ()=>{
-      if(!confirm("Sau khi xoay vòng Key chính, các client đã cấu hình cần cập nhật Key. Tiếp tục?")) return;
-      const j = await api("/key/rotate", {});
-      if(j) toast("Đã xoay vòng");
-      refresh();
-    };
-    // --- Luân phiên đăng ký proxy ---
-    const subUrls = ()=> el.querySelector("#subs-urls").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
-    const subItems = urls => urls.map(u=>({ id:"sub-"+(u.length+"|"+u).split("").reduce((a,c)=>((a<<5)-a+c.charCodeAt(0))|0,0).toString(16), url:u, name:"", enabled:true }));
-    el.querySelector("#btn-subs-apply").onclick = async ()=>{
-      const urls = subUrls();
-      if(!urls.length){ toast("Hãy điền ít nhất một URL đăng ký proxy trước"); return; }
-      const j = await api("/subs/save", { enabled:true, items: subItems(urls) });
-      if(j){ toast("Đã lưu đăng ký proxy, đang kéo node…"); refresh(); setTimeout(refresh, 6000); }
-    };
-    el.querySelector("#btn-subs-disable").onclick = async ()=>{
-      const j = await api("/subs/save", { enabled:false, items: (STATE.subscriptions?.items||[]) });
-      if(j){ toast("Luân phiên đăng ký proxy đã tắt, proxy khôi phục theo biến môi trường"); refresh(); }
-    };
-    el.querySelector("#btn-subs-refresh").onclick = async ()=>{
-      toast("Đang kéo đăng ký proxy…");
-      await api("/subs/refresh", {});
-      refresh(); setTimeout(refresh, 6000);
-    };
-    el.querySelector("#btn-subs-probe").onclick = async ()=>{
-      toast("Đang dò kiểm tra đầu ra của từng node…");
-      await api("/subs/probe", {});
-      refresh(); setTimeout(refresh, 8000);
-    };
-    el.querySelector("#btn-subs-path").onclick = async ()=>{
-      const p = el.querySelector("#subs-path").value.trim();
-      const j = await api("/subs/singbox", { path: p });
-      if(j){ toast(p ? "Đã lưu đường dẫn sing-box" : "Đã xoá đường dẫn, chuyển sang dùng bản tải tự động"); refresh(); }
-    };
-    el.querySelector("#btn-subs-download").onclick = async ()=>{
-      const b = el.querySelector("#btn-subs-download");
-      b.disabled = true; b.textContent = "Đang tải…";
-      const j = await api("/subs/singbox", { download: true });
-      if(j){ toast("Bắt đầu tải sing-box (qua proxy hiện tại), vài phút sau làm mới để xem"); setTimeout(refresh, 8000); }
-      b.disabled = false; b.textContent = "Tải sing-box";
-    };
     // Điều hướng theo nhóm: nhấp để trượt tới nhóm, nhóm đang hiển thị được làm nổi bật theo (giới hạn tần suất cuộn).
     // Container cuộn là main.main (toàn bộ #app overflow:hidden), cuộn trực tiếp nó.
     const scroller = el.closest(".main") || document.querySelector(".main");
@@ -4488,10 +4693,8 @@ function renderSettings(s){
   }
   fill(el.querySelector("#set-max"), s.settings.defaultMaxTokens);
   fill(el.querySelector("#set-probe"), s.settings.probeIntervalMinutes);
-  /* Un-saved picks survive the 10s redraw. The dropdowns' own value is only
-     replaced by the server's when the user has not touched them: without this
-     vòng poll trạng thái lại đặt 「Theo biến môi trường」 đè lên 「Luân phiên đăng ký proxy」 vừa mới chọn,
-     and the save then persisted the value the user never picked (#121). */
+  /* Lựa chọn chưa lưu sống qua vòng vẽ lại 10 giây: giá trị của dropdown chỉ bị
+     thay bằng giá trị máy chủ khi người dùng chưa chạm vào nó. */
   const pick = (sel, dirtyKey) => {
     const node = el.querySelector(sel);
     if(!node) return null;
@@ -4502,44 +4705,6 @@ function renderSettings(s){
     [["light","Light · Gọn nhẹ (2K)"],["balanced","Balanced · Cân bằng (8K)"],["deep","Deep · Suy nghĩ sâu (giới hạn tối đa của mô hình)"]],
     pick("#set-effort", "defaultEffort") || s.settings.defaultEffort || "balanced",
     ()=>settingsDirty.add("defaultEffort"));
-  makeDropdown(el.querySelector("#set-proxy"),
-    [["system","Theo proxy hệ thống"],["env","Theo biến môi trường"],["direct","Kết nối trực tiếp"],["custom","URL tuỳ chỉnh"],["rotate","Luân phiên đăng ký proxy (sing-box)"],["pool","Xoay vòng danh sách proxy tĩnh"]],
-    pick("#set-proxy", "proxyMode") || s.settings.proxyMode || "env",
-    ()=>settingsDirty.add("proxyMode"));
-  if(!settingsDirty.has("proxyUrl")) fill(el.querySelector("#set-proxy-url"), s.settings.proxyURL);
-  const poolTA = el.querySelector("#set-proxy-pool");
-  if(poolTA){
-    if(!settingsDirty.has("proxyPool") && document.activeElement !== poolTA){
-      poolTA.value = (s.settings.proxyPool||[]).join("\n");
-    }
-    poolTA.addEventListener("input", ()=>settingsDirty.add("proxyPool"));
-  }
-  // --- Đồng bộ trạng thái luân phiên đăng ký proxy (mỗi lần làm mới vẽ lại bảng node) ---
-  const sub = s.subscriptions || {items:[], singbox:{}};
-  const ta = el.querySelector("#subs-urls");
-  if (ta && document.activeElement !== ta) {
-    ta.value = (sub.items||[]).map(i=>i.url).join("\n");
-  }
-  const sp = el.querySelector("#subs-path");
-  if (sp && document.activeElement !== sp) sp.value = sub.singbox?.path || "";
-  const sb = sub.singbox || {};
-  const stEl = el.querySelector("#subs-status");
-  if (stEl) {
-    if (!sub.enabled) {
-      stEl.innerHTML = `<span class="pill hidsync">Chưa bật</span>`;
-    } else if (sb.running) {
-      stEl.innerHTML = `<span class="pill ok">Sidecar đang chạy${sb.version ? " · sing-box "+esc(sb.version) : ""}</span> <span class="muted" style="font-size:11px">${sb.alive||0}/${(sb.nodes||[]).length} Node khoẻ mạnh</span>${sb.lastErr?` <span class="muted" style="font-size:11px">Một số đăng ký proxy thất bại: ${esc(sb.lastErr)}</span>`:""}`;
-    } else {
-      stEl.innerHTML = `<span class="pill warn">Sidecar chưa chạy</span>${sb.lastErr?` <span class="muted" style="font-size:11px">${esc(sb.lastErr)}</span>`:""}`;
-    }
-  }
-  const ndEl = el.querySelector("#subs-nodes");
-  if (ndEl) {
-    const nodes = sb.nodes || [];
-    ndEl.innerHTML = nodes.length ? `<div style="display:grid; grid-template-columns:1fr 60px 1fr 90px 70px; gap:4px 10px; font-size:12px">
-      ${nodes.map(n=>`<span>${esc(n.name||n.id)}</span><span class="muted">${esc(n.proto)}</span><span class="mono" style="font-size:11px">${esc(n.ip||"—")} ${esc(n.country||"")}</span><span class="muted">${n.latencyMs?n.latencyMs+"ms":"—"}</span><span>${n.alive?'<span class="pill ok">Khả dụng</span>':'<span class="pill bad">Thất bại</span>'}</span>`).join("")}
-    </div>` : `<div class="muted" style="font-size:12px">${sub.enabled?"Chưa kéo được node nào——hãy thử bấm 「Làm mới đăng ký proxy」.":"Đang tắt."}</div>`;
-  }
   const curVer = el.querySelector("#cur-ver");
   if (curVer) curVer.textContent = "Phiên bản hiện tại v" + (s.version||"") + (s.settings.updateAvailable ? " · có phiên bản mới " + s.settings.updateVersion : "");
   setToggle("#tg-tray", s.settings.closeToTray);
@@ -4563,7 +4728,6 @@ function renderSettings(s){
   setToggle("#tg-autotag", s.settings.autoTagEnabled);
   setToggle("#tg-openref", s.settings.openRefEnabled);
   setToggle("#tg-wbcache", s.settings.workBuddyCacheKey);
-  setToggle("#tg-lan", s.settings.allowLan);
   const sseg = el.querySelector("#strategy-seg");
   if (sseg){
     const cur = s.settings.routingStrategy || "catalog";
@@ -4596,21 +4760,6 @@ function renderSettings(s){
   bindSettingToggle("#tg-wbcache", "workBuddyCacheKey",
     "Yêu cầu WorkBuddy đã kèm prompt_cache_key——vào trang 「Mức sử dụng」 xem tỷ lệ hit có thực sự thay đổi không",
     "Yêu cầu WorkBuddy trở lại body yêu cầu thuần (không kèm gợi ý cache)");
-  const lanBtn = el.querySelector("#tg-lan");
-  if(lanBtn && !lanBtn.dataset.bound){
-    lanBtn.dataset.bound = "1";
-    lanBtn.onclick = async ()=>{
-      const on = lanBtn.dataset.on !== "1";
-      const j = await api("/settings", { allowLan: on });
-      if(!j) return;
-      setToggle("#tg-lan", on);
-      toast(on ? "API qua mạng LAN đã mở (cùng dải mạng có thể kết nối, nhớ giữ kỹ Key chính)" : "API qua mạng LAN đã đóng, chỉ máy này dùng được");
-      // Server trả xong phản hồi mới đổi cổng nghe, cổng có khoảng trống vài chục mili giây, đợi nó quay lại rồi làm mới
-      const back = async () => { try { return (await fetch("/health")).ok; } catch(e){ return false; } };
-      for(let i=0;i<20 && !(await back());i++){ await new Promise(r=>setTimeout(r,200)); }
-      refresh();
-    };
-  }
   const retagBtn = el.querySelector("#btn-retag");
   if(retagBtn && !retagBtn.dataset.bound){
     retagBtn.dataset.bound = "1";

@@ -60,6 +60,12 @@ func Check(feedURL string, client getJSONer) (bool, string, string, string, erro
 	}
 	data, err := client.Get(feedURL)
 	if err != nil {
+		// A repository with no published release yet answers 404. That is a
+		// normal "nothing to update to", not an error worth logging every six
+		// hours; the dashboard still has its own "check now" button.
+		if isNotFound(err) {
+			return false, "", "", "", nil
+		}
 		return false, "", "", "", err
 	}
 	if IsGitHubFeed(feedURL) {
@@ -225,4 +231,9 @@ func (e *statusError) Error() string { return fmt.Sprintf("update feed returned 
 func isRateLimited(err error) bool {
 	se, ok := err.(*statusError)
 	return ok && (se.Code == 403 || se.Code == 429)
+}
+
+func isNotFound(err error) bool {
+	se, ok := err.(*statusError)
+	return ok && se.Code == 404
 }

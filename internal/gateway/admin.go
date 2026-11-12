@@ -521,6 +521,7 @@ func (s *Server) adminState(w http.ResponseWriter) {
 	for k, v := range logSettingsView(cfg) {
 		settings[k] = v
 	}
+	system := s.systemInfo(cfg)
 	writeJSON(w, 200, map[string]any{
 		"baseURL":             s.BaseURL(),
 		"lanBaseURL":          s.LANBaseURL(),
@@ -528,6 +529,7 @@ func (s *Server) adminState(w http.ResponseWriter) {
 		"mainKey":             cfg.MainKey,
 		"agentKeys":           cfg.AgentKeys,
 		"egress":              egress,
+		"system":              system,
 		"models":              models,
 		"agents":              agentsView,
 		"stats":               map[string]any{"days": days, "recent": recent},

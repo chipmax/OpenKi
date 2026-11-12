@@ -78,3 +78,18 @@ func TestGetDoesNotRetryOtherStatuses(t *testing.T) {
 		t.Fatalf("non-rate-limit statuses must not be retried, got %d requests", n)
 	}
 }
+
+func TestCheckTreatsMissingReleaseAsNoUpdate(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+	}))
+	defer srv.Close()
+	h := HTTP{Timeout: 5 * time.Second, Client: srv.Client()}
+	has, _, _, _, err := Check(srv.URL, h)
+	if err != nil {
+		t.Fatalf("404 release must be a silent no, got %v", err)
+	}
+	if has {
+		t.Fatal("404 release must not advertise an update")
+	}
+}

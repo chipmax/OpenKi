@@ -21,6 +21,7 @@ import (
 type View struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
+	Platform  string `json:"platform"`
 	Detail    string `json:"detail"`
 	Installed bool   `json:"installed"`
 	Version   string `json:"version,omitempty"`
@@ -217,6 +218,7 @@ func (r *Registry) detectViews() []View {
 		v := View{
 			ID:        id,
 			Name:      name,
+			Platform:  agentPlatform(id),
 			Detail:    describe,
 			Installed: installed,
 			Version:   version,

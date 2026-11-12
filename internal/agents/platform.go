@@ -3,6 +3,8 @@ package agents
 import (
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 )
 
 // platform.go resolves the second platform when the gateway runs inside WSL.
@@ -12,6 +14,19 @@ import (
 // "OpenCode (Windows)" must not touch the Linux file and vice versa. All
 // Windows-side adapters resolve their profile through /mnt/c, and each looks
 // for its own marker so only genuinely installed agents appear.
+
+// agentPlatform labels an adapter for the dashboard. A Windows-side variant
+// is always "windows", even when this process is WSL; the host adapter is
+// "wsl" in WSL (not "linux") so the two sections never blur together.
+func agentPlatform(id string) string {
+	if strings.HasSuffix(id, "-windows") {
+		return "windows"
+	}
+	if isWSL() {
+		return "wsl"
+	}
+	return runtime.GOOS
+}
 
 // windowsProfileHolding returns the first Windows user profile under /mnt/c/Users
 // that contains rel (a path relative to the profile directory), or "" when

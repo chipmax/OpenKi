@@ -30,7 +30,7 @@ func TestNewerComparesSemverCorrectly(t *testing.T) {
 func TestCheckAnswersWithoutFeed(t *testing.T) {
 	// The pre-fix default: an empty feed must report "no update" without
 	// erroring — but the shipped default now points at this repository.
-	has, _, _, _, err := Check("", nil)
+	has, _, _, _, _, err := Check("", nil)
 	if has || err != nil {
 		t.Fatalf("empty feed must be a silent no: has=%v err=%v", has, err)
 	}
@@ -80,17 +80,39 @@ func TestGetDoesNotRetryOtherStatuses(t *testing.T) {
 }
 
 func TestCheckTreatsMissingReleaseAsNoUpdate(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 	}))
 	defer srv.Close()
 	h := HTTP{Timeout: 5 * time.Second, Client: srv.Client()}
-	has, _, _, _, err := Check(srv.URL, h)
+	has, _, _, _, _, err := Check(srv.URL, h)
 	if err != nil {
 		t.Fatalf("404 release must be a silent no, got %v", err)
 	}
 	if has {
 		t.Fatal("404 release must not advertise an update")
+	}
+}
+
+func TestCheckRejectsPlainHTTPFeed(t *testing.T) {
+	if _, _, _, _, _, err := Check("http://example.test/feed", nil); err == nil {
+		t.Fatal("a plain-HTTP feed must be refused")
+	}
+}
+
+func TestValidateFeedURL(t *testing.T) {
+	if err := ValidateFeedURL("https://api.github.com/repos/o/r/releases/latest"); err != nil {
+		t.Fatal(err)
+	}
+	for _, bad := range []string{
+		"http://example.test/feed",
+		"ftp://example.test/feed",
+		"https:///feed",
+		"https://user:pass@example.test/feed",
+	} {
+		if err := ValidateFeedURL(bad); err == nil {
+			t.Errorf("ValidateFeedURL(%q) accepted a bad feed", bad)
+		}
 	}
 }
 

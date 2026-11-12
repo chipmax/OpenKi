@@ -4827,10 +4827,19 @@ function renderUpdate(s){
   const el = $("#page-update");
   if(!el.dataset.rendered){
     el.innerHTML = `
-      <h2 class="pt">Cập nhật <span class="sub">Bản dựng đang chạy, mã nguồn GitHub và cách cập nhật trên Linux——không có nút ghi đè một chạm</span></h2>
+      <h2 class="pt">Cập nhật <span class="sub">Bản dựng đang chạy, mã nguồn GitHub và cách cập nhật trên Linux; bản Windows có nút một chạm có xác minh chữ ký</span></h2>
       <div class="two">
         <div>
           <div class="card" id="upd-running"><h3>Bản dựng đang chạy</h3><div class="sysinfo" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))" id="upd-running-box"><div class="muted">Đang đọc thông tin bản dựng…</div></div></div>
+          <div class="card" id="upd-windows" hidden>
+            <h3>Cập nhật một chạm (Windows)</h3>
+            <div class="muted" id="upd-windows-note" style="font-size:12px"></div>
+            <div class="row" style="align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+              <button class="btn-primary" id="upd-apply" disabled>Cập nhật một chạm</button>
+              <span class="muted" id="upd-apply-note" style="font-size:12px"></span>
+            </div>
+            <div id="upd-apply-error" style="color:var(--bad);font-size:12px;margin-top:6px"></div>
+          </div>
           <div class="card" id="upd-source"><h3>Mã nguồn GitHub</h3><div id="upd-source-box"><div class="muted">Đang kiểm tra…</div></div></div>
           <div class="card"><h3>Cập nhật thủ công trên Linux</h3>
             <div class="muted" style="font-size:12px;margin-bottom:8px">Bản Linux không tự thay binary đang chạy. Chạy các lệnh dưới trong WSL, sau đó làm mới trang này.</div>
@@ -4848,10 +4857,11 @@ function renderUpdate(s){
               <li>Restart service, rồi kiểm tra lại trang này.</li>
             </ol>
           </div>
-          <div class="card"><h3>Vì sao không có một chạm?</h3>
-            <div class="muted" style="font-size:12px;line-height:1.6">Tự tải và thay binary trên Linux cần quyền ghi vào thư mục cài đặt, xử lý service đang chạy và rollback khi bản mới lỗi. Bản dựng này giữ thao tác đó ngoài tiến trình gateway để tránh tự khoá mình giữa lúc cập nhật.</div>
+          <div class="card"><h3>Cập nhật được xác minh thế nào?</h3>
+            <div class="muted" style="font-size:12px;line-height:1.6">Bản Windows tải <code class="k">.sha256</code> và manifest JSON có chữ ký Ed25519 trước khi thay binary; thiếu hoặc sai là từ chối. Bản Linux build từ nguồn, không thay binary đang chạy. Xem <code class="k">SHA256SUMS</code> trong bản phát hành để kiểm tra bản tải tay.</div>
           </div>
         </div>
+      </div>
       </div>`;
     el.dataset.rendered = "1";
     if(!sourceUpd && !sourceUpdBusy) loadSourceUpdate(false);
@@ -4943,6 +4953,32 @@ function paintUpdate(s){
     try { await navigator.clipboard.writeText(cmds); $("#upd-copy-note").textContent = "Đã sao chép"; }
     catch(e) { $("#upd-copy-note").textContent = "Trình duyệt chặn clipboard, hãy chọn và sao chép thủ công"; }
   };
+  const set = (s && s.settings) || {};
+  const selfUpd = !!set.updateSelfUpdate;
+  const winCard = $("#upd-windows");
+  if(winCard) winCard.hidden = !selfUpd;
+  const apply = $("#upd-apply");
+  const applyNote = $("#upd-apply-note");
+  const applyErr = $("#upd-apply-error");
+  if(applyErr) applyErr.textContent = "";
+  if(apply){
+    if(!selfUpd){ apply.disabled = true; }
+    else if(!set.updateAvailable){ apply.disabled = true; apply.textContent = "Đang ở bản mới nhất"; }
+    else if(!set.updateAsset){ apply.disabled = true; apply.textContent = "Release chưa có asset cho nền tảng này"; }
+    else { apply.disabled = false; apply.textContent = "Cập nhật một chạm"; }
+  }
+  if(applyNote){
+    if(!selfUpd) applyNote.textContent = "";
+    else if(!set.updateAvailable) applyNote.textContent = `Bản đang chạy ${esc((s && s.version) || "dev")} là mới nhất.`;
+    else if(!set.updateAsset) applyNote.textContent = "Bản phát hành chưa có openki.exe; hãy dùng trang phát hành.";
+    else applyNote.textContent = `Sẽ cập nhật từ ${esc((s && s.version) || "dev")} lên v${esc(set.updateVersion)}.`;
+  }
+  const winNote = $("#upd-windows-note");
+  if(winNote){
+    winNote.textContent = selfUpd
+      ? "Bản Windows thay binary đang chạy sau khi kiểm tra SHA-256 và chữ ký manifest. Nếu thiếu một trong hai, cập nhật bị từ chối."
+      : "";
+  }
 }
 function renderSettings(s){
   const el = $("#page-settings");
@@ -5179,13 +5215,22 @@ document.addEventListener("click", e=>{
   }
   const b = e.target.closest("#upd-apply");
   if(!b) return;
+  const err = $("#upd-apply-error");
+  if(err) err.textContent = "";
   b.disabled = true; b.textContent = "Đang tải…";
-  api("/update/apply", {}).then(j=>{
-    if(j && j.ok){ b.textContent = "Đang khởi động lại…"; toast("Cập nhật xong, đang khởi động lại…");
-      const t = setInterval(()=>{ fetch("/health").then(r=>{ if(r.ok){ clearInterval(t); location.reload(); } }).catch(()=>{}); }, 1000);
-      setTimeout(()=>{ clearInterval(t); location.reload(); }, 60000);
-    } else { b.disabled = false; b.textContent = "Cập nhật một chạm"; }
-  });
+  fetch("/admin/api/update/apply",{method:"POST",headers:{"content-type":"application/json","x-openki-admin":"1"},body:"{}"})
+    .then(async r=>({r, j:await r.json().catch(()=>({}))}))
+    .then(({r,j})=>{
+      if(r.ok && j && j.ok){
+        b.textContent = "Đang khởi động lại…"; toast("Cập nhật xong, đang khởi động lại…");
+        const t = setInterval(()=>{ fetch("/health").then(r=>{ if(r.ok){ clearInterval(t); location.reload(); } }).catch(()=>{}); }, 1000);
+        setTimeout(()=>{ clearInterval(t); location.reload(); }, 60000);
+      } else {
+        b.disabled = false; b.textContent = "Cập nhật một chạm";
+        if(err) err.textContent = (j && j.error) || `Cập nhật thất bại (HTTP ${r.status})`;
+      }
+    })
+    .catch(()=>{ b.disabled = false; b.textContent = "Cập nhật một chạm"; if(err) err.textContent = "Không kết nối được gateway."; });
 });
 
 /* copy buttons */

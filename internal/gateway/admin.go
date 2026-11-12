@@ -569,6 +569,7 @@ func (s *Server) adminState(w http.ResponseWriter) {
 		"updateAvailable":      s.updateAvailable,
 		"updateVersion":        s.updateVersion,
 		"updateURL":            s.updateURL,
+		"updateAsset":          s.updateAsset,
 		// Bundled builds cannot swap their own binary; the dashboard hides
 		// 一键更新 and just links to the release page.
 		"updateSelfUpdate":        update.SelfUpdateSupported,
@@ -926,7 +927,14 @@ func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if in.UpdateFeed != nil {
-		cfg.UpdateFeed = strings.TrimSpace(*in.UpdateFeed)
+		next := strings.TrimSpace(*in.UpdateFeed)
+		if next != "" {
+			if err := update.ValidateFeedURL(next); err != nil {
+				writeJSON(w, 400, map[string]any{"ok": false, "error": err.Error()})
+				return
+			}
+		}
+		cfg.UpdateFeed = next
 		changed = true
 		dirty["updateFeed"] = true
 	}
@@ -2410,11 +2418,15 @@ func (s *Server) adminUpdateApply(w http.ResponseWriter) {
 		writeJSON(w, 400, map[string]any{"ok": false, "error": "Không phát hiện bản cập nhật khả dụng"})
 		return
 	}
+	if !s.updateAsset {
+		writeJSON(w, 400, map[string]any{"ok": false, "error": "Release chưa có asset openki.exe cho nền tảng này; hãy tải từ trang phát hành"})
+		return
+	}
 	if !update.SelfUpdateSupported {
 		writeJSON(w, 400, map[string]any{"ok": false, "error": "Nền tảng này không hỗ trợ cập nhật một chạm, vui lòng tải phiên bản mới từ trang phát hành"})
 		return
 	}
-	if _, err := update.Apply(s.updateURL, lane.Client()); err != nil {
+	if _, err := update.Apply(s.updateURL, s.updateVersion, lane.Client()); err != nil {
 		if s.logger != nil {
 			s.logger.Errorf("Cập nhật một chạm thất bại: %v", err)
 		}

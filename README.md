@@ -121,8 +121,18 @@ Kiểm tra fingerprint upstream: `openki -gate-check` (xem
 
 ## Cập nhật
 
-OpenKi kiểm tra feed GitHub Releases mỗi 6 giờ. Bản Windows có nút cập nhật một
-chạm; bản Linux hiển thị commit đang chạy và lệnh `git pull` + build + restart.
+OpenKi kiểm tra feed GitHub Releases mỗi 6 giờ.
+
+- **Windows:** trang **Cập nhật** có nút một chạm. Gateway tải `<asset>.sha256`
+  và manifest JSON có chữ ký Ed25519, xác minh cả hai trước khi đổi binary;
+  thiếu hoặc sai là từ chối. Bản cập nhật được đổi chỗ nguyên tử và giữ bản cũ
+  một lần khởi động để rollback.
+- **Linux/macOS:** trang **Cập nhật** hiển thị commit đang chạy và lệnh
+  `git pull` + build + restart; không tự thay binary đang chạy.
+- Bản phát hành có `SHA256SUMS` cho mọi asset; kiểm tra bản tải tay bằng
+  `sha256sum -c SHA256SUMS`.
+- Feed tùy chỉnh phải dùng HTTPS và publish `<asset>.sha256` + manifest đã ký.
+
 Lịch sử thay đổi: [CHANGELOG.md](CHANGELOG.md).
 
 ## Giấy phép

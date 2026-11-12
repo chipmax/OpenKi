@@ -43,17 +43,30 @@ jobs:
 
       - name: Package
         shell: pwsh
+        env:
+          OPENKI_UPDATE_SIGNING_KEY: ${{ secrets.OPENKI_UPDATE_SIGNING_KEY }}
         run: |
           $ver = "${{ github.ref_name }}" -replace '^v','' -replace '/','-'
           Copy-Item README.md dist/README.md
           Copy-Item LICENSE dist/LICENSE
           if (-not (Test-Path dist/openki.exe)) { throw "openki.exe missing" }
-          # The updater refuses to swap an executable without this sibling
-          # asset. Publish the digest the same release job built, never a
-          # value copied from a previous run.
+          # The updater refuses to swap an executable without these siblings:
+          # a SHA-256 sidecar (integrity) and a signed manifest (authenticity).
           $hash = (Get-FileHash dist/openki.exe -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  openki.exe" | Set-Content -Encoding ascii dist/openki.exe.sha256
+          $size = (Get-Item dist/openki.exe).Length
+          $manifest = [ordered]@{ version = $ver; asset = "openki.exe"; sha256 = $hash; size = $size } | ConvertTo-Json -Compress
+          Set-Content -Encoding ascii -NoNewline dist/openki.exe.manifest $manifest
+          if ($env:OPENKI_UPDATE_SIGNING_KEY) {
+            go run ./tools/signupdate -in dist/openki.exe.manifest -out dist/openki.exe.manifest.sig
+          } else {
+            Write-Warning "OPENKI_UPDATE_SIGNING_KEY is not set; the release will have no manifest signature and one-click update will refuse it."
+          }
+          $statsHash = (Get-FileHash dist/openkistats.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$statsHash  openkistats.exe" | Set-Content -Encoding ascii dist/openkistats.exe.sha256
           tar -a -c -f "dist/openki-$ver.zip" -C dist openki.exe README.md LICENSE
+          $zipHash = (Get-FileHash "dist/openki-$ver.zip" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$zipHash  openki-$ver.zip" | Set-Content -Encoding ascii "dist/openki-$ver.zip.sha256"
           Get-ChildItem dist
 
       - name: Release
@@ -64,7 +77,8 @@ jobs:
         run: |
           $tag = "${{ github.ref_name }}"
           $ver = $tag -replace '^v','' -replace '/','-'
-          $assets = @("dist/openki.exe", "dist/openki.exe.sha256", "dist/openkistats.exe", "dist/openki-$ver.zip")
+          $assets = @("dist/openki.exe", "dist/openki.exe.sha256", "dist/openki.exe.manifest", "dist/openkistats.exe", "dist/openkistats.exe.sha256", "dist/openki-$ver.zip", "dist/openki-$ver.zip.sha256")
+          if (Test-Path dist/openki.exe.manifest.sig) { $assets += "dist/openki.exe.manifest.sig" }
           # A tag published once and re-run (a failed later step, a
           # workflow_dispatch) already owns the release; gh release create exits
           # non-zero there, so the binaries never got uploaded on the retry.
@@ -169,3 +183,23 @@ jobs:
             dist/openki-darwin
             dist/openki-*-darwin.zip
           if-no-files-found: error
+
+  # One SHA256SUMS for every published asset. Linux and macOS users install
+  # by hand, so the release must carry a verifiable list, not just the Windows
+  # sidecar the updater consumes.
+  checksums:
+    needs: [build, build-linux]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf assets && mkdir assets
+          gh release download "${GITHUB_REF_NAME}" -D assets
+          rm -f assets/SHA256SUMS
+          (cd assets && sha256sum -- * > SHA256SUMS)
+          gh release upload "${GITHUB_REF_NAME}" assets/SHA256SUMS --clobber

@@ -43,6 +43,23 @@ phát triển (UTC+7).
   favicon, dashboard và bộ cài; sinh lại toàn bộ kích thước từ một nguồn SVG.
 - Phát hành `v2.0.0` cho Windows x64 và Linux x64/arm64 (headless).
 
+### Cập nhật
+
+- Trang **Cập nhật** có nút một chạm cho Windows, chỉ hiện khi gateway chạy
+  trên Windows và bản phát hành có asset `openki.exe`.
+- Gateway bắt buộc tải `<asset>.sha256` (integrity) và `<asset>.manifest` +
+  `<asset>.manifest.sig` (Ed25519) trước khi thay binary; thiếu, sai chữ ký,
+  sai version/asset/size hoặc payload không phải PE đều bị từ chối.
+- Đổi binary có `fsync`, tên tạm theo PID, mutex chống hai lần cập nhật đồng
+  thời; `.bak` được giữ một chu kỳ khởi động và `RestoreBackup` phục hồi nếu
+  swap bị gián đoạn.
+- Feed tùy chỉnh phải dùng HTTPS; feed `http://` bị từ chối ở cả settings và
+  `update.Check`.
+- Release workflow publish `.sha256` cho mọi asset Windows, manifest + chữ ký,
+  và job `checksums` tạo `SHA256SUMS` cho toàn bộ bản phát hành.
+- `v2.0.0` chỉ là tag cục bộ, chưa từng publish; bản phát hành thực tế đầu tiên
+  là `v2.0.1` với đầy đủ checksum/chữ ký.
+
 ### Giao diện
 
 - Trang "Mạng" có bảng đầu ra hợp nhất: IP hiện tại, node đăng ký và proxy

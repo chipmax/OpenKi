@@ -202,6 +202,7 @@ func main() {
 	if n := gateway.MigrateProviderSelections(st); n > 0 {
 		logger.Infof("Đã tinh gọn mô hình của %d nhà cung cấp tuỳ chỉnh theo danh sách khuyến nghị (bản cũ từng lưu toàn bộ danh mục)", n)
 	}
+	update.RestoreBackup() // recover an install whose swap was interrupted
 	update.CleanupBackup() // remove the previous binary left by 一键更新
 	// Which binary this is matters in a container: a GUI build has no tray to
 	// fail without, but a headless one silently has no window at all, so the log
@@ -584,12 +585,12 @@ func main() {
 		if feed == "" {
 			return false, ""
 		}
-		has, ver, url, _, err := update.Check(feed, update.HTTP{Timeout: 15 * time.Second, Client: lane.Client()})
+		has, ver, url, _, asset, err := update.Check(feed, update.HTTP{Timeout: 15 * time.Second, Client: lane.Client()})
 		if err != nil {
 			logger.Warnf("update check failed: %v", err)
 			return false, ""
 		}
-		gw.SetUpdateState(has, ver, url)
+		gw.SetUpdateState(has, ver, url, asset)
 		if has && cfg.LastVersion != ver {
 			logger.Infof("Có phiên bản mới %s (hiện tại %s)", ver, gateway.Version)
 			if windowHidden {

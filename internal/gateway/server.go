@@ -74,6 +74,7 @@ type Server struct {
 	updateAvailable bool
 	updateVersion   string
 	updateURL       string
+	updateAsset     bool
 	// customProbe remembers per-model verdicts for user-added providers; they
 	// are probed manually from the dashboard, never on a schedule.
 	customProbeMu sync.Mutex
@@ -247,8 +248,8 @@ func (s *Server) auditFor(rid string) *turnAudit {
 func (s *Server) SetAutostartState(f func() bool) { s.autostart = f }
 
 // SetUpdateState records the latest update-check result for the banner.
-func (s *Server) SetUpdateState(available bool, version, url string) {
-	s.updateAvailable, s.updateVersion, s.updateURL = available, version, url
+func (s *Server) SetUpdateState(available bool, version, url string, asset bool) {
+	s.updateAvailable, s.updateVersion, s.updateURL, s.updateAsset = available, version, url, asset
 }
 
 // autostartState reads the registry-backed autostart toggle.

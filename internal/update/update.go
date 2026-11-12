@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"runtime"
 	"strconv"
 	"strings"
@@ -54,10 +55,13 @@ type FeedJSON struct {
 }
 
 // Check fetches the feed and compares against Current.
-// Returns (hasUpdate, version, downloadURL, notes, error).
-func Check(feedURL string, client getJSONer) (bool, string, string, string, error) {
+// Returns (hasUpdate, version, downloadURL, notes, asset, error).
+func Check(feedURL string, client getJSONer) (bool, string, string, string, bool, error) {
 	if strings.TrimSpace(feedURL) == "" {
-		return false, "", "", "", nil
+		return false, "", "", "", false, nil
+	}
+	if err := ValidateFeedURL(feedURL); err != nil {
+		return false, "", "", "", false, err
 	}
 	data, err := client.Get(feedURL)
 	if err != nil {
@@ -65,24 +69,44 @@ func Check(feedURL string, client getJSONer) (bool, string, string, string, erro
 		// normal "nothing to update to", not an error worth logging every six
 		// hours; the dashboard still has its own "check now" button.
 		if isNotFound(err) {
-			return false, "", "", "", nil
+			return false, "", "", "", false, nil
 		}
-		return false, "", "", "", err
+		return false, "", "", "", false, err
 	}
 	if IsGitHubFeed(feedURL) {
 		return parseGitHubRelease(data)
 	}
 	var feed FeedJSON
 	if err := json.Unmarshal(data, &feed); err != nil {
-		return false, "", "", "", err
+		return false, "", "", "", false, err
 	}
-	return Newer(feed.Version, Current), strings.TrimSpace(feed.Version), strings.TrimSpace(feed.URL), feed.Notes, nil
+	return Newer(feed.Version, Current), strings.TrimSpace(feed.Version), strings.TrimSpace(feed.URL), feed.Notes, strings.TrimSpace(feed.URL) != "", nil
 }
 
 // IsGitHubFeed reports whether the feed URL is a GitHub Releases API endpoint.
 func IsGitHubFeed(feedURL string) bool {
 	u := strings.TrimSuffix(strings.TrimSpace(feedURL), "/")
 	return strings.HasPrefix(u, "https://api.github.com/repos/") && strings.HasSuffix(u, "/releases/latest")
+}
+
+// ValidateFeedURL rejects anything but an HTTPS feed. A plain-HTTP feed can be
+// rewritten by an on-path attacker, who then chooses both the asset and its
+// checksum; the updater would install whatever the feed names.
+func ValidateFeedURL(raw string) error {
+	u, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil {
+		return fmt.Errorf("feed URL không hợp lệ: %w", err)
+	}
+	if u.Scheme != "https" {
+		return fmt.Errorf("feed URL phải dùng HTTPS")
+	}
+	if u.Host == "" {
+		return fmt.Errorf("feed URL thiếu host")
+	}
+	if u.User != nil {
+		return fmt.Errorf("feed URL không được chứa userinfo")
+	}
+	return nil
 }
 
 // githubRelease mirrors the slice of the Releases API response openki needs.
@@ -99,23 +123,26 @@ type githubRelease struct {
 
 // parseGitHubRelease maps a Releases/latest payload onto the feed shape,
 // preferring this platform's binary asset. Without a matching asset the URL
-// stays on the release page: the dashboard then shows the version and sends
-// the user to the download, which is what a bundled build needs.
-func parseGitHubRelease(data []byte) (bool, string, string, string, error) {
+// stays on the release page and asset is false: the dashboard then shows the
+// version and sends the user to the download, which is what a bundled build
+// needs.
+func parseGitHubRelease(data []byte) (bool, string, string, string, bool, error) {
 	var rel githubRelease
 	if err := json.Unmarshal(data, &rel); err != nil {
-		return false, "", "", "", err
+		return false, "", "", "", false, err
 	}
 	url := rel.HTMLURL
+	asset := false
 	if want := assetName(); want != "" {
 		for _, a := range rel.Assets {
 			if strings.EqualFold(a.Name, want) {
 				url = a.BrowserDownloadURL
+				asset = true
 				break
 			}
 		}
 	}
-	return Newer(rel.TagName, Current), strings.TrimSpace(rel.TagName), url, rel.Body, nil
+	return Newer(rel.TagName, Current), strings.TrimSpace(rel.TagName), url, rel.Body, asset, nil
 }
 
 // LatestAssetURL returns this platform's binary download URL from a

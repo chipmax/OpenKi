@@ -212,7 +212,7 @@ GUI 构建仍留在 `release.yml`。
 ## 许可证
 
 本项目按 **GNU GPL-3.0-only** 发布 — SPDX：`GPL-3.0-only`。完整文本见
-[LICENSE](LICENSE) 与副本 [COPYING](COPYING)。
+[LICENSE](LICENSE)。
 
 - 上游原始项目：[LAGcomcom/zen-gate](https://github.com/LAGcomcom/zen-gate) —
   Copyright (C) 2026 LAGcomcom。

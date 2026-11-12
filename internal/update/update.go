@@ -41,7 +41,7 @@ func assetName() string {
 // build time and per-install through settings. It points at this repository's
 // own Releases API — leaving it empty made every build's update check answer
 // "already latest" without ever looking anywhere.
-var FeedURL = "https://api.github.com/repos/chipmax/loimo/releases/latest"
+var FeedURL = "https://api.github.com/repos/chipmax/OpenKi/releases/latest"
 
 // Current is the running version, overridable via -ldflags.
 var Current = "2.0.0"

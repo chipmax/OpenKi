@@ -654,6 +654,25 @@ func Open() (*Store, error) {
 			cfg.AnnouncementFeed = "https://api.github.com/repos/" + fork + "/contents/announcements.json?ref=master"
 		}
 	}
+	// v15: the fork repository moved from loimo to OpenKi. Installs that
+	// already ran v14 carry the loimo feed with a schema version that would
+	// never revisit it, so rewrite exactly the known defaults here. A feed
+	// the user pointed at another repository still wins.
+	if cfg.SchemaVersion < 15 {
+		cfg.SchemaVersion = 15
+		const fork = "chipmax/OpenKi"
+		const legacyFork = "chipmax/loimo"
+		const olderFork = "chipmax/zen-gate-vi"
+		const upstream = "LAGcomcom/zen-gate"
+		feed := strings.TrimSpace(cfg.UpdateFeed)
+		if feed == "" || strings.Contains(feed, legacyFork) || strings.Contains(feed, olderFork) || strings.Contains(feed, upstream) {
+			cfg.UpdateFeed = "https://api.github.com/repos/" + fork + "/releases/latest"
+		}
+		ann := strings.TrimSpace(cfg.AnnouncementFeed)
+		if ann == "" || strings.Contains(ann, legacyFork) || strings.Contains(ann, olderFork) || strings.Contains(ann, upstream) {
+			cfg.AnnouncementFeed = "https://api.github.com/repos/" + fork + "/contents/announcements.json?ref=master"
+		}
+	}
 	if cfg.SchemaVersion == 0 {
 		// first migration to the versioned schema: mature defaults
 		cfg.SchemaVersion = 1

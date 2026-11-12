@@ -20,7 +20,7 @@ import (
 // variables so a fork can point the dashboard at its own repository without
 // editing the rendering code.
 var (
-	SourceRepo   = "chipmax/loimo"
+	SourceRepo   = "chipmax/OpenKi"
 	SourceBranch = "master"
 )
 

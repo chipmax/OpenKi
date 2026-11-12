@@ -11,8 +11,8 @@ import (
 // v14 must rewrite exactly those feed defaults and leave a custom feed alone.
 func TestOpenMigratesLegacyFeedURLs(t *testing.T) {
 	const (
-		wantUpdate = "https://api.github.com/repos/chipmax/loimo/releases/latest"
-		wantAnn    = "https://api.github.com/repos/chipmax/loimo/contents/announcements.json?ref=master"
+		wantUpdate = "https://api.github.com/repos/chipmax/OpenKi/releases/latest"
+		wantAnn    = "https://api.github.com/repos/chipmax/OpenKi/contents/announcements.json?ref=master"
 	)
 	cases := []struct {
 		name       string
@@ -24,6 +24,11 @@ func TestOpenMigratesLegacyFeedURLs(t *testing.T) {
 			name:       "legacy fork",
 			updateFeed: "https://api.github.com/repos/chipmax/zen-gate-vi/releases/latest",
 			annFeed:    "https://api.github.com/repos/chipmax/zen-gate-vi/contents/announcements.json?ref=master",
+		},
+		{
+			name:       "previous fork",
+			updateFeed: "https://api.github.com/repos/chipmax/loimo/releases/latest",
+			annFeed:    "https://api.github.com/repos/chipmax/loimo/contents/announcements.json?ref=master",
 		},
 		{
 			name:       "upstream",
@@ -51,8 +56,8 @@ func TestOpenMigratesLegacyFeedURLs(t *testing.T) {
 				t.Fatal(err)
 			}
 			cfg := st.Config()
-			if cfg.SchemaVersion != 14 {
-				t.Fatalf("schemaVersion = %d, want 14", cfg.SchemaVersion)
+			if cfg.SchemaVersion != 15 {
+				t.Fatalf("schemaVersion = %d, want 15", cfg.SchemaVersion)
 			}
 			if tc.wantCustom {
 				if cfg.UpdateFeed != tc.updateFeed || cfg.AnnouncementFeed != tc.annFeed {
@@ -64,5 +69,26 @@ func TestOpenMigratesLegacyFeedURLs(t *testing.T) {
 				t.Fatalf("feeds = %q, %q; want %q, %q", cfg.UpdateFeed, cfg.AnnouncementFeed, wantUpdate, wantAnn)
 			}
 		})
+	}
+}
+
+func TestOpenMigratesLoimoFeedAtV14(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("LOIMO_HOME", home)
+	raw := `{"mainKey":"sk-test","schemaVersion":14,"updateFeed":"https://api.github.com/repos/chipmax/loimo/releases/latest","announcementFeed":"https://api.github.com/repos/chipmax/loimo/contents/announcements.json?ref=master"}`
+	if err := os.WriteFile(filepath.Join(home, "config.json"), []byte(raw), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	st, err := Open()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg := st.Config()
+	if cfg.SchemaVersion != 15 {
+		t.Fatalf("schemaVersion = %d, want 15", cfg.SchemaVersion)
+	}
+	if cfg.UpdateFeed != "https://api.github.com/repos/chipmax/OpenKi/releases/latest" ||
+		cfg.AnnouncementFeed != "https://api.github.com/repos/chipmax/OpenKi/contents/announcements.json?ref=master" {
+		t.Fatalf("feeds = %q, %q; want OpenKi defaults", cfg.UpdateFeed, cfg.AnnouncementFeed)
 	}
 }

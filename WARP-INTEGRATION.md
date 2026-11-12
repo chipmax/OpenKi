@@ -91,5 +91,5 @@ Build headless với `warpEnabled=true, warpPoolSize=2`, cổng 8797:
 
 loimo (bản gốc) theo GPL-3.0; opencode2api là **GPL-3.0**; package warp
 nguyên thủy trong ai-route là MIT. Toàn bộ fork loimo phát hành theo
-**GPL-3.0-only** — xem `LICENSE` và `COPYING`. Không phát hành bản fork dưới
+**GPL-3.0-only** — xem `LICENSE`. Không phát hành bản fork dưới
 danh nghĩa MIT. Xem `internal/warp/NOTICE` và `THIRD_PARTY_NOTICES.md`.

@@ -1,9 +1,21 @@
 # Changelog
 
-Các thay đổi của fork `chipmax/loimo` so với upstream. Ngày theo giờ máy
+Các thay đổi của fork `chipmax/OpenKi` so với upstream. Ngày theo giờ máy
 phát triển (UTC+7).
 
 ## 2026-11-12
+
+### Repo
+
+- Đổi tên repo GitHub từ `loimo` thành **OpenKi**. URL release, badge, feed cập
+  nhật, feed thông báo và dashboard trỏ `chipmax/OpenKi`; cấu hình cũ còn feed
+  `chipmax/loimo` được migrate ở schema v15, feed người dùng tự đặt vẫn giữ.
+- Bỏ `COPYING` (bản sao trùng byte-for-byte của `LICENSE`), hai ảnh chụp không
+  được tham chiếu và script patch dashboard một lần; repo gọn hơn, không đổi
+  tính năng.
+- WSL dùng NAT + `localhostForwarding` thay cho relay/nft/portproxy, nên
+  `http://127.0.0.1:8787` trên Windows vào thẳng gateway; bỏ dịch vụ relay cục
+  bộ và firewall đi kèm.
 
 ### Thương hiệu
 
@@ -12,7 +24,7 @@ phát triển (UTC+7).
   agent, thư mục dữ liệu `~/.config/loimo`, service systemd và toàn bộ
   README/tài liệu. Các marker và provider `zen-gate` cũ vẫn được nhận diện
   để migrate cấu hình đang chạy, nhưng không còn được ghi mới.
-- Repo phát hành chuyển sang `chipmax/loimo`; feed cập nhật và thông báo cũ
+- Repo phát hành chuyển sang `chipmax/OpenKi`; feed cập nhật và thông báo cũ
   được migrate tự động, feed người dùng tự trỏ nơi khác được giữ nguyên.
 - Logo mới (vòng cung mở + tia sáng) thay cho icon zen-gate ở cửa sổ, tray,
   favicon, dashboard và bộ cài; sinh lại toàn bộ kích thước từ một nguồn SVG.
@@ -109,5 +121,5 @@ phát triển (UTC+7).
 
 ### Giấy phép
 
-- Fork phát hành GPL-3.0-only (`LICENSE`, `COPYING`); WARP port từ opencode2api
+- Fork phát hành GPL-3.0-only (`LICENSE`); WARP port từ opencode2api
   ghi nguồn tại `internal/warp/NOTICE` và `THIRD_PARTY_NOTICES.md`.

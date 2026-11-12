@@ -61,7 +61,7 @@ Installed-Size: $SIZE_KB
 Depends: libc6 (>= 2.34), libgtk-3-0 (>= 3.24), libayatana-appindicator3-1 (>= 0.5)
 Section: net
 Priority: optional
-Homepage: https://github.com/chipmax/loimo
+Homepage: https://github.com/chipmax/OpenKi
 Description: Local free-model gateway with a tray icon
  Lối Mở wraps the OpenCode Zen free model lane into standard
  OpenAI/Anthropic-compatible APIs on 127.0.0.1, auto-detects and injects
@@ -91,8 +91,8 @@ chmod 755 "$PKGDIR/DEBIAN/postinst"
 cat > "$PKGDIR/usr/share/doc/loimo/copyright" <<'EOF'
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: loimo
-Upstream-Contact: https://github.com/chipmax/loimo
-Source: https://github.com/chipmax/loimo
+Upstream-Contact: https://github.com/chipmax/OpenKi
+Source: https://github.com/chipmax/OpenKi
 
 Files: *
 Copyright: 2024-2026 LAGcomcom
@@ -128,7 +128,7 @@ cat > "$PKGDIR/usr/share/metainfo/loimo.metainfo.xml" <<'EOF'
   <description>
     <p>把 OpenCode Zen 免费模型封装成标准 OpenAI / Anthropic 兼容接口，自动注入已安装的 AI Agent 配置，托盘常驻。</p>
   </description>
-  <url type="homepage">https://github.com/chipmax/loimo</url>
+  <url type="homepage">https://github.com/chipmax/OpenKi</url>
   <launchable type="desktop-id">loimo.desktop</launchable>
   <provides>
     <binary>loimo</binary>

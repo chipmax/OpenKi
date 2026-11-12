@@ -1,4 +1,8 @@
-# loimo — Fork tiếng Việt của Lối Mở
+# OpenKi — Lối Mở
+
+> **OpenKi là tên repo phát hành.** Sản phẩm, binary và tên miền cấu hình vẫn
+> mang thương hiệu **Lối Mở (loimo)**; các lệnh build bên dưới giữ nguyên module
+> `github.com/chipmax/loimo`.
 
 > **Fork tiếng Việt — loimo**
 >
@@ -17,9 +21,9 @@
 
 Một chương trình khay hệ thống trên máy tính (Windows 10/11, macOS 13+, Linux): mở một cổng (gateway) cục bộ tương thích OpenAI / Anthropic và tự động kết nối với các AI Agent đã cài trên máy — các mô hình miễn phí xuất hiện ngay trong bộ chọn mô hình của Agent.
 
-[![release](https://img.shields.io/github/v/release/chipmax/loimo?style=flat-square&label=phiên%20bản)](https://github.com/chipmax/loimo/releases/latest)
+[![release](https://img.shields.io/github/v/release/chipmax/OpenKi?style=flat-square&label=phiên%20bản)](https://github.com/chipmax/OpenKi/releases/latest)
 [![go](https://img.shields.io/badge/Go-1.26-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
-[![platform](https://img.shields.io/badge/Windows-10%2F11%20%7C%20macOS%2013%2B%20%7C%20Linux-0078D6?style=flat-square)](https://github.com/chipmax/loimo/releases)
+[![platform](https://img.shields.io/badge/Windows-10%2F11%20%7C%20macOS%2013%2B%20%7C%20Linux-0078D6?style=flat-square)](https://github.com/chipmax/OpenKi/releases)
 [![license](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)](LICENSE)
 
 </div>
@@ -58,7 +62,7 @@ OpenCode Zen cung cấp một loạt mô hình miễn phí **không cần đăng
 
 ## Bắt đầu nhanh
 
-**Windows** — Tải `loimo.exe` từ trang [Releases của bản fork](https://github.com/chipmax/loimo/releases/latest) và chạy trực tiếp (biểu tượng xuất hiện ở khay). Nếu máy chưa có WebView2 Runtime, chương trình tự chuyển sang mở trang quản lý bằng trình duyệt mặc định, chức năng cổng không bị ảnh hưởng. Biến môi trường `LOIMO_NO_WEBVIEW2=1` ép dùng chế độ trình duyệt (để chẩn đoán lỗi).
+**Windows** — Tải `loimo.exe` từ trang [Releases của bản fork](https://github.com/chipmax/OpenKi/releases/latest) và chạy trực tiếp (biểu tượng xuất hiện ở khay). Nếu máy chưa có WebView2 Runtime, chương trình tự chuyển sang mở trang quản lý bằng trình duyệt mặc định, chức năng cổng không bị ảnh hưởng. Biến môi trường `LOIMO_NO_WEBVIEW2=1` ép dùng chế độ trình duyệt (để chẩn đoán lỗi).
 
 **macOS** — `tools/build-macos.sh` tạo ra `dist/Lối Mở.app`:
 
@@ -102,8 +106,8 @@ Chạy một bản tại một thời điểm trên cùng một cổng; hai bả
 #### Cài trong WSL (Debian/Ubuntu, systemd)
 
 ```bash
-git clone https://github.com/chipmax/loimo.git
-cd loimo
+git clone https://github.com/chipmax/OpenKi.git
+cd OpenKi
 CGO_ENABLED=0 go build -tags headless -trimpath -o loimo ./cmd/loimo
 sudo install -m755 loimo /usr/local/bin/loimo
 
@@ -179,13 +183,13 @@ fingerprint và transport: [docs/GATE-AB.md](docs/GATE-AB.md).
 
 ## Cập nhật một chạm
 
-Ứng dụng kiểm tra Releases của kho fork (`chipmax/loimo`) mỗi 6 giờ. Khi có phiên bản mới, trang tổng quan hiện nút "Cập nhật một chạm" — tự tải, thay thế và khởi động lại trong khoảng 10 giây. Tính năng này chỉ bật trên Windows (nơi bản phát hành là một file `.exe` đổi tên được khi đang chạy).
+Ứng dụng kiểm tra Releases của kho fork (`chipmax/OpenKi`) mỗi 6 giờ. Khi có phiên bản mới, trang tổng quan hiện nút "Cập nhật một chạm" — tự tải, thay thế và khởi động lại trong khoảng 10 giây. Tính năng này chỉ bật trên Windows (nơi bản phát hành là một file `.exe` đổi tên được khi đang chạy).
 
 Lịch sử thay đổi của fork: [CHANGELOG.md](CHANGELOG.md).
 
 ## Giấy phép
 
-**GNU GPL-3.0-only** — SPDX: `GPL-3.0-only`. Toàn văn tại [LICENSE](LICENSE) và bản sao [COPYING](COPYING).
+**GNU GPL-3.0-only** — SPDX: `GPL-3.0-only`. Toàn văn tại [LICENSE](LICENSE).
 
 - Mã nguồn gốc: [LAGcomcom/zen-gate](https://github.com/LAGcomcom/zen-gate) — Copyright (C) 2026 LAGcomcom.
 - Bản fork tiếng Việt: Copyright (C) 2026 chipmax.

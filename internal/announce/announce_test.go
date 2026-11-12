@@ -104,7 +104,7 @@ func TestMirrorMapsGitHubPair(t *testing.T) {
 	if got := mirror("https://raw.githubusercontent.com/LAGcomcom/zen-gate/master/announcements.json"); got != "https://api.github.com/repos/LAGcomcom/zen-gate/contents/announcements.json?ref=master" {
 		t.Errorf("raw mirror = %q, want contents", got)
 	}
-	if got := mirror("https://api.github.com/repos/chipmax/loimo/contents/announcements.json?ref=master"); got != "https://raw.githubusercontent.com/chipmax/loimo/master/announcements.json" {
+	if got := mirror("https://api.github.com/repos/chipmax/OpenKi/contents/announcements.json?ref=master"); got != "https://raw.githubusercontent.com/chipmax/OpenKi/master/announcements.json" {
 		t.Errorf("fork contents mirror = %q, want its raw feed", got)
 	}
 	if got := mirror("https://example.com/feed.json"); got != "" {

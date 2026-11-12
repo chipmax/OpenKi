@@ -64,8 +64,9 @@ jobs:
           # workflow_dispatch) already owns the release; gh release create exits
           # non-zero there, so the binaries never got uploaded on the retry.
           if (gh release view $tag 2>$null) {
+            # Already latest: re-running `release edit --latest` answers 422
+            # ("Latest release cannot be draft or prerelease") on this repo.
             gh release upload $tag $assets --clobber
-            gh release edit $tag --latest
           } else {
             gh release create $tag $assets --title $tag --generate-notes --latest
           }

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // parallelToolReply drives a chat-wire upstream that streams two parallel tool

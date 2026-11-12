@@ -21,7 +21,7 @@ func openCodeHome(t *testing.T) string {
 // often the .jsonc one because it tolerates comments. Writing a second, plain
 // .json next to it puts two live configs in one directory with no documented
 // winner — the adapter would quietly shadow the file the user actually
-// maintains. So loimo refuses instead of guessing.
+// maintains. So openki refuses instead of guessing.
 func TestOpenCodeRefusesToShadowAJSONCConfig(t *testing.T) {
 	dir := openCodeHome(t)
 	jsonc := filepath.Join(dir, "opencode.jsonc")
@@ -41,7 +41,7 @@ func TestOpenCodeRefusesToShadowAJSONCConfig(t *testing.T) {
 	}
 }
 
-// An explicit OPENCODE_CONFIG is the user telling loimo where to write, so
+// An explicit OPENCODE_CONFIG is the user telling openki where to write, so
 // the sibling check does not apply to it.
 func TestOpenCodeHonoursExplicitConfigPath(t *testing.T) {
 	dir := openCodeHome(t)
@@ -75,8 +75,8 @@ func TestOpenCodeUpdatesAnExistingJSONBesideJSONC(t *testing.T) {
 	}
 	doc := readJSON(t, path)
 	prov, _ := doc["provider"].(map[string]any)
-	if _, ok := prov["loimo"].(map[string]any); !ok {
-		t.Errorf("provider.loimo missing: %v", doc)
+	if _, ok := prov["openki"].(map[string]any); !ok {
+		t.Errorf("provider.openki missing: %v", doc)
 	}
 }
 
@@ -114,7 +114,7 @@ func TestOpenCodeEnableMigratesLegacyProvider(t *testing.T) {
 	if _, ok := prov["zen-gate"]; ok {
 		t.Fatalf("legacy provider survived migration: %v", prov)
 	}
-	if _, ok := prov["loimo"]; !ok {
+	if _, ok := prov["openki"]; !ok {
 		t.Fatalf("current provider missing after migration: %v", prov)
 	}
 	if _, ok := prov["custom"]; !ok {
@@ -125,7 +125,7 @@ func TestOpenCodeEnableMigratesLegacyProvider(t *testing.T) {
 	}
 	doc = readJSON(t, path)
 	prov, _ = doc["provider"].(map[string]any)
-	if _, ok := prov["loimo"]; ok {
+	if _, ok := prov["openki"]; ok {
 		t.Fatalf("Disable left the current provider behind: %v", prov)
 	}
 	if _, ok := prov["custom"]; !ok {

@@ -1,5 +1,5 @@
 # Relay chạy trên Bun. Không có dependency runtime nên không cần bước install.
-# Cổng 8789 để không đụng 8787 (loimo trên VPS) và 8788 (loimo WSL).
+# Cổng 8789 để không đụng 8787 (openki trên VPS) và 8788 (openki WSL).
 FROM oven/bun:1-alpine
 
 WORKDIR /app

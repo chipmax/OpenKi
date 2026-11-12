@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // A rotation can mirror one id across the Zen lane and the Kilo pool. The
@@ -16,7 +16,7 @@ import (
 // the primary channel — the one the card groups under — is the copy a
 // request would actually ride: the probe-healthy one.
 func TestAdminStateMergesSameIDAcrossChannels(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)

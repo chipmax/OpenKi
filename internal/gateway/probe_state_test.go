@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // The 模型 page showed 不可用 for an hour after one exit answered 404 once, and

@@ -1,10 +1,9 @@
-# OpenKi — Lối Mở
+# OpenKi
 
-> **OpenKi là tên repo phát hành.** Sản phẩm, binary và tên miền cấu hình vẫn
-> mang thương hiệu **Lối Mở (loimo)**; các lệnh build bên dưới giữ nguyên module
-> `github.com/chipmax/loimo`.
+> **OpenKi là tên repo phát hành.** Sản phẩm, binary và tên miền cấu hình mang
+> thương hiệu **OpenKi**; module Go dùng `github.com/chipmax/openki`.
 
-> **Fork tiếng Việt — loimo**
+> **Fork tiếng Việt — OpenKi**
 >
 > Đây là bản fork đã Việt hoá từ [LAGcomcom/zen-gate](https://github.com/LAGcomcom/zen-gate) (bản gốc tiếng Trung được giữ nguyên ở [README.zh-CN.md](README.zh-CN.md)):
 >
@@ -13,9 +12,9 @@
 
 <div align="center">
 
-<img src="assets/icon-256.png" width="88" alt="Lối Mở">
+<img src="assets/icon-256.png" width="88" alt="OpenKi">
 
-# LỐI—MỞ
+# OPENKI
 
 **Đưa các mô hình miễn phí của OpenCode Zen vào mọi AI Agent của bạn.**
 
@@ -32,7 +31,7 @@ Một chương trình khay hệ thống trên máy tính (Windows 10/11, macOS 1
 
 ## Đây là gì
 
-OpenCode Zen cung cấp một loạt mô hình miễn phí **không cần đăng nhập, không tính phí**, nhưng chúng không có cơ chế API Key tiêu chuẩn nên các client thông thường không kết nối được. Lối Mở đóng gói "làn" này trên máy của bạn thành **giao diện tương thích OpenAI / Anthropic tiêu chuẩn**, và tự động hoàn tất việc tiêm cấu hình cho mọi Agent.
+OpenCode Zen cung cấp một loạt mô hình miễn phí **không cần đăng nhập, không tính phí**, nhưng chúng không có cơ chế API Key tiêu chuẩn nên các client thông thường không kết nối được. OpenKi đóng gói "làn" này trên máy của bạn thành **giao diện tương thích OpenAI / Anthropic tiêu chuẩn**, và tự động hoàn tất việc tiêm cấu hình cho mọi Agent.
 
 - **Tự động thích ứng toàn diện**: phát hiện OpenCode / Codex / Claude Code / DeepSeek Harness / omp (bản Windows và bản WSL là hai mục riêng) là tiêm cấu hình ngay (sao lưu trước, tắt là khôi phục). Khởi động lại Agent tương ứng là thấy mô hình miễn phí trong bộ chọn mô hình.
 - **Thêm API tuỳ chỉnh**: ngoài làn miễn phí, có thể thêm bất kỳ upstream tương thích OpenAI / Anthropic nào — tích hợp sẵn 14 preset nhà cung cấp miễn phí (NVIDIA NIM, Google Gemini, GitHub Models, Groq, Cerebras, Mistral, OpenRouter, HuggingFace, SiliconFlow, ModelScope, BigModel...) để điền sẵn, bạn chỉ cần dán Key của mình; mô hình xuất hiện trong mọi Agent dưới dạng `nhà cung cấp/mô hình`.
@@ -48,7 +47,7 @@ OpenCode Zen cung cấp một loạt mô hình miễn phí **không cần đăng
 | 🎯 **Chiến lược định tuyến** | Công tắc định tuyến thông minh bật/tắt bất cứ lúc nào; chuỗi ứng viên dự phòng sắp xếp theo "thứ tự danh mục / độ trễ ký tự đầu"; khi làn miễn phí cạn hoàn toàn có thể lùi một chiều về API tuỳ chỉnh của bạn (mặc định tắt, vì sẽ tốn Key của bạn) |
 | 🔄 **Tự động chuyển đổi khi bị giới hạn** | Mô hình bị giới hạn tốc độ sẽ tự chuyển sang mô hình khả dụng tiếp theo, header phản hồi ghi rõ mô hình thực tế đã trả lời |
 | 🧯 **Giới hạn theo exit, không theo mô hình** | Chuỗi 429 bắt đầu 90 giây, gấp đôi đến trần 15 phút; chỉ park dài khi ba lần 429 cách xa **và** một lần thăm dò độc lập xác nhận. Governor `exitTokensPerMinute` (mặc định 300k/phút mỗi exit, `0` = tắt) giữ nhịp token, thử exit khác khi cạn và chỉ chờ tối đa 20 giây trước khi trả 429 kèm `Retry-After` — chi tiết ở [docs/EGRESS-POLICY.md](docs/EGRESS-POLICY.md) |
-| 🫆 **Cổng fingerprint có công tắc và A/B** | `fingerprintMode` (`auto`/`off`/`force`) và `gateprobe` (`-n`, `-via direct\|pool\|warp`) kiểm tra upstream còn bắt buộc định nghĩa `read`/`shell` hay không; mỗi lần chạy in hash của profile, header `x-loimo-exit` cho biết đúng exit đã phục vụ — xem [docs/GATE-AB.md](docs/GATE-AB.md) |
+| 🫆 **Cổng fingerprint có công tắc và A/B** | `fingerprintMode` (`auto`/`off`/`force`) và `gateprobe` (`-n`, `-via direct\|pool\|warp`) kiểm tra upstream còn bắt buộc định nghĩa `read`/`shell` hay không; mỗi lần chạy in hash của profile, header `x-openki-exit` cho biết đúng exit đã phục vụ — xem [docs/GATE-AB.md](docs/GATE-AB.md) |
 | 📢 **Hệ thống thông báo** | Sửa `announcements.json` ở thư mục gốc là phát thông báo tới mọi người dùng (phân cấp info/warn/critical, khung giờ hiệu lực, theo dõi đã đọc); trang tổng quan đồng bộ mỗi 6 giờ |
 | 🔌 **API tuỳ chỉnh** | 14 preset nhà cung cấp miễn phí điền sẵn một chạm + tự truy vấn danh sách mô hình; Key của bạn do bạn điền, mức dùng vẫn ghi sổ đầy đủ |
 | 📖 **Siêu dữ liệu năng lực trong giao diện chuẩn** | `GET /v1/models` kèm theo mỗi mô hình các trường `context_window`, `max_output_tokens`, `input_modalities`, `reasoning`, `supported_reasoning_levels`, `capability_source` — kết luận đo thực tế đọc được từ Agent/SDK/script bất kỳ mà không cần mở bảng quản lý |
@@ -62,32 +61,32 @@ OpenCode Zen cung cấp một loạt mô hình miễn phí **không cần đăng
 
 ## Bắt đầu nhanh
 
-**Windows** — Tải `loimo.exe` từ trang [Releases của bản fork](https://github.com/chipmax/OpenKi/releases/latest) và chạy trực tiếp (biểu tượng xuất hiện ở khay). Nếu máy chưa có WebView2 Runtime, chương trình tự chuyển sang mở trang quản lý bằng trình duyệt mặc định, chức năng cổng không bị ảnh hưởng. Biến môi trường `LOIMO_NO_WEBVIEW2=1` ép dùng chế độ trình duyệt (để chẩn đoán lỗi).
+**Windows** — Tải `openki.exe` từ trang [Releases của bản fork](https://github.com/chipmax/OpenKi/releases/latest) và chạy trực tiếp (biểu tượng xuất hiện ở khay). Nếu máy chưa có WebView2 Runtime, chương trình tự chuyển sang mở trang quản lý bằng trình duyệt mặc định, chức năng cổng không bị ảnh hưởng. Biến môi trường `OPENKI_NO_WEBVIEW2=1` ép dùng chế độ trình duyệt (để chẩn đoán lỗi).
 
-**macOS** — `tools/build-macos.sh` tạo ra `dist/Lối Mở.app`:
+**macOS** — `tools/build-macos.sh` tạo ra `dist/OpenKi.app`:
 
 ```bash
 tools/build-macos.sh
-cp -R "dist/Lối Mở.app" /Applications/
-open "/Applications/Lối Mở.app"
+cp -R "dist/OpenKi.app" /Applications/
+open "/Applications/OpenKi.app"
 ```
 
-**Linux** — `tools/build-linux.sh` tạo AppImage tự chứa `dist/Loi_Mo-x86_64.AppImage` (GTK3 + appindicator đóng gói sẵn, không cần cài phụ thuộc):
+**Linux** — `tools/build-linux.sh` tạo AppImage tự chứa `dist/OpenKi-x86_64.AppImage` (GTK3 + appindicator đóng gói sẵn, không cần cài phụ thuộc):
 
 ```bash
 tools/build-linux.sh 1.2.1
-chmod +x dist/Loi_Mo-x86_64.AppImage
-./dist/Loi_Mo-x86_64.AppImage
+chmod +x dist/OpenKi-x86_64.AppImage
+./dist/OpenKi-x86_64.AppImage
 ```
 
 Bản Linux không có cửa sổ nhúng: trang quản lý mở trong trình duyệt mặc định, chương trình thường trú ở khay.
 
-**Debian / Ubuntu / Deepin** — `tools/build-deb.sh` tạo gói `dist/loimo_*.deb` (phụ thuộc `libgtk-3-0` và `libayatana-appindicator3-1` của hệ thống, dung lượng nhỏ hơn):
+**Debian / Ubuntu / Deepin** — `tools/build-deb.sh` tạo gói `dist/openki_*.deb` (phụ thuộc `libgtk-3-0` và `libayatana-appindicator3-1` của hệ thống, dung lượng nhỏ hơn):
 
 ```bash
 tools/build-deb.sh 1.2.1
-sudo apt install ./dist/loimo_1.2.1-linux_amd64.deb
-loimo
+sudo apt install ./dist/openki_1.2.1-linux_amd64.deb
+openki
 ```
 
 Ở mọi nền tảng, cách dùng đều như nhau: vào trang "Thích ứng Agent", bật công tắc của Agent bạn đã cài → khởi động lại Agent đó → mô hình miễn phí xuất hiện trong bộ chọn mô hình.
@@ -97,7 +96,7 @@ loimo
 | | Windows | WSL |
 |---|---|---|
 | Giao diện | GUI + khay hệ thống | headless, mở bằng trình duyệt |
-| Dữ liệu | `%APPDATA%\loimo` | `$XDG_CONFIG_HOME/loimo` (mặc định `~/.config/loimo`) |
+| Dữ liệu | `%APPDATA%\openki` | `$XDG_CONFIG_HOME/openki` (mặc định `~/.config/openki`) |
 | Agent | cấu hình nằm trong Windows | cấu hình nằm trong Linux; thêm mục **omp (Windows)** khi tìm thấy `C:\Users\<tên>\.omp\agent\models.yml` qua `/mnt/c` |
 | Cổng | 127.0.0.1:8787 | 127.0.0.1:8787 |
 
@@ -108,20 +107,20 @@ Chạy một bản tại một thời điểm trên cùng một cổng; hai bả
 ```bash
 git clone https://github.com/chipmax/OpenKi.git
 cd OpenKi
-CGO_ENABLED=0 go build -tags headless -trimpath -o loimo ./cmd/loimo
-sudo install -m755 loimo /usr/local/bin/loimo
+CGO_ENABLED=0 go build -tags headless -trimpath -o openki ./cmd/openki
+sudo install -m755 openki /usr/local/bin/openki
 
-sudo tee /etc/systemd/system/loimo.service >/dev/null <<'EOF'
+sudo tee /etc/systemd/system/openki.service >/dev/null <<'EOF'
 [Unit]
-Description=Lối Mở (headless)
+Description=OpenKi (headless)
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 User=YOUR_USER
-Environment=LOIMO_HEADLESS=1
-ExecStart=/usr/local/bin/loimo
+Environment=OPENKI_HEADLESS=1
+ExecStart=/usr/local/bin/openki
 Restart=on-failure
 RestartSec=3
 
@@ -129,19 +128,19 @@ RestartSec=3
 WantedBy=multi-user.target
 EOF
 
-sudo sed -i "s/YOUR_USER/$USER/" /etc/systemd/system/loimo.service
+sudo sed -i "s/YOUR_USER/$USER/" /etc/systemd/system/openki.service
 sudo systemctl daemon-reload
-sudo systemctl enable --now loimo
+sudo systemctl enable --now openki
 ```
 
-Mở `http://127.0.0.1:8787` từ trình duyệt trên Windows (WSL2 chuyển tiếp localhost). Log: `journalctl -u loimo -f`.
+Mở `http://127.0.0.1:8787` từ trình duyệt trên Windows (WSL2 chuyển tiếp localhost). Log: `journalctl -u openki -f`.
 
 ## Build từ mã nguồn
 
 Windows:
 
 ```bash
-go build -trimpath -ldflags "-H=windowsgui -X github.com/chipmax/loimo/internal/gateway.Version=1.2.1 -X github.com/chipmax/loimo/internal/update.Current=1.2.1" -o dist/loimo.exe ./cmd/loimo
+go build -trimpath -ldflags "-H=windowsgui -X github.com/chipmax/openki/internal/gateway.Version=1.2.1 -X github.com/chipmax/openki/internal/update.Current=1.2.1" -o dist/openki.exe ./cmd/openki
 ```
 
 macOS (cần cgo và công cụ dòng lệnh Xcode):
@@ -161,17 +160,17 @@ tools/build-linux.sh 1.2.1
 Mã nguồn có thẻ build `headless`: cửa sổ và khay hệ thống được biên dịch loại bỏ hoàn toàn, binary không còn liên kết GTK / WebView2 / appindicator, nên `CGO_ENABLED=0` cũng biên dịch chéo được và chạy thẳng trong container / NAS:
 
 ```bash
-docker compose up -d        # hoặc docker build -t loimo .
+docker compose up -d        # hoặc docker build -t openki .
 ```
 
-- Cổng `8787`, dữ liệu nằm ở volume `/data` (`LOIMO_HOME`); `LOIMO_HEADLESS=1` tương đương cờ `-no-tray`
+- Cổng `8787`, dữ liệu nằm ở volume `/data` (`OPENKI_HOME`); `OPENKI_HEADLESS=1` tương đương cờ `-no-tray`
 - Image có sẵn `HEALTHCHECK` gọi `/healthz`
 - Trang quản lý vẫn **chỉ** nghe ở loopback: trong container hãy dùng tunnel SSH hoặc reverse proxy cùng máy để truy cập; cổng được map ra ngoài là tầng endpoint OpenAI / Anthropic `/v1`, không phải trang quản trị
 
 Không dùng Docker, chỉ cần một binary không giao diện:
 
 ```bash
-CGO_ENABLED=0 go build -tags headless -trimpath -o loimo ./cmd/loimo
+CGO_ENABLED=0 go build -tags headless -trimpath -o openki ./cmd/openki
 ```
 
 Ma trận triển khai Windows (GUI/tray), WSL (systemd, cổng 8788) và VPS (Caddy

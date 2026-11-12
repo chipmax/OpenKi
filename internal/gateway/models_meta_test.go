@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // listModels pulls /v1/models and indexes the entries by id.
@@ -210,7 +210,7 @@ func TestCodexCatalogNamesAudioAndFileInputs(t *testing.T) {
 	t.Cleanup(func() { lane.UpstreamBase = old })
 
 	home := t.TempDir()
-	t.Setenv("LOIMO_HOME", home)
+	t.Setenv("OPENKI_HOME", home)
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)
@@ -259,7 +259,7 @@ func TestCodexCatalogNamesAudioAndFileInputs(t *testing.T) {
 // tag is on disk, and the lane builds its catalog from the curated table.
 func TestStoredTagsSurviveRestartIntoTheLane(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("LOIMO_HOME", home)
+	t.Setenv("OPENKI_HOME", home)
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)

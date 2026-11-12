@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // relayOneTurn posts one turn through a capturing upstream and returns the body

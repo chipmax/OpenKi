@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chipmax/loimo/internal/qoderhub/remote"
-	"github.com/chipmax/loimo/internal/qoderhub/service"
-	"github.com/chipmax/loimo/internal/qoderhub/tooltypes"
+	"github.com/chipmax/openki/internal/qoderhub/remote"
+	"github.com/chipmax/openki/internal/qoderhub/service"
+	"github.com/chipmax/openki/internal/qoderhub/tooltypes"
 )
 
 // Server-side tool injection: the proxy advertises gateway-only tools and runs

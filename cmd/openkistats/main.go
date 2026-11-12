@@ -1,12 +1,12 @@
-// Command loimostats is the server-side companion of Lối Mở: it receives the
+// Command openkistats is the server-side companion of OpenKi: it receives the
 // anonymous heartbeats the desktop gateway sends ({installId, version,
 // country}) and serves a dashboard showing how many people are using it.
 //
 // Single binary, zero dependencies, one JSON file for storage:
 //
-//	loimostats.exe              # serves :8321 (dashboard + API)
-//	LOIMOSTATS_ADDR=:8321       # override listen address
-//	LOIMOSTATS_TOKEN=s3cret     # require ?token=s3cret on the dashboard (optional)
+//	openkistats.exe              # serves :8321 (dashboard + API)
+//	OPENKISTATS_ADDR=:8321       # override listen address
+//	OPENKISTATS_TOKEN=s3cret     # require ?token=s3cret on the dashboard (optional)
 package main
 
 import (
@@ -24,7 +24,7 @@ import (
 //go:embed logo.png
 var logoPNG []byte
 
-// Install is one deployed Lối Mở instance.
+// Install is one deployed OpenKi instance.
 type Install struct {
 	InstallID string `json:"installId"`
 	Version   string `json:"version"`
@@ -45,7 +45,7 @@ var db = &store{installs: map[string]*Install{}}
 var dataFile string
 
 func main() {
-	addr := os.Getenv("LOIMOSTATS_ADDR")
+	addr := os.Getenv("OPENKISTATS_ADDR")
 	if addr == "" {
 		addr = ":8321"
 	}
@@ -64,7 +64,7 @@ func main() {
 	mux.HandleFunc("/api/stats", handleStats)
 	mux.HandleFunc("/api/installs", handleInstalls)
 
-	fmt.Printf("loimostats serving on %s (data: %s)\n", addr, dataFile)
+	fmt.Printf("openkistats serving on %s (data: %s)\n", addr, dataFile)
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		fmt.Println("listen error:", err)
 		os.Exit(1)
@@ -183,7 +183,7 @@ func handleInstalls(w http.ResponseWriter, r *http.Request) {
 
 // --- dashboard ----------------------------------------------------------------
 
-var dashboardToken = os.Getenv("LOIMOSTATS_TOKEN")
+var dashboardToken = os.Getenv("OPENKISTATS_TOKEN")
 
 func handleDashboard(w http.ResponseWriter, r *http.Request) {
 	if dashboardToken != "" && r.URL.Query().Get("token") != dashboardToken {
@@ -203,9 +203,9 @@ func dashboardHTML() string { return dashHTML }
 
 const dashHTML = `<!doctype html>
 <html lang="vi"><head><meta charset="utf-8">
-<title>Lối Mở · Tổng quan người dùng</title>
+<title>OpenKi · Tổng quan người dùng</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Lối Mở – cổng mô hình miễn phí cục bộ · thống kê nhịp tim ẩn danh của các bản triển khai">
+<meta name="description" content="OpenKi – cổng mô hình miễn phí cục bộ · thống kê nhịp tim ẩn danh của các bản triển khai">
 <link rel="icon" type="image/png" href="/logo.png">
 <style>
 :root { --bg:#141414; --panel:#1c1c1c; --panel-2:#262626; --ink:#ececec; --ink-dim:#a8a8a8; --ink-mute:#787878;
@@ -249,8 +249,8 @@ tr:hover td { background:rgba(255,255,255,.02); }
 footer { margin-top:34px; display:flex; justify-content:space-between; color:var(--ink-mute); font-size:11.5px; }
 </style></head><body><div class="wrap">
 <header>
-  <img src="/logo.png" alt="Lối Mở">
-  <div class="tt"><h1>LỐI—MỞ <b>Tổng quan người dùng</b></h1><div class="tag">Cổng mô hình miễn phí cục bộ · Thống kê bản triển khai</div></div>
+  <img src="/logo.png" alt="OpenKi">
+  <div class="tt"><h1>OPENKI <b>Tổng quan người dùng</b></h1><div class="tag">Cổng mô hình miễn phí cục bộ · Thống kê bản triển khai</div></div>
   <div class="live"><span class="dot"></span><span id="live">Trực tiếp</span></div>
 </header>
 <div class="sub">Dữ liệu từ nhịp tim ẩn danh của các bản triển khai (chỉ installId / phiên bản / quốc gia), báo cáo mỗi 6 giờ, chỉ lưu trên máy chủ này.</div>
@@ -263,7 +263,7 @@ footer { margin-top:34px; display:flex; justify-content:space-between; color:var
 <div class="panel"><h3>Phân bố phiên bản</h3><div id="p-versions"><div class="empty">Đang tải…</div></div></div>
 <div class="panel"><h3>Phân bố quốc gia / khu vực</h3><div id="p-countries"><div class="empty">Đang tải…</div></div></div>
 <div class="panel"><h3>Nhịp tim gần đây</h3><table><thead><tr><th>Bản triển khai</th><th>Phiên bản</th><th>Quốc gia / Khu vực</th><th>Lần đầu trực tuyến</th><th>Nhịp tim gần nhất</th><th>Số lần báo cáo</th></tr></thead><tbody id="tb"><tr><td colspan="6" class="empty">Đang tải…</td></tr></tbody></table></div>
-<footer><span>Lối Mở · Nhịp tim mỗi 6 giờ · Dữ liệu chỉ lưu trên máy chủ này</span><span>Tự làm mới mỗi 30 giây · Cập nhật lúc <span id="gen">—</span></span></footer>
+<footer><span>OpenKi · Nhịp tim mỗi 6 giờ · Dữ liệu chỉ lưu trên máy chủ này</span><span>Tự làm mới mỗi 30 giây · Cập nhật lúc <span id="gen">—</span></span></footer>
 </div>
 <script>
 const f = n => new Date(n).toLocaleString("vi-VN", {hour12:false});

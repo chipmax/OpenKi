@@ -16,10 +16,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/logx"
-	"github.com/chipmax/loimo/internal/relay"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/logx"
+	"github.com/chipmax/openki/internal/relay"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // probePNG is a 1×1 transparent PNG — the smallest legal image.

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	autostartValueName       = "Lối Mở"
+	autostartValueName       = "OpenKi"
 	legacyAutostartValueName = "Zen Gate"
 )
 

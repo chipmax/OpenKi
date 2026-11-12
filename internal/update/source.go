@@ -86,17 +86,17 @@ type SourceStatus struct {
 // runs with the install user's HOME, so the usual ~/src path resolves.
 func SourceDir() string {
 	candidates := []string{}
-	if v := strings.TrimSpace(os.Getenv("LOIMO_SOURCE")); v != "" {
+	if v := strings.TrimSpace(os.Getenv("OPENKI_SOURCE")); v != "" {
 		candidates = append(candidates, v)
 	}
 	if home, err := os.UserHomeDir(); err == nil && home != "" {
 		candidates = append(candidates,
 			filepath.Join(home, "src", "OpenKi"),
 			filepath.Join(home, "OpenKi"),
-			filepath.Join(home, "src", "loimo"),
-			filepath.Join(home, "loimo"),
-			filepath.Join(home, "src", "loimo-source"),
-			filepath.Join(home, "loimo-source"),
+			filepath.Join(home, "src", "openki"),
+			filepath.Join(home, "openki"),
+			filepath.Join(home, "src", "openki-source"),
+			filepath.Join(home, "openki-source"),
 		)
 	}
 	if wd, err := os.Getwd(); err == nil {

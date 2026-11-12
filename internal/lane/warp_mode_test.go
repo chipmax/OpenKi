@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chipmax/loimo/internal/warp"
+	"github.com/chipmax/openki/internal/warp"
 )
 
 // The WARP switch is a pure function of two config values: the dedicated

@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chipmax/loimo/internal/logx"
+	"github.com/chipmax/openki/internal/logx"
 )
 
 // patchSettings sends a settings change the way the dashboard does.

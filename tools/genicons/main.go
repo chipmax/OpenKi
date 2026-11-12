@@ -31,7 +31,7 @@ var pngOutputs = []output{
 	{"internal/window/assets/icon-256.png", 256},
 	{"internal/tray/assets/icon-256.png", 256},
 	{"internal/gateway/web/favicon.png", 128},
-	{"cmd/loimostats/logo.png", 256},
+	{"cmd/openkistats/logo.png", 256},
 }
 
 var icoOutputs = []struct {
@@ -168,8 +168,8 @@ func writeICO(path string, sizes []int, blobs [][]byte) error {
 		} else {
 			buf.WriteByte(byte(size))
 		}
-		buf.WriteByte(0) // palette count
-		buf.WriteByte(0) // reserved
+		buf.WriteByte(0)                                    // palette count
+		buf.WriteByte(0)                                    // reserved
 		binary.Write(&buf, binary.LittleEndian, uint16(1))  // planes
 		binary.Write(&buf, binary.LittleEndian, uint16(32)) // bit count
 		binary.Write(&buf, binary.LittleEndian, uint32(len(blobs[i])))

@@ -3,7 +3,7 @@ package gateway
 import (
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // Issue #96: parallel tool calls must reach the client with distinct

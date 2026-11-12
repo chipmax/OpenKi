@@ -1,24 +1,24 @@
 [Unit]
-Description=Lối Mở gateway (headless, VPS)
+Description=OpenKi gateway (headless, VPS)
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=loimo
-Group=loimo
-Environment=HOME=/var/lib/loimo
-Environment=LOIMO_HEADLESS=1
-Environment=LOIMO_HOME=/var/lib/loimo
-WorkingDirectory=/var/lib/loimo
-ExecStart=/opt/loimo/loimo --no-inject
+User=openki
+Group=openki
+Environment=HOME=/var/lib/openki
+Environment=OPENKI_HEADLESS=1
+Environment=OPENKI_HOME=/var/lib/openki
+WorkingDirectory=/var/lib/openki
+ExecStart=/opt/openki/openki --no-inject
 Restart=always
 RestartSec=3
 TimeoutStopSec=10
 KillSignal=SIGTERM
 UMask=0077
 
-StateDirectory=loimo
+StateDirectory=openki
 StateDirectoryMode=0750
 
 # Hardening cơ bản: filesystem chỉ đọc trừ thư mục dữ liệu.
@@ -27,7 +27,7 @@ PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/loimo
+ReadWritePaths=/var/lib/openki
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true

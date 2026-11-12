@@ -36,7 +36,7 @@ func TestCloneCopiesProviderKeyList(t *testing.T) {
 // A masked export is the file people paste into issues: every balanced key
 // must mask, not just the legacy field.
 func TestMaskedHidesBalancedKeys(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := Open()
 	if err != nil {
 		t.Fatal(err)

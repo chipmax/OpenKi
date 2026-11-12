@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // The day buckets are the only durable place usage lives: Recent is capped at
@@ -17,7 +17,7 @@ import (
 // a hit rate from, which is why "we have no cache" looked true.
 func TestRecordPersistsCacheFieldsInDayBuckets(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("LOIMO_HOME", home)
+	t.Setenv("OPENKI_HOME", home)
 	st, err := Open()
 	if err != nil {
 		t.Fatal(err)
@@ -65,7 +65,7 @@ func TestRecordPersistsCacheFieldsInDayBuckets(t *testing.T) {
 // older binary reading the file keeps working.
 func TestRecordOmitsCacheFieldsWhenZero(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("LOIMO_HOME", home)
+	t.Setenv("OPENKI_HOME", home)
 	st, err := Open()
 	if err != nil {
 		t.Fatal(err)
@@ -87,7 +87,7 @@ func TestRecordOmitsCacheFieldsWhenZero(t *testing.T) {
 // A day bucket written before these fields existed unmarshals with both at
 // zero, and Record must keep folding into it without losing the older numbers.
 func TestRecordAccumulatesCacheFieldsOnAnExistingBucket(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := Open()
 	if err != nil {
 		t.Fatal(err)

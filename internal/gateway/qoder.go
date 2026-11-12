@@ -12,14 +12,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/logx"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/logx"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // The Qoder 账号渠道: a managed provider backed by a local qodercn-gateway
 // sidecar (github.com/Morpheus799/qodercn-gateway) that harvests the QoderCN
-// IDE's cached login and speaks OpenAI against gateway.qoder.com.cn. loimo
+// IDE's cached login and speaks OpenAI against gateway.qoder.com.cn. openki
 // never logs in itself — the Qoder IDE owns the credential and refreshes it —
 // so the channel's state is observed, not driven:
 //
@@ -414,7 +414,7 @@ func (s *Server) ensureQoderProvider(st qoderStatus) bool {
 			ID: qoderProviderID, Name: "Kênh tài khoản Qoder",
 			BaseURL: qoderGatewayURL + "/v1", Protocol: store.ProtocolOpenAI,
 			Enabled: true, Models: st.ModelIDs,
-			Note: "Sidecar qodercn-gateway do loimo quản lý tự động điều hành, trạng thái đăng nhập theo Qoder IDE",
+			Note: "Sidecar qodercn-gateway do openki quản lý tự động điều hành, trạng thái đăng nhập theo Qoder IDE",
 		}
 		mergeCatalog(&p, st.Catalog)
 		s.Store.Mutate(func(c *store.Config) {

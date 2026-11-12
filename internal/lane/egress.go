@@ -275,7 +275,7 @@ func (r *relayRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 		resp, err := r.base.RoundTrip(clone)
 		if err == nil {
 			if resp.Header != nil {
-				resp.Header.Set("X-LoiMo-Egress", "relay:"+peer.ID)
+				resp.Header.Set("X-OpenKi-Egress", "relay:"+peer.ID)
 			}
 			return resp, nil
 		}
@@ -318,12 +318,12 @@ func cloneRelayRequest(req *http.Request, peer RelayEndpoint, first bool) (*http
 		clone.Header = make(http.Header)
 	}
 	for k := range clone.Header {
-		if strings.HasPrefix(strings.ToLower(k), "x-loimo-relay-") {
+		if strings.HasPrefix(strings.ToLower(k), "x-openki-relay-") {
 			clone.Header.Del(k)
 		}
 	}
-	clone.Header.Set("X-LoiMo-Relay-Token", peer.Token)
-	clone.Header.Set("X-LoiMo-Relay-Upstream", req.URL.Scheme+"://"+req.URL.Host)
+	clone.Header.Set("X-OpenKi-Relay-Token", peer.Token)
+	clone.Header.Set("X-OpenKi-Relay-Upstream", req.URL.Scheme+"://"+req.URL.Host)
 	return clone, nil
 }
 
@@ -384,8 +384,8 @@ func (s *egressSelector) RoundTrip(req *http.Request) (*http.Response, error) {
 			}
 			continue
 		}
-		if resp.Header != nil && resp.Header.Get("X-LoiMo-Egress") == "" {
-			resp.Header.Set("X-LoiMo-Egress", peer.name)
+		if resp.Header != nil && resp.Header.Get("X-OpenKi-Egress") == "" {
+			resp.Header.Set("X-OpenKi-Egress", peer.name)
 		}
 		if resp.StatusCode != http.StatusTooManyRequests && resp.StatusCode != http.StatusForbidden {
 			return resp, nil

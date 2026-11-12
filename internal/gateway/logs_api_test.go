@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chipmax/loimo/internal/logx"
+	"github.com/chipmax/openki/internal/logx"
 )
 
 // logLines decodes just the entries array so a filter test can assert on order.

@@ -10,22 +10,22 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// dsh injects a loimo provider into DeepSeek Harness. The host's llm-pi-ai
+// dsh injects a openki provider into DeepSeek Harness. The host's llm-pi-ai
 // plugin carries the providers dict every model picker reads from
 // (displayName, api, baseURL, models), and the supported way to set it is the
 // profile's own cordis.patch.yml — the same layer a hand-added provider lands
 // in. The edit is a targeted merge on the yaml node tree (comments, key order
 // and !!js expressions survive round-trip): an existing llm-pi-ai entry gains
-// a "loimo" key under config.providers, a profile without one gets the
+// a "openki" key under config.providers, a profile without one gets the
 // entry appended.
 //
 // Profiles keep their own layer last in the composition order, so this never
 // fights bundle patches; and installs of the legacy dsh-our-free-model plugin
-// (wired by earlier loimo versions) are stripped on enable/disable so the
+// (wired by earlier openki versions) are stripped on enable/disable so the
 // two routes never run at once.
 const (
 	dshPluginID         = "dsh-our-free-model"
-	dshProviderID       = "loimo"
+	dshProviderID       = "openki"
 	legacyDSHProviderID = "zen-gate"
 	dshPatchID          = "llm-pi-ai"
 	dshPatchName        = "@deepseek-ai/dsh-llm-pi-ai"
@@ -112,7 +112,7 @@ func (d *dsh) Detect() (bool, string, string) {
 	return true, "", detail
 }
 
-// IsEnabled reports whether any profile's patch layer carries the loimo
+// IsEnabled reports whether any profile's patch layer carries the openki
 // provider — the providers dict itself may well hold hand-added providers.
 func (d *dsh) IsEnabled() (bool, string, error) {
 	for _, dir := range d.profileDirs() {
@@ -141,7 +141,7 @@ func (d *dsh) LegacyEnabled() bool {
 }
 
 // Enable wires every profile: strip the legacy plugin install, then merge the
-// loimo provider into the patch layer (backed up first).
+// openki provider into the patch layer (backed up first).
 func (d *dsh) Enable(o Options) error {
 	profiles := d.profileDirs()
 	if len(profiles) == 0 {
@@ -158,7 +158,7 @@ func (d *dsh) Enable(o Options) error {
 	return nil
 }
 
-// Disable removes the loimo provider from every profile's patch layer and
+// Disable removes the openki provider from every profile's patch layer and
 // strips any legacy plugin install. Hand-added providers are untouched.
 func (d *dsh) Disable() error {
 	for _, dir := range d.profileDirs() {
@@ -382,7 +382,7 @@ func (d *dsh) removeProvider(dir string) error {
 // apiKeyEnv reference would need a separately provisioned host credential.
 func (d *dsh) providerNode(o Options) *yaml.Node {
 	provider := &yaml.Node{Kind: yaml.MappingNode}
-	setMapKey(provider, "displayName", strNode("Lối Mở"))
+	setMapKey(provider, "displayName", strNode("OpenKi"))
 	setMapKey(provider, "api", strNode("openai-completions"))
 	setMapKey(provider, "baseURL", strNode(o.BaseURL))
 	headers := &yaml.Node{Kind: yaml.MappingNode}
@@ -416,7 +416,7 @@ func (d *dsh) providerNode(o Options) *yaml.Node {
 
 // --- legacy plugin strip ----------------------------------------------------
 
-// stripLegacyPlugin removes an earlier loimo release's wiring of the
+// stripLegacyPlugin removes an earlier openki release's wiring of the
 // dsh-our-free-model plugin (package.json deps + bundle registration +
 // node_modules copy) so the plugin route and the gateway provider never run
 // side by side. A plugin the user installed by other means carries a

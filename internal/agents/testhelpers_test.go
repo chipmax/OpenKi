@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // fakeAgentHome points os.UserHomeDir at a temp tree so an adapter writes into
@@ -16,7 +16,7 @@ func fakeAgentHome(t *testing.T) string {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
-	t.Setenv("LOIMO_HOME", filepath.Join(home, "data"))
+	t.Setenv("OPENKI_HOME", filepath.Join(home, "data"))
 	return home
 }
 

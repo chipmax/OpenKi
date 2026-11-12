@@ -222,7 +222,7 @@ func RequestIdFor(session, turnSeed string) string {
 	if strings.TrimSpace(turnSeed) == "" {
 		return MintRequestId(0)
 	}
-	sum := sha256.Sum256([]byte("loimo-req\x00" + session + "\x00" + turnSeed))
+	sum := sha256.Sum256([]byte("openki-req\x00" + session + "\x00" + turnSeed))
 	id := "msg_" + hex.EncodeToString(sum[:6]) + base62From(sum[6:20])
 	if !requestRe.MatchString(id) {
 		return MintRequestId(0)
@@ -294,7 +294,7 @@ func isSystemOneModel(base string) bool { return systemOneRe.MatchString(base) }
 func IsSystemOneModel(modelID string) bool { return isSystemOneModel(BaseModelId(modelID)) }
 
 // EndpointFor returns the upstream path for one model. Free-tier inference
-// moved to /inference/v1 (loimo fork of 9router PR #4842).
+// moved to /inference/v1 (openki fork of 9router PR #4842).
 func EndpointFor(modelID string) string {
 	switch WireFor(modelID) {
 	case "responses":

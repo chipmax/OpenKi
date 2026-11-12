@@ -21,12 +21,12 @@ import (
 	"sync/atomic"
 
 	_ "embed"
-	"github.com/chipmax/loimo/internal/announce"
-	"github.com/chipmax/loimo/internal/autotag"
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/logx"
-	"github.com/chipmax/loimo/internal/relay"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/announce"
+	"github.com/chipmax/openki/internal/autotag"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/logx"
+	"github.com/chipmax/openki/internal/relay"
+	"github.com/chipmax/openki/internal/store"
 	"time"
 )
 
@@ -373,7 +373,7 @@ func (s *Server) Start() error {
 		// this goroutine is still entering Serve, and reading the field here
 		// would race with that write.
 		if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
-			log.Printf("[loimo] http serve: %v", err)
+			log.Printf("[openki] http serve: %v", err)
 		}
 	}()
 	return nil
@@ -431,7 +431,7 @@ func (s *Server) Stop() {
 }
 
 // BaseURL is the locally advertised endpoint. It stays on loopback even while
-// the LAN is served: the agent adapters recognise loimo's own entries by
+// the LAN is served: the agent adapters recognise openki's own entries by
 // the literal 127.0.0.1 in the URL they are handed.
 func (s *Server) BaseURL() string {
 	return fmt.Sprintf("http://127.0.0.1:%d/v1", s.Store.Config().Port)
@@ -505,7 +505,7 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) {
 		// /healthz is the supervisor spelling (docker healthchecks, systemd
 		// probes, load balancers): same unauthenticated liveness answer, no
 		// key and no state — a readiness probe must not depend on config.
-		writeJSON(w, 200, map[string]any{"ok": true, "service": "loimo"})
+		writeJSON(w, 200, map[string]any{"ok": true, "service": "openki"})
 	case path == "/v1/models" && r.Method == http.MethodGet:
 		if !s.authorized(w, r) {
 			return
@@ -604,7 +604,7 @@ func (s *Server) handleListModels(w http.ResponseWriter, r *http.Request) {
 	// The same ordering the Codex catalog uses: two pickers, one truth.
 	s.sortPickerEntries(vis)
 	for _, m := range vis {
-		data = append(data, s.modelCard(m, m.ID, "loimo", cfg, true))
+		data = append(data, s.modelCard(m, m.ID, "openki", cfg, true))
 	}
 	hidden := s.hiddenSet()
 	for i := range cfg.Providers {
@@ -889,7 +889,7 @@ func (s *Server) InjectableModels() []lane.ModelInfo {
 }
 
 // handleCodexCatalog serves the model list in Codex's remote-catalog shape so
-// the desktop model picker can offer the free models under the loimo
+// the desktop model picker can offer the free models under the openki
 // provider. Deliberately unauthenticated: the listing is non-sensitive, and a
 // 401 here makes Codex surface a login prompt instead of the models.
 func (s *Server) handleCodexCatalog(w http.ResponseWriter, r *http.Request) {
@@ -973,7 +973,7 @@ func (s *Server) handleCodexCatalog(w http.ResponseWriter, r *http.Request) {
 			"slug":                         m.ID,
 			"display_name":                 m.Name,
 			"description":                  desc,
-			"base_instructions":            fmt.Sprintf("You are %s (model id: %s), a coding agent serving the user's Codex app through the Lối Mở local gateway. Work toward the user's goal with the available tools and verify your changes. Always reply in the same language as the user's latest message — when the user writes Chinese, reply in Simplified Chinese. Be concise.", m.Name, m.ID),
+			"base_instructions":            fmt.Sprintf("You are %s (model id: %s), a coding agent serving the user's Codex app through the OpenKi local gateway. Work toward the user's goal with the available tools and verify your changes. Always reply in the same language as the user's latest message — when the user writes Chinese, reply in Simplified Chinese. Be concise.", m.Name, m.ID),
 			"default_reasoning_level":      "medium",
 			"supported_reasoning_levels":   lv,
 			"shell_type":                   "unified_exec",
@@ -984,7 +984,7 @@ func (s *Server) handleCodexCatalog(w http.ResponseWriter, r *http.Request) {
 			"visibility":                   "list",
 			"supported_in_api":             true,
 			"priority":                     entryPriority,
-			"provider_id":                  "loimo",
+			"provider_id":                  "openki",
 			"context_window":               m.ContextWindow,
 			"max_output_tokens":            m.MaxOutput,
 		})
@@ -1127,7 +1127,7 @@ func stampRequestID(w http.ResponseWriter, r *http.Request) *http.Request {
 	if rid == "" {
 		rid = randomID("lreq-")
 	}
-	w.Header().Set("x-loimo-request-id", rid)
+	w.Header().Set("x-openki-request-id", rid)
 	return r.WithContext(lane.WithTrace(r.Context(), rid))
 }
 

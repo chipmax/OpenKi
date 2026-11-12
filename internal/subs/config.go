@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // PortBase is the first local socks inbound port; node i listens on
@@ -63,7 +63,7 @@ func inboundTag(i int) string  { return fmt.Sprintf("in-%02d", i) }
 func outboundTag(i int) string { return fmt.Sprintf("out-%02d", i) }
 
 // WriteConfig atomically writes the generated config under
-// <loimo home>/subs/sing-box.json and returns its path.
+// <openki home>/subs/sing-box.json and returns its path.
 func WriteConfig(nodes []Node) (string, error) {
 	data, err := BuildConfig(nodes)
 	if err != nil {

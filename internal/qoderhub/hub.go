@@ -7,18 +7,18 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/chipmax/loimo/internal/qoderhub/httpapi"
-	"github.com/chipmax/loimo/internal/qoderhub/remote"
-	"github.com/chipmax/loimo/internal/qoderhub/service"
+	"github.com/chipmax/openki/internal/qoderhub/httpapi"
+	"github.com/chipmax/openki/internal/qoderhub/remote"
+	"github.com/chipmax/openki/internal/qoderhub/service"
 )
 
 // The embedded QoderCN gateway: the vendored qodercn-gateway (MIT, by
-// Tiancheng Lu) runs inside loimo's process on 127.0.0.1:8095 and serves
+// Tiancheng Lu) runs inside openki's process on 127.0.0.1:8095 and serves
 // the OpenAI/Anthropic surface the Qoder 账号渠道 provider points at. It
 // harvests the QoderCN IDE's cached login, so "logged in" follows the IDE.
 //
 // Start is non-fatal by design: when the port is already taken (an external
-// qodercn-gateway the user runs themselves, or a second loimo), the hub
+// qodercn-gateway the user runs themselves, or a second openki), the hub
 // stays down and the status probe simply reports whatever answers on the port.
 
 // HubHost/HubPort is the fixed loopback bind the managed provider points at.
@@ -62,7 +62,7 @@ func (h *Hub) Pool() *remote.Pool {
 }
 
 // Start brings the hub up. Warmup happens asynchronously — a slow or absent
-// IDE login must never delay loimo's own startup.
+// IDE login must never delay openki's own startup.
 func Start() (*Hub, error) {
 	addr := net.JoinHostPort(HubHost, fmt.Sprintf("%d", HubPort))
 	// Fail fast on a busy port so the caller can fall back to whatever

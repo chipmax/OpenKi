@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // The task registry is what makes the 测试 / 能力实测 buttons observable: the

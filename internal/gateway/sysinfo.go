@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // SystemReport is the host/process information shown on the dashboard. It is

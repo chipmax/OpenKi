@@ -7,21 +7,21 @@ import (
 )
 
 func TestAppDataDirHonoursOverride(t *testing.T) {
-	t.Setenv("LOIMO_HOME", "/tmp/zg-override")
+	t.Setenv("OPENKI_HOME", "/tmp/zg-override")
 	if got := AppDataDir(); got != "/tmp/zg-override" {
-		t.Fatalf("LOIMO_HOME ignored: got %s", got)
+		t.Fatalf("OPENKI_HOME ignored: got %s", got)
 	}
 }
 
 func TestAppDataDirIsPerPlatform(t *testing.T) {
-	t.Setenv("LOIMO_HOME", "")
+	t.Setenv("OPENKI_HOME", "")
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming"))
 
 	got := AppDataDir()
-	if filepath.Base(got) != "loimo" {
-		t.Fatalf("data dir must live in a loimo folder, got %s", got)
+	if filepath.Base(got) != "openki" {
+		t.Fatalf("data dir must live in a openki folder, got %s", got)
 	}
 	if !filepath.IsAbs(got) {
 		t.Fatalf("data dir must be absolute, got %s", got)
@@ -29,13 +29,13 @@ func TestAppDataDirIsPerPlatform(t *testing.T) {
 	switch runtime.GOOS {
 	case "windows":
 		// %APPDATA% wins on Windows.
-		if want := filepath.Join(home, "AppData", "Roaming", "loimo"); got != want {
+		if want := filepath.Join(home, "AppData", "Roaming", "openki"); got != want {
 			t.Fatalf("got %s, want %s", got, want)
 		}
 	case "darwin":
 		// macOS keeps app state in ~/Library/Application Support, never in the
 		// Windows-shaped AppData path the port inherited.
-		if want := filepath.Join(home, "Library", "Application Support", "loimo"); got != want {
+		if want := filepath.Join(home, "Library", "Application Support", "openki"); got != want {
 			t.Fatalf("got %s, want %s", got, want)
 		}
 	}
@@ -48,7 +48,7 @@ func TestAppDataDirIgnoresWindowsOnlyVars(t *testing.T) {
 		t.Skip("macOS-only invariant")
 	}
 	home := t.TempDir()
-	t.Setenv("LOIMO_HOME", "")
+	t.Setenv("OPENKI_HOME", "")
 	t.Setenv("HOME", home)
 	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming"))
 

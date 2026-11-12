@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // laneUpstream429 refuses everything on the free lane.
@@ -101,7 +101,7 @@ func TestProviderFallbackOnExhaustedLane(t *testing.T) {
 	if resp.StatusCode != 200 {
 		t.Fatalf("status = %d, want 200 (fallback must rescue an exhausted lane)", resp.StatusCode)
 	}
-	if got := resp.Header.Get("x-loimo-served-by"); got != "pv1/gpt-4o-mini" {
+	if got := resp.Header.Get("x-openki-served-by"); got != "pv1/gpt-4o-mini" {
 		t.Fatalf("served-by = %q, want pv1/gpt-4o-mini", got)
 	}
 	var out struct {
@@ -160,10 +160,10 @@ func TestVisionAwareFailover(t *testing.T) {
 	if resp.StatusCode != 200 {
 		t.Fatalf("status = %d", resp.StatusCode)
 	}
-	if got := resp.Header.Get("x-loimo-served-by"); got != "space-bunny-free" {
+	if got := resp.Header.Get("x-openki-served-by"); got != "space-bunny-free" {
 		t.Fatalf("smart routing served-by = %q, want space-bunny-free", got)
 	}
-	if got := resp.Header.Get("x-loimo-exit"); got != "direct" {
+	if got := resp.Header.Get("x-openki-exit"); got != "direct" {
 		t.Fatalf("exit header = %q, want direct", got)
 	}
 }
@@ -186,7 +186,7 @@ func TestSmartRoutingOffDropsModalityFilter(t *testing.T) {
 	resp := postChat(t, s, body)
 	// Legacy ignores the modality filter, so the next roster member wins on
 	// catalog order alone (space-bunny sits ahead of nemotron-lightning).
-	if got := resp.Header.Get("x-loimo-served-by"); got != "space-bunny-free" {
+	if got := resp.Header.Get("x-openki-served-by"); got != "space-bunny-free" {
 		t.Fatalf("legacy served-by = %q, want space-bunny-free", got)
 	}
 }

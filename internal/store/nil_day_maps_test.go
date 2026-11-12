@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // A day bucket written by an older build has no "agents"/"models" object, so

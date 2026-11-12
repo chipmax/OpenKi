@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 const maxTaskRuns = 5

@@ -12,8 +12,8 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/chipmax/loimo/internal/tray"
-	_ "github.com/chipmax/loimo/internal/window/cocoa"
+	"github.com/chipmax/openki/internal/tray"
+	_ "github.com/chipmax/openki/internal/window/cocoa"
 )
 
 // macOS has no HWND. Callers only ever compare the handle against zero to ask

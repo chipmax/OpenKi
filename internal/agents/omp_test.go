@@ -11,7 +11,7 @@ import (
 
 func ompFixture(t *testing.T, content string) (root, path string) {
 	t.Helper()
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	root = t.TempDir()
 	dir := filepath.Join(root, "agent")
 	if err := os.MkdirAll(dir, 0o700); err != nil {
@@ -62,9 +62,9 @@ func TestOMPEnableAddsProviderAndPreservesOthers(t *testing.T) {
 	if _, ok := providers["other"].(map[string]any); !ok {
 		t.Fatalf("the pre-existing provider was dropped: %v", providers)
 	}
-	zg, _ := providers["loimo"].(map[string]any)
+	zg, _ := providers["openki"].(map[string]any)
 	if zg == nil {
-		t.Fatalf("providers.loimo missing: %v", providers)
+		t.Fatalf("providers.openki missing: %v", providers)
 	}
 	if got, _ := zg["baseUrl"].(string); got != "http://127.0.0.1:8787/v1" {
 		t.Errorf("baseUrl = %q", got)
@@ -100,7 +100,7 @@ func TestOMPDisableRemovesOnlyItsProvider(t *testing.T) {
 }
 
 // models.yml is the user's file; an unknown shape must be refused, not
-// flattened into a loimo-only document.
+// flattened into a openki-only document.
 func TestOMPEnableRefusesAnUnparseableFile(t *testing.T) {
 	broken := "providers: [unclosed\n"
 	root, path := ompFixture(t, broken)
@@ -167,7 +167,7 @@ func TestOMPEnableMigratesLegacyProvider(t *testing.T) {
 	if _, ok := providers["zen-gate"]; ok {
 		t.Fatalf("legacy provider survived migration: %v", providers)
 	}
-	if _, ok := providers["loimo"]; !ok {
+	if _, ok := providers["openki"]; !ok {
 		t.Fatalf("current provider missing after migration: %v", providers)
 	}
 	if _, ok := providers["other"]; !ok {

@@ -15,7 +15,7 @@ import (
 // through the WinINET settings in HKCU when the user flips "系统代理" — NOT
 // through environment variables, which is why the "env" mode never sees them.
 // This reader picks those settings up, cached for a few seconds so toggling
-// the proxy in the tool's UI is picked up without restarting loimo.
+// the proxy in the tool's UI is picked up without restarting openki.
 
 const sysProxyCacheTTL = 3 * time.Second
 

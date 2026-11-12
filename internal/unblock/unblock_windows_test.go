@@ -108,8 +108,8 @@ func TestClearOneOnCleanFileIsNotAnError(t *testing.T) {
 
 func TestDirClearsRecursivelyWithinDepth(t *testing.T) {
 	root := t.TempDir()
-	shallow := filepath.Join(root, "loimo.exe")
-	launcher := filepath.Join(root, "启动-loimo.cmd")
+	shallow := filepath.Join(root, "openki.exe")
+	launcher := filepath.Join(root, "启动-openki.cmd")
 	nested := filepath.Join(root, "lib", "helper.dll")
 	deep := filepath.Join(root, "lib", "deep", "too-far.txt")
 
@@ -169,7 +169,7 @@ func TestNearClearsItsOwnImageWhenPossible(t *testing.T) {
 	// never report the attempt as a failure, though: the image already passed the
 	// gate, and if an AV scanner holds the stream the next launch retries.
 	dir := t.TempDir()
-	exe := filepath.Join(dir, "loimo.exe")
+	exe := filepath.Join(dir, "openki.exe")
 	makeFile(t, exe)
 	writeZone(t, exe, "3")
 

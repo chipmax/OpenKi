@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // backupFile stores a pre-injection copy of an agent config under
-// <loimo home>/backups/<agent>/.
+// <openki home>/backups/<agent>/.
 func backupFile(agentID, path string, data []byte) (string, error) {
 	dir := filepath.Join(store.Home(), "backups", agentID)
 	if err := os.MkdirAll(dir, 0o700); err != nil {

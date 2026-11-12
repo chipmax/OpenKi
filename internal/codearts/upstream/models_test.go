@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chipmax/loimo/internal/codearts/auth"
+	"github.com/chipmax/openki/internal/codearts/auth"
 )
 
 func TestCanonicalModelKnownIndex(t *testing.T) {

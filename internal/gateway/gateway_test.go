@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/store"
 )
 
 func fakeUpstream(t *testing.T, frames []string) *httptest.Server {
@@ -32,7 +32,7 @@ func newTestServer(t *testing.T, upstream *httptest.Server) *Server {
 	lane.UpstreamBase = upstream.URL
 	t.Cleanup(func() { lane.UpstreamBase = old })
 
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)
@@ -125,7 +125,7 @@ func TestChatCompletionsStreamShape(t *testing.T) {
 				FinishReason *string `json:"finish_reason"`
 			} `json:"choices"`
 			Usage map[string]int `json:"usage"`
-			Exit  string         `json:"x_loimo_exit"`
+			Exit  string         `json:"x_openki_exit"`
 		}
 		if json.Unmarshal([]byte(payload), &chunk) != nil {
 			continue

@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // A shared config export must carry no CodeArts secret: the STS triple, the
 // refresh binding (token + verifier) and the DPoP key all mask, while the
 // identity fields stay so the file still says whose account it was.
 func TestMaskedHidesEveryCodeArtsSecret(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := Open()
 	if err != nil {
 		t.Fatal(err)

@@ -11,7 +11,7 @@ import (
 
 	"golang.org/x/net/proxy"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // probeTimeout bounds one node's egress echo round-trip.

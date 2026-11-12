@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // 能力实测 sends three separate turns (image, audio, PDF) and each one can take

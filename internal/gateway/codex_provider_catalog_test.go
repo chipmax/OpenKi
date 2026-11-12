@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // A provider's models must reach the agent menus, not just /v1/models. The
@@ -19,7 +19,7 @@ import (
 // providerServer builds a server with cfg applied to a throwaway store.
 func providerServer(t *testing.T, providers []store.Provider, hidden []string) *Server {
 	t.Helper()
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)
@@ -90,8 +90,8 @@ func TestCodexCatalogIncludesProviders(t *testing.T) {
 	if len(missing) > 0 {
 		t.Errorf("provider catalog entry missing %v", missing)
 	}
-	if mine["provider_id"] != "loimo" {
-		t.Errorf("provider_id = %v, want loimo (must match [model_providers.loimo])", mine["provider_id"])
+	if mine["provider_id"] != "openki" {
+		t.Errorf("provider_id = %v, want openki (must match [model_providers.openki])", mine["provider_id"])
 	}
 	// Providers declare no reasoning levels; claiming low/medium/high would
 	// let a user pick (deep) on a model that ignores the parameter.

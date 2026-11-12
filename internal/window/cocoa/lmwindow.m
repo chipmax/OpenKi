@@ -25,22 +25,22 @@ static int gBounds[4] = {0, 0, 0, 0};
 static int gScreen[4] = {0, 0, 0, 0};
 
 // Injected at document start so the dashboard's title bar finds the same
-// window.loimo* globals the Windows build exposes via WebView2's Bind.
+// window.openki* globals the Windows build exposes via WebView2's Bind.
 static NSString *const kShimJS = @""
   "(function(){"
-  "  if (window.loimoShimInstalled) return;"
-  "  window.loimoShimInstalled = true;"
-  "  function send(n){ try { window.webkit.messageHandlers.loimoMsg.postMessage(n); } catch (e) {} }"
-  "  window.loimoDrag = function(){ send('drag'); };"
-  "  window.loimoMinimize = function(){ send('min'); };"
-  "  window.loimoToggleMax = function(){ send('max'); };"
-  "  window.loimoClose = function(){ send('close'); };"
+  "  if (window.openkiShimInstalled) return;"
+  "  window.openkiShimInstalled = true;"
+  "  function send(n){ try { window.webkit.messageHandlers.openkiMsg.postMessage(n); } catch (e) {} }"
+  "  window.openkiDrag = function(){ send('drag'); };"
+  "  window.openkiMinimize = function(){ send('min'); };"
+  "  window.openkiToggleMax = function(){ send('max'); };"
+  "  window.openkiClose = function(){ send('close'); };"
   "})();";
 
-@interface LoiMoDelegate : NSObject <NSWindowDelegate, WKScriptMessageHandler>
+@interface OpenKiDelegate : NSObject <NSWindowDelegate, WKScriptMessageHandler>
 @end
 
-@implementation LoiMoDelegate
+@implementation OpenKiDelegate
 
 // Both the dashboard's × and ⌘W land here; Go owns the close decision, so the
 // window never actually closes on its own.
@@ -143,12 +143,12 @@ void lm_run(const char *title, int width, int height, const char *url) {
     [gWindow standardWindowButton:(NSWindowButton)[button unsignedIntValue]].hidden = YES;
   }
 
-  gDelegate = [[LoiMoDelegate alloc] init];
+  gDelegate = [[OpenKiDelegate alloc] init];
   gWindow.delegate = (id<NSWindowDelegate>)gDelegate;
   [gWindow center];
 
   WKUserContentController *content = [[WKUserContentController alloc] init];
-  [content addScriptMessageHandler:(id<WKScriptMessageHandler>)gDelegate name:@"loimoMsg"];
+  [content addScriptMessageHandler:(id<WKScriptMessageHandler>)gDelegate name:@"openkiMsg"];
   [content addUserScript:[[WKUserScript alloc]
                              initWithSource:kShimJS
                               injectionTime:WKUserScriptInjectionTimeAtDocumentStart

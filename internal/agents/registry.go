@@ -1,5 +1,5 @@
 // Package agents auto-detects locally installed AI agents and injects (or
-// removes) a loimo provider entry so the agent's model picker shows the
+// removes) a openki provider entry so the agent's model picker shows the
 // free lane. Every adapter follows the same contract: Detect → Enable (backup,
 // atomic write, rollback on failure) → Disable (restore).
 package agents
@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // View is one agent's state for the dashboard.
@@ -323,7 +323,7 @@ func (r *Registry) ResyncEnabled() int {
 		}
 		// Config, not a pre-existing provider entry, decides ownership. The
 		// old IsEnabled-only gate rewrote any agent whose file already carried
-		// a loimo provider: a second instance (Windows/WSL) could silently
+		// a openki provider: a second instance (Windows/WSL) could silently
 		// take over an endpoint the user had explicitly disabled in its own
 		// config. The installed/enabled check stays so an uninstalled agent is
 		// not recreated by a stale enabledAgents entry.
@@ -439,7 +439,7 @@ func homePath(rel ...string) string {
 
 // atomicWrite writes a file via temp+rename, mode 0600.
 func atomicWrite(path string, data []byte) error {
-	tmp := path + ".loimo.tmp"
+	tmp := path + ".openki.tmp"
 	if err := os.WriteFile(tmp, data, 0o600); err != nil {
 		return err
 	}

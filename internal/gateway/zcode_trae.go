@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // The ZCode 渠道 card: login, roster, per-account state.

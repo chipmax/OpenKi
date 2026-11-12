@@ -27,8 +27,8 @@ func TestOpenMigratesLegacyFeedURLs(t *testing.T) {
 		},
 		{
 			name:       "previous fork",
-			updateFeed: "https://api.github.com/repos/chipmax/loimo/releases/latest",
-			annFeed:    "https://api.github.com/repos/chipmax/loimo/contents/announcements.json?ref=master",
+			updateFeed: "https://api.github.com/repos/chipmax/openki/releases/latest",
+			annFeed:    "https://api.github.com/repos/chipmax/openki/contents/announcements.json?ref=master",
 		},
 		{
 			name:       "upstream",
@@ -45,7 +45,7 @@ func TestOpenMigratesLegacyFeedURLs(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			home := t.TempDir()
-			t.Setenv("LOIMO_HOME", home)
+			t.Setenv("OPENKI_HOME", home)
 			raw := `{"mainKey":"sk-test","schemaVersion":13,"updateFeed":"` + tc.updateFeed +
 				`","announcementFeed":"` + tc.annFeed + `"}`
 			if err := os.WriteFile(filepath.Join(home, "config.json"), []byte(raw), 0o600); err != nil {
@@ -72,10 +72,10 @@ func TestOpenMigratesLegacyFeedURLs(t *testing.T) {
 	}
 }
 
-func TestOpenMigratesLoimoFeedAtV14(t *testing.T) {
+func TestOpenMigratesOpenKiFeedAtV14(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("LOIMO_HOME", home)
-	raw := `{"mainKey":"sk-test","schemaVersion":14,"updateFeed":"https://api.github.com/repos/chipmax/loimo/releases/latest","announcementFeed":"https://api.github.com/repos/chipmax/loimo/contents/announcements.json?ref=master"}`
+	t.Setenv("OPENKI_HOME", home)
+	raw := `{"mainKey":"sk-test","schemaVersion":14,"updateFeed":"https://api.github.com/repos/chipmax/openki/releases/latest","announcementFeed":"https://api.github.com/repos/chipmax/openki/contents/announcements.json?ref=master"}`
 	if err := os.WriteFile(filepath.Join(home, "config.json"), []byte(raw), 0o600); err != nil {
 		t.Fatal(err)
 	}

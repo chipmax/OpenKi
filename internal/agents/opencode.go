@@ -17,8 +17,8 @@ type openCode struct {
 }
 
 const (
-	openCodeProviderID       = "loimo"
-	openCodeProviderName     = "Lối Mở"
+	openCodeProviderID       = "openki"
+	openCodeProviderName     = "OpenKi"
 	legacyOpenCodeProviderID = "zen-gate"
 	legacyOpenCodeName       = "Zen Gate"
 )
@@ -68,7 +68,7 @@ func (o *openCode) Detect() (bool, string, string) {
 		return true, "", "Đã phát hiện opencode.json"
 	}
 	if p := o.defaultJSONC(); p != "" {
-		return true, "", "Đã phát hiện opencode.jsonc (cấu hình có chú thích); loimo sẽ không ghi thêm opencode.json song song, vui lòng kết nối thủ công"
+		return true, "", "Đã phát hiện opencode.jsonc (cấu hình có chú thích); openki sẽ không ghi thêm opencode.json song song, vui lòng kết nối thủ công"
 	}
 	if _, err := os.Stat(o.p(".config", "opencode")); err == nil {
 		return true, "", "Đã phát hiện thư mục cấu hình opencode (chưa tạo opencode.json)"
@@ -131,7 +131,7 @@ func (o *openCode) Enable(opts Options) error {
 			// OpenCode reads .jsonc too, so a plain .json written here becomes a
 			// second live config with no documented winner — and the .jsonc is the
 			// file the user maintains. Refuse rather than guess which one wins.
-			return fmt.Errorf("Đã phát hiện %s: OpenCode sẽ đọc nó, loimo không tạo thêm opencode.json song song nữa; vui lòng tự ghi khối provider vào file .jsonc đó", p)
+			return fmt.Errorf("Đã phát hiện %s: OpenCode sẽ đọc nó, openki không tạo thêm opencode.json song song nữa; vui lòng tự ghi khối provider vào file .jsonc đó", p)
 		}
 	}
 	doc, err := o.read()

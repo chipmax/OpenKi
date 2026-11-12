@@ -3,8 +3,8 @@ package gateway
 import (
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // Issue #32: the settings handler snapshots the config at request start and
@@ -15,7 +15,7 @@ import (
 // with a deliberately stale snapshot, which is exactly what a racing request
 // holds.
 func TestCommitSettingsPublishesOnlyDirtyFields(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)

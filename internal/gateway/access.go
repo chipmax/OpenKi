@@ -11,8 +11,8 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/logx"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/logx"
 )
 
 // Per-request logging. One logical client request gets one `access` line,

@@ -3,7 +3,7 @@ package store
 import (
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // An install that predates the pool must come back with its one account in the

@@ -1,16 +1,16 @@
 > **Windows 桌面重构版已发布：Lamp Guide**
 >
-> loimo 现有版本与历史发布继续保留。全新桌面界面、模型聚合管理、OpenCode 专页、日夜主题和中文安装向导在独立项目迭代。
+> openki 现有版本与历史发布继续保留。全新桌面界面、模型聚合管理、OpenCode 专页、日夜主题和中文安装向导在独立项目迭代。
 >
 > **[前往 Lamp Guide 新仓库](https://github.com/LAGcomcom/Lamp-Guide) · [下载安装包](https://github.com/LAGcomcom/Lamp-Guide/releases/latest) · [版本关系与迁移说明](docs/LAMP_GUIDE.md)**
 >
-> 当前重构版支持 Windows 10 / 11 x64，版本号与 loimo 分别计算。原版其他平台发行包仍在本仓库。
+> 当前重构版支持 Windows 10 / 11 x64，版本号与 openki 分别计算。原版其他平台发行包仍在本仓库。
 
 <div align="center">
 
-<img src="assets/icon-256.png" width="88" alt="Lối Mở">
+<img src="assets/icon-256.png" width="88" alt="OpenKi">
 
-# LỐI—MỞ
+# OPENKI
 
 **把 OpenCode Zen 免费模型，装进你所有的 AI Agent。**
 
@@ -32,12 +32,12 @@
 ## 这是什么
 
 OpenCode Zen 提供了一批**免登录、免计费**的模型车道，但它们没有标准的 API Key 体系，
-一般客户端接不上。Lối Mở 在本机把这条车道封装成**标准 OpenAI / Anthropic 兼容接口**，
+一般客户端接不上。OpenKi 在本机把这条车道封装成**标准 OpenAI / Anthropic 兼容接口**，
 并自动完成所有 Agent 的配置注入。v1.8.0 曾因上游按客户端指纹拦截（一律 403）退役这条
 车道，v1.9.0 按官方客户端指纹实测对齐后恢复——免费额度按出口 IP 计量，撞到限额由
 failover 与出口轮换自动消化：
 
-<div align="center"><img src="docs/screenshot-home.png" width="820" alt="Lối Mở 总览"></div>
+<div align="center"><img src="docs/screenshot-home.png" width="820" alt="OpenKi 总览"></div>
 
 - **全自动适配**：检测到 ZCode / OpenCode / Codex / Claude Code / DeepSeek Harness /
   Crush / ChatBox / Aider / Qwen Code / Continue / WorkBuddy / Qoder 后，一键注入配置（先备份，关闭即还原），
@@ -51,7 +51,7 @@ failover 与出口轮换自动消化：
   断流续写、空停续写、截断自动续写三重兜底——全部按真实客户端行为逐项实测；
 - **Kilo 免费池**：第二条免凭据免费源直接并入目录，与免费车道共用路由、
   限流切换与探测看板；免费池提示词可能被上游记录，别交机密内容；
-- **渠道分文件**：每个免费车道渠道一份配置文件（`%APPDATA%\loimo\channels\<渠道ID>.json`），
+- **渠道分文件**：每个免费车道渠道一份配置文件（`%APPDATA%\openki\channels\<渠道ID>.json`），
   记录启用开关与该渠道当前模型名单，停用即时生效——模型立刻从所有 Agent 选择器撤下；
 - **面板 v1.9.1 大改版**：模型页页首直接给「现在用这个」+ 一键主用，搜索/筛选带计数、卡片/列表双视图；总览变上手任务清单；自定义 API 三分区；错误全部人话化；整体配色与排版向克制风收敛；**模型页按渠道分组**：搜索与状态筛选、每渠道一个主开关、同 id 多渠道合并单卡；
   每个模型可在卡片上点击设置默认思考档，默认模型可指定；
@@ -79,38 +79,38 @@ failover 与出口轮换自动消化：
 ## 快速开始
 
 **Windows** — 从 [Releases](https://github.com/LAGcomcom/zen-gate/releases/latest) 下载
-`loimo.exe`，双击运行（托盘出现图标）。机器没装 WebView2 Runtime 时会自动改用
+`openki.exe`，双击运行（托盘出现图标）。机器没装 WebView2 Runtime 时会自动改用
 默认浏览器打开管理页，网关功能不受影响；想要内嵌窗口装一下
 [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) 即可。
-`LOIMO_NO_WEBVIEW2=1` 可强制浏览器模式（排障用）。
+`OPENKI_NO_WEBVIEW2=1` 可强制浏览器模式（排障用）。
 
-**macOS** — `tools/build-macos.sh` 产出 `dist/Lối Mở.app`，安装并启动：
+**macOS** — `tools/build-macos.sh` 产出 `dist/OpenKi.app`，安装并启动：
 
 ```bash
 tools/build-macos.sh
-cp -R "dist/Lối Mở.app" /Applications/
-open "/Applications/Lối Mở.app"
+cp -R "dist/OpenKi.app" /Applications/
+open "/Applications/OpenKi.app"
 ```
 
-**Linux** — `tools/build-linux.sh` 产出 `dist/Loi_Mo-x86_64.AppImage`
+**Linux** — `tools/build-linux.sh` 产出 `dist/OpenKi-x86_64.AppImage`
 （自包含 GTK3 + appindicator，无需安装依赖），下载后 `chmod +x` 双击运行即可：
 
 ```bash
 tools/build-linux.sh 1.2.1
-chmod +x dist/Loi_Mo-x86_64.AppImage
-./dist/Loi_Mo-x86_64.AppImage
+chmod +x dist/OpenKi-x86_64.AppImage
+./dist/OpenKi-x86_64.AppImage
 ```
 
 Linux 版没有原生内嵌窗口：管理页在默认浏览器打开，托盘常驻（AppImage 内的
-`loimo.desktop` 也支持「开机自启」开关，写入 `~/.config/autostart`）。
+`openki.desktop` 也支持「开机自启」开关，写入 `~/.config/autostart`）。
 
-**Debian / Ubuntu / Deepin 等** — `tools/build-deb.sh` 产出 `dist/loimo_*.deb`
+**Debian / Ubuntu / Deepin 等** — `tools/build-deb.sh` 产出 `dist/openki_*.deb`
 （依赖系统 `libgtk-3-0` 与 `libayatana-appindicator3-1`，体积更小），安装：
 
 ```bash
 tools/build-deb.sh 1.2.1
-sudo apt install ./dist/loimo_1.2.1-linux_amd64.deb
-loimo   # 或从应用菜单启动
+sudo apt install ./dist/openki_1.2.1-linux_amd64.deb
+openki   # 或从应用菜单启动
 ```
 
 两边都是：到「Agent 适配」页打开你装的 Agent 开关 → 重启该 Agent →
@@ -124,11 +124,11 @@ loimo   # 或从应用菜单启动
 Windows：
 
 ```bash
-go build -trimpath -ldflags "-H=windowsgui -X github.com/chipmax/loimo/internal/gateway.Version=1.2.1 -X github.com/chipmax/loimo/internal/update.Current=1.2.1" -o dist/loimo.exe ./cmd/loimo
+go build -trimpath -ldflags "-H=windowsgui -X github.com/chipmax/openki/internal/gateway.Version=1.2.1 -X github.com/chipmax/openki/internal/update.Current=1.2.1" -o dist/openki.exe ./cmd/openki
 ```
 
 不要加 `-s -w`（剥符号表）：火绒一分钟内就会把这样产出、刚解压出来的
-`loimo.exe` 直接删掉，表现成"下载完文件就不见了"。
+`openki.exe` 直接删掉，表现成"下载完文件就不见了"。
 
 macOS（需要 cgo 与 Xcode 命令行工具；脚本负责编出 arm64 + x86_64 双架构、
 打 .app 包、生成 .icns、做 ad-hoc 签名并压 zip）：
@@ -171,10 +171,10 @@ WebView2 / appindicator，因此 `CGO_ENABLED=0` 也能交叉编译，容器与 
 跑得起来（issue #79）。
 
 ```bash
-docker compose up -d        # 或 docker build -t loimo .
+docker compose up -d        # 或 docker build -t openki .
 ```
 
-* 端口 `8787`，数据落在 `/data` 卷（`LOIMO_HOME`）；`LOIMO_HEADLESS=1`
+* 端口 `8787`，数据落在 `/data` 卷（`OPENKI_HOME`）；`OPENKI_HEADLESS=1`
   等价于 `-no-tray`
 * 镜像自带 `HEALTHCHECK`，打的是 `/healthz`（`/health` 的 supervisor 拼法）
 * 面板仍**只**监听 loopback：容器里用 SSH 隧道或同机反代访问，端口映射出去的是
@@ -183,7 +183,7 @@ docker compose up -d        # 或 docker build -t loimo .
 不用 Docker、只要一个无界面二进制：
 
 ```bash
-CGO_ENABLED=0 go build -tags headless -trimpath -o loimo ./cmd/loimo
+CGO_ENABLED=0 go build -tags headless -trimpath -o openki ./cmd/openki
 ```
 
 `.github/workflows/headless.yml` 会在每次 PR 上跑这套交叉编译矩阵
@@ -199,15 +199,15 @@ GUI 构建仍留在 `release.yml`。
 |---|---|---|---|
 | 窗口 | WebView2 + Win32 无边框窗口 | WKWebView + NSWindow（全尺寸内容视图，隐藏系统红绿灯） | 无内嵌窗口：管理页在默认浏览器打开（`xdg-open`），托盘常驻 |
 | 托盘 | `getlantern/systray`，独占一个锁定的 goroutine | 同上，但与窗口共用主线程——AppKit 只允许主线程建窗口 | 同上，GTK 主循环跑在主 goroutine（libayatana-appindicator） |
-| 开机自启 | `HKCU\...\Run` | `~/Library/LaunchAgents/io.github.chipmax.loimo.plist` + `launchctl bootstrap` | `~/.config/autostart/loimo.desktop`（AppImage 运行时指向 `.AppImage` 本体） |
+| 开机自启 | `HKCU\...\Run` | `~/Library/LaunchAgents/io.github.chipmax.openki.plist` + `launchctl bootstrap` | `~/.config/autostart/openki.desktop`（AppImage 运行时指向 `.AppImage` 本体） |
 | 系统代理 | `HKCU\...\Internet Settings`（WinINET） | `scutil --proxy` | `https_proxy` / `http_proxy` 环境变量 |
 | 通知 | PowerShell + WinRT toast | `osascript -e 'display notification'` | `notify-send`（libnotify） |
-| 数据目录 | `%APPDATA%\loimo` | `~/Library/Application Support/loimo`（`LOIMO_HOME` 可覆盖） | `$XDG_CONFIG_HOME`（或 `~/.config`）`/loimo`（`LOIMO_HOME` 可覆盖） |
-| 单实例 | 命名互斥体 | `loimo.lock` 上的 `flock`（进程退出即释放，不会留死锁） | 未做进程级互斥：靠网关端口绑定兜底（同一端口被占时第二个实例退出） |
+| 数据目录 | `%APPDATA%\openki` | `~/Library/Application Support/openki`（`OPENKI_HOME` 可覆盖） | `$XDG_CONFIG_HOME`（或 `~/.config`）`/openki`（`OPENKI_HOME` 可覆盖） |
+| 单实例 | 命名互斥体 | `openki.lock` 上的 `flock`（进程退出即释放，不会留死锁） | 未做进程级互斥：靠网关端口绑定兜底（同一端口被占时第二个实例退出） |
 | 一键更新 | 支持 | 不支持，只跳发布页 | 不支持（AppImage 为只读挂载），只跳发布页 |
 
 窗口按钮（最小化 / 最大化 / 关闭 / 拖拽）在两边都通过页面注入的
-`window.loimo*` 绑定实现，所以 dashboard 一份代码三处跑。
+`window.openki*` 绑定实现，所以 dashboard 一份代码三处跑。
 
 ## 许可证
 

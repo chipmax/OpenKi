@@ -454,7 +454,7 @@ func ParseListing(payload map[string]any) []string {
 // FetchListing pulls the authoritative id set from the gateway.
 func FetchListing(ctx context.Context) ([]string, error) {
 	var payload map[string]any
-	err := GetJSON(ctx, "/zen/v1/models", SessionForConversation("catalog:loimo"), MintRequestId(0), &payload)
+	err := GetJSON(ctx, "/zen/v1/models", SessionForConversation("catalog:openki"), MintRequestId(0), &payload)
 	if err != nil {
 		return nil, err
 	}

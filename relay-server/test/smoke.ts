@@ -89,8 +89,8 @@ const upstreamOrigin = `http://127.0.0.1:${upstream.port}`;
 
 function relayHeaders(extra: Record<string, string> = {}): Record<string, string> {
   return {
-    "x-loimo-relay-token": TOKEN,
-    "x-loimo-relay-upstream": upstreamOrigin,
+    "x-openki-relay-token": TOKEN,
+    "x-openki-relay-upstream": upstreamOrigin,
     ...extra,
   };
 }
@@ -105,31 +105,31 @@ async function run(): Promise<void> {
   const healthPost = await fetch(`${relayBase}/healthz`, { method: "POST" });
   check("healthz rejects POST", healthPost.status === 405, String(healthPost.status));
 
-  const noToken = await fetch(`${relayBase}/v1/models`, { headers: { "x-loimo-relay-upstream": upstreamOrigin } });
+  const noToken = await fetch(`${relayBase}/v1/models`, { headers: { "x-openki-relay-upstream": upstreamOrigin } });
   check("missing token rejected", noToken.status === 401, String(noToken.status));
 
   const wrongToken = await fetch(`${relayBase}/v1/models`, {
-    headers: { "x-loimo-relay-token": "wrong", "x-loimo-relay-upstream": upstreamOrigin },
+    headers: { "x-openki-relay-token": "wrong", "x-openki-relay-upstream": upstreamOrigin },
   });
   check("wrong token rejected", wrongToken.status === 401, String(wrongToken.status));
 
   const blockedHost = await fetch(`${relayBase}/v1/models`, {
-    headers: { "x-loimo-relay-token": TOKEN, "x-loimo-relay-upstream": `http://localhost:${upstream.port}` },
+    headers: { "x-openki-relay-token": TOKEN, "x-openki-relay-upstream": `http://localhost:${upstream.port}` },
   });
   check("host outside allowlist rejected", blockedHost.status === 403, String(blockedHost.status));
 
   const missingUpstream = await fetch(`${relayBase}/v1/models`, {
-    headers: { "x-loimo-relay-token": TOKEN },
+    headers: { "x-openki-relay-token": TOKEN },
   });
   check("missing upstream rejected", missingUpstream.status === 400, String(missingUpstream.status));
 
   const malformedUpstream = await fetch(`${relayBase}/v1/models`, {
-    headers: { "x-loimo-relay-token": TOKEN, "x-loimo-relay-upstream": "not a url" },
+    headers: { "x-openki-relay-token": TOKEN, "x-openki-relay-upstream": "not a url" },
   });
   check("malformed upstream rejected", malformedUpstream.status === 400, String(malformedUpstream.status));
 
   const pathInUpstream = await fetch(`${relayBase}/v1/models`, {
-    headers: { "x-loimo-relay-token": TOKEN, "x-loimo-relay-upstream": `${upstreamOrigin}/v1` },
+    headers: { "x-openki-relay-token": TOKEN, "x-openki-relay-upstream": `${upstreamOrigin}/v1` },
   });
   check("upstream with path rejected", pathInUpstream.status === 400, String(pathInUpstream.status));
 
@@ -148,7 +148,7 @@ async function run(): Promise<void> {
       authorization: "Bearer upstream-key",
       "x-api-key": "anthropic-key",
       "anthropic-version": "2023-06-01",
-      "x-loimo-relay-debug": "must-be-stripped",
+      "x-openki-relay-debug": "must-be-stripped",
       "cf-connecting-ip": "203.0.113.9",
     }),
   });
@@ -166,8 +166,8 @@ async function run(): Promise<void> {
   check("x-api-key forwarded", echoBody.headers["x-api-key"] === "anthropic-key");
   check("anthropic-version forwarded", echoBody.headers["anthropic-version"] === "2023-06-01");
   check(
-    "x-loimo-relay-* stripped",
-    !Object.keys(echoBody.headers).some((name) => name.startsWith("x-loimo-relay-")),
+    "x-openki-relay-* stripped",
+    !Object.keys(echoBody.headers).some((name) => name.startsWith("x-openki-relay-")),
   );
   check("host rewritten to upstream", echoBody.headers.host === `127.0.0.1:${upstream.port}`, echoBody.headers.host);
   check("region response header", echo.headers.get("x-relay-region") === "test-region");
@@ -235,7 +235,7 @@ async function run(): Promise<void> {
   const unreachable = createRelayHandler(makeConfig());
   const unreachableRes = await unreachable(
     new Request("http://relay.local/v1/models", {
-      headers: { "x-loimo-relay-token": TOKEN, "x-loimo-relay-upstream": `http://127.0.0.1:${deadPort}` },
+      headers: { "x-openki-relay-token": TOKEN, "x-openki-relay-upstream": `http://127.0.0.1:${deadPort}` },
     }),
   );
   check("unreachable upstream returns 502", unreachableRes.status === 502, String(unreachableRes.status));
@@ -257,11 +257,11 @@ async function run(): Promise<void> {
   check("oversized body returns 413", tooLargeRes.status === 413, String(tooLargeRes.status));
 
   const parsed = loadConfig({
-    LOIMO_RELAY_TOKEN: "t",
-    LOIMO_RELAY_HOSTS: "opencode.ai, https://API.Example.com:8443, ",
-    LOIMO_RELAY_ALLOW_HTTP: "1",
-    LOIMO_RELAY_MAX_BODY_BYTES: "2048",
-    LOIMO_RELAY_TIMEOUT_MS: "1234",
+    OPENKI_RELAY_TOKEN: "t",
+    OPENKI_RELAY_HOSTS: "opencode.ai, https://API.Example.com:8443, ",
+    OPENKI_RELAY_ALLOW_HTTP: "1",
+    OPENKI_RELAY_MAX_BODY_BYTES: "2048",
+    OPENKI_RELAY_TIMEOUT_MS: "1234",
     VERCEL_REGION: "sin1",
   });
   check(

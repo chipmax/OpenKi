@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // --- OpenAI request shapes ---------------------------------------------------
@@ -332,7 +332,7 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 					s.providerFallbackPicks(needs, base), unified,
 					convertOpenAITools(req.Tools), maxTok, agent,
 					func(c lane.Chunk) { emit.consume(c, &text, &reasoning, &toolCalls) }); ok {
-					w.Header().Set("x-loimo-served-by", served)
+					w.Header().Set("x-openki-served-by", served)
 					msg := map[string]any{"role": "assistant", "content": text.String()}
 					if reasoning.Len() > 0 {
 						msg["reasoning_content"] = reasoning.String()
@@ -363,8 +363,8 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		served := servedModel(outcome, base)
-		w.Header().Set("x-loimo-served-by", served)
-		w.Header().Set("x-loimo-exit", servedExit(outcome))
+		w.Header().Set("x-openki-served-by", served)
+		w.Header().Set("x-openki-exit", servedExit(outcome))
 		msg := map[string]any{"role": "assistant", "content": text.String()}
 		if reasoning.Len() > 0 {
 			msg["reasoning_content"] = reasoning.String()
@@ -413,7 +413,7 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 			sse.event(chunkPayload(id, created, base, map[string]any{"role": "assistant", "content": ""}, nil, nil))
 		}
 		payload := chunkPayload(id, created, base, map[string]any{}, finish, nil)
-		payload["x_loimo_exit"] = exit
+		payload["x_openki_exit"] = exit
 		sse.event(payload)
 	}
 	inStreamFail := func(uerr *lane.UpstreamError) {
@@ -435,7 +435,7 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 	// The first content chunk may already have committed the headers; this is
 	// still read by clients that got a header-less stream start, and the final
 	// usage chunk repeats it when the stream is already open.
-	w.Header().Set("x-loimo-exit", servedExit(outcome))
+	w.Header().Set("x-openki-exit", servedExit(outcome))
 	if uerr != nil && !emit.hasAny() {
 		// Free lane exhausted and the user opted in: continue the same SSE
 		// stream from a user-added provider.
@@ -501,7 +501,7 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 		payload := map[string]any{
 			"id": id, "object": "chat.completion.chunk", "created": created,
 			"model": finalModel, "choices": []any{choice}, "usage": usagePayload(outcome.Usage),
-			"x_loimo_exit": servedExit(outcome),
+			"x_openki_exit": servedExit(outcome),
 		}
 		sse.event(payload)
 	}
@@ -936,8 +936,8 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 				s.providerFallbackPicks(needs, base), unified,
 				convertOpenAITools(req.Tools), req.MaxOutputTokens, agent, collector.consume); ok {
 				fbOutcome := lane.Outcome{Usage: usage, Finish: finish, ServedModel: fbServed}
-				w.Header().Set("x-loimo-served-by", fbServed)
-				w.Header().Set("x-loimo-exit", "direct")
+				w.Header().Set("x-openki-served-by", fbServed)
+				w.Header().Set("x-openki-exit", "direct")
 				if req.Stream {
 					s.writeResponsesEvents(w, fbServed, collector, fbOutcome)
 				} else {
@@ -954,7 +954,7 @@ func (s *Server) handleResponses(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, errorStatus(uerr), body)
 		return
 	}
-	w.Header().Set("x-loimo-exit", servedExit(outcome))
+	w.Header().Set("x-openki-exit", servedExit(outcome))
 	if req.Stream {
 		s.writeResponsesEvents(w, served, collector, outcome)
 	} else {

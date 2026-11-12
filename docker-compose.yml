@@ -2,17 +2,17 @@
 # on. The panel stays loopback-only, so the published port is the OpenAI /
 # Anthropic endpoint under /v1 and not the admin surface (issue #79).
 services:
-  loimo:
+  openki:
     build: .
-    image: loimo:local
+    image: openki:local
     ports:
       - "8787:8787"
     volumes:
-      - loimo-data:/data
+      - openki-data:/data
     environment:
-      LOIMO_HEADLESS: "1"
-      LOIMO_HOME: /data
+      OPENKI_HEADLESS: "1"
+      OPENKI_HOME: /data
     restart: unless-stopped
 
 volumes:
-  loimo-data:
+  openki-data:

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // 导出配置 exists so the file can be mailed to a friend or pasted into an issue.

@@ -11,7 +11,7 @@ import (
 // survives both a flip and a roster rewrite.
 func TestChannelFilesRoundTrip(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("LOIMO_HOME", home)
+	t.Setenv("OPENKI_HOME", home)
 	st, err := Open()
 	if err != nil {
 		t.Fatal(err)

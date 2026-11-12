@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // Anthropic /v1/messages, for Claude-protocol clients (Claude Code and kin).
@@ -230,7 +230,7 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 					s.providerFallbackPicks(needs, base), unified, tools,
 					req.MaxTokens, agent, collector.consume); ok {
 					fbOutcome := lane.Outcome{Usage: usage, Finish: finish, ServedModel: fbServed}
-					w.Header().Set("x-loimo-served-by", fbServed)
+					w.Header().Set("x-openki-served-by", fbServed)
 					writeJSON(w, 200, anthropicResponse(randomID("msg_"), fbServed, collector, fbOutcome))
 					return
 				}
@@ -239,8 +239,8 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 			writeJSON(w, errorStatus(uerr), map[string]any{"type": "error", "error": map[string]any{"type": errorType(uerr), "message": uerr.Message}})
 			return
 		}
-		w.Header().Set("x-loimo-served-by", served)
-		w.Header().Set("x-loimo-exit", servedExit(outcome))
+		w.Header().Set("x-openki-served-by", served)
+		w.Header().Set("x-openki-exit", servedExit(outcome))
 		writeJSON(w, 200, anthropicResponse(randomID("msg_"), served, collector, outcome))
 		return
 	}
@@ -300,7 +300,7 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 				begin()
 				sse.typedEvent(map[string]any{"type": "message_delta",
 					"delta": map[string]any{"stop_reason": stop, "stop_sequence": nil},
-					"usage": anthropicUsage(usage), "x_loimo_exit": "direct"})
+					"usage": anthropicUsage(usage), "x_openki_exit": "direct"})
 				sse.typedEvent(map[string]any{"type": "message_stop"})
 				return
 			}
@@ -318,7 +318,7 @@ func (s *Server) handleAnthropicMessages(w http.ResponseWriter, r *http.Request)
 	begin()
 	sse.typedEvent(map[string]any{"type": "message_delta",
 		"delta": map[string]any{"stop_reason": stop, "stop_sequence": nil},
-		"usage": anthropicUsage(outcome.Usage), "x_loimo_exit": servedExit(outcome)})
+		"usage": anthropicUsage(outcome.Usage), "x_openki_exit": servedExit(outcome)})
 	sse.typedEvent(map[string]any{"type": "message_stop"})
 }
 

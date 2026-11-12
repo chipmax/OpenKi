@@ -12,7 +12,7 @@
 // Run it against a COPY of the live config, never the running gateway's own
 // file, so nothing can race it:
 //
-//	LOIMO_HOME=D:\tmp\cache-ab LOIMO_WB_PROBE=1 \
+//	OPENKI_HOME=D:\tmp\cache-ab OPENKI_WB_PROBE=1 \
 //	  go test ./internal/lane/ -tags live -run TestLivePromptCache -v
 //
 // Nothing here writes credentials, and it prints counts only — no token, no
@@ -52,12 +52,12 @@ func liveCacheMessages(prefix, question string) []Message {
 // TestLivePromptCache sends one prefix twice per arm and reports the two usage
 // blocks. The field under test is the only difference between the arms.
 func TestLivePromptCache(t *testing.T) {
-	if os.Getenv("LOIMO_WB_PROBE") == "" {
-		t.Skip("live A/B; set LOIMO_WB_PROBE=1")
+	if os.Getenv("OPENKI_WB_PROBE") == "" {
+		t.Skip("live A/B; set OPENKI_WB_PROBE=1")
 	}
-	home := os.Getenv("LOIMO_HOME")
+	home := os.Getenv("OPENKI_HOME")
 	if home == "" {
-		t.Fatal("LOIMO_HOME must point at a copy of the live config")
+		t.Fatal("OPENKI_HOME must point at a copy of the live config")
 	}
 	raw, err := os.ReadFile(filepath.Join(home, "config.json"))
 	if err != nil {
@@ -153,7 +153,7 @@ func testLiveWorkBuddyCache(t *testing.T, accounts []WBAccount, prefix string) {
 func liveWorkBuddyModel(t *testing.T) string {
 	t.Helper()
 	const fallback = "hy4-preview"
-	home := os.Getenv("LOIMO_HOME")
+	home := os.Getenv("OPENKI_HOME")
 	raw, err := os.ReadFile(filepath.Join(home, "channels", "workbuddy.json"))
 	if err != nil {
 		t.Logf("no workbuddy roster (%v); falling back to %q", err, fallback)
@@ -211,10 +211,10 @@ func testLiveCodeArtsCache(t *testing.T, acct CAAccount, prefix string) {
 // suspected of breaking a lane — it answers "rejected?" without spending a
 // full prefix's worth of tokens.
 func TestLiveCacheFieldAccepted(t *testing.T) {
-	if os.Getenv("LOIMO_WB_PROBE") == "" {
-		t.Skip("live probe; set LOIMO_WB_PROBE=1")
+	if os.Getenv("OPENKI_WB_PROBE") == "" {
+		t.Skip("live probe; set OPENKI_WB_PROBE=1")
 	}
-	home := os.Getenv("LOIMO_HOME")
+	home := os.Getenv("OPENKI_HOME")
 	raw, err := os.ReadFile(filepath.Join(home, "config.json"))
 	if err != nil {
 		t.Fatal(err)

@@ -3,7 +3,7 @@ package gateway
 import (
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // Issue #97: clients that spell the deepest rung "max" (MyAgent profiles do)

@@ -5,7 +5,7 @@
 // Run it against a COPY of the live config (never the running gateway's own
 // file, so nothing can race it):
 //
-//	LOIMO_HOME=D:\tmp\wbprobe-home LOIMO_WB_PROBE=1 \
+//	OPENKI_HOME=D:\tmp\wbprobe-home OPENKI_WB_PROBE=1 \
 //	  go test ./internal/lane/ -tags live -run TestLiveWBMeterProbe -v
 //
 // Prints status codes, envelope codes and where numbers live in the JSON —
@@ -25,12 +25,12 @@ import (
 )
 
 func TestLiveWBMeterProbe(t *testing.T) {
-	if os.Getenv("LOIMO_WB_PROBE") == "" {
-		t.Skip("live probe; set LOIMO_WB_PROBE=1")
+	if os.Getenv("OPENKI_WB_PROBE") == "" {
+		t.Skip("live probe; set OPENKI_WB_PROBE=1")
 	}
-	home := os.Getenv("LOIMO_HOME")
+	home := os.Getenv("OPENKI_HOME")
 	if home == "" {
-		t.Fatal("LOIMO_HOME must point at a copy of the live config")
+		t.Fatal("OPENKI_HOME must point at a copy of the live config")
 	}
 	raw, err := os.ReadFile(filepath.Join(home, "config.json"))
 	if err != nil {
@@ -67,12 +67,12 @@ type meterCase struct {
 // long string cut short, so the parser is written against the field names the
 // meter actually publishes rather than the ones a doc claims it has.
 //
-//	LOIMO_HOME=… LOIMO_WB_DUMP=1 go test ./internal/lane/ -tags live -run TestLiveWBMeterShape -v
+//	OPENKI_HOME=… OPENKI_WB_DUMP=1 go test ./internal/lane/ -tags live -run TestLiveWBMeterShape -v
 func TestLiveWBMeterShape(t *testing.T) {
-	if os.Getenv("LOIMO_WB_DUMP") == "" {
-		t.Skip("live dump; set LOIMO_WB_DUMP=1")
+	if os.Getenv("OPENKI_WB_DUMP") == "" {
+		t.Skip("live dump; set OPENKI_WB_DUMP=1")
 	}
-	home := os.Getenv("LOIMO_HOME")
+	home := os.Getenv("OPENKI_HOME")
 	raw, err := os.ReadFile(filepath.Join(home, "config.json"))
 	if err != nil {
 		t.Fatal(err)

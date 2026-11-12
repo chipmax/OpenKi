@@ -3,15 +3,15 @@ package agents
 import (
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // The injected DefaultModel is the user's chosen pick when the roster carries
 // it; anything else (empty, hidden, retired, channel off) falls back to the
 // first model — a stale pick must never inject a dead default.
 func TestSnapshotHonorsConfiguredDefaultModel(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)

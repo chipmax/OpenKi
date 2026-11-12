@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // rungUpstream answers a chat stream and reports the reasoning_effort it got.

@@ -9,8 +9,8 @@ export const DEFAULT_TIMEOUT_MS = 300_000;
 export const DEFAULT_REGION = "local";
 export const DEFAULT_PORT = 8789;
 
-const RELAY_TOKEN_HEADER = "x-loimo-relay-token";
-const RELAY_UPSTREAM_HEADER = "x-loimo-relay-upstream";
+const RELAY_TOKEN_HEADER = "x-openki-relay-token";
+const RELAY_UPSTREAM_HEADER = "x-openki-relay-upstream";
 
 // Hop-by-hop headers must never be forwarded (RFC 9110 §7.6.1). `host` is
 // dropped because fetch derives it from the target URL.
@@ -44,19 +44,19 @@ export type RelayHandler = (request: Request) => Promise<Response>;
 
 export function loadConfig(env: Record<string, string | undefined> = process.env): RelayConfig {
   const allowedHosts = new Set<string>();
-  for (const entry of (env.LOIMO_RELAY_HOSTS ?? "").split(",")) {
+  for (const entry of (env.OPENKI_RELAY_HOSTS ?? "").split(",")) {
     const host = normalizeAllowedHost(entry);
     if (host) allowedHosts.add(host);
   }
 
   return {
-    token: firstNonEmpty(env.LOIMO_RELAY_TOKEN) ?? "",
+    token: firstNonEmpty(env.OPENKI_RELAY_TOKEN) ?? "",
     allowedHosts,
-    allowHttp: (env.LOIMO_RELAY_ALLOW_HTTP ?? "").trim() === "1",
-    region: firstNonEmpty(env.LOIMO_RELAY_REGION, env.VERCEL_REGION) ?? DEFAULT_REGION,
+    allowHttp: (env.OPENKI_RELAY_ALLOW_HTTP ?? "").trim() === "1",
+    region: firstNonEmpty(env.OPENKI_RELAY_REGION, env.VERCEL_REGION) ?? DEFAULT_REGION,
     version: VERSION,
-    maxBodyBytes: positiveInt(env.LOIMO_RELAY_MAX_BODY_BYTES, DEFAULT_MAX_BODY_BYTES),
-    timeoutMs: positiveInt(env.LOIMO_RELAY_TIMEOUT_MS, DEFAULT_TIMEOUT_MS),
+    maxBodyBytes: positiveInt(env.OPENKI_RELAY_MAX_BODY_BYTES, DEFAULT_MAX_BODY_BYTES),
+    timeoutMs: positiveInt(env.OPENKI_RELAY_TIMEOUT_MS, DEFAULT_TIMEOUT_MS),
   };
 }
 
@@ -106,32 +106,32 @@ async function dispatch(request: Request, config: RelayConfig): Promise<Response
 
   // Fail closed: thiếu token cấu hình thì không phục vụ proxy.
   if (!config.token) {
-    return errorResponse(503, "relay_not_configured", "LOIMO_RELAY_TOKEN is not set");
+    return errorResponse(503, "relay_not_configured", "OPENKI_RELAY_TOKEN is not set");
   }
 
   const presentedToken = request.headers.get(RELAY_TOKEN_HEADER) ?? "";
   if (!constantTimeEquals(presentedToken, config.token)) {
-    return errorResponse(401, "unauthorized", "missing or invalid X-LoiMo-Relay-Token");
+    return errorResponse(401, "unauthorized", "missing or invalid X-OpenKi-Relay-Token");
   }
 
   const rawUpstream = (request.headers.get(RELAY_UPSTREAM_HEADER) ?? "").trim();
   if (!rawUpstream) {
-    return errorResponse(400, "missing_upstream", "X-LoiMo-Relay-Upstream is required");
+    return errorResponse(400, "missing_upstream", "X-OpenKi-Relay-Upstream is required");
   }
 
   let upstream: URL;
   try {
     upstream = new URL(rawUpstream);
   } catch {
-    return errorResponse(400, "invalid_upstream", "X-LoiMo-Relay-Upstream must be an absolute scheme://host URL");
+    return errorResponse(400, "invalid_upstream", "X-OpenKi-Relay-Upstream must be an absolute scheme://host URL");
   }
 
   if (upstream.username || upstream.password) {
-    return errorResponse(403, "upstream_not_allowed", "credentials in X-LoiMo-Relay-Upstream are not allowed");
+    return errorResponse(403, "upstream_not_allowed", "credentials in X-OpenKi-Relay-Upstream are not allowed");
   }
 
   if (upstream.pathname !== "/" || upstream.search || upstream.hash) {
-    return errorResponse(400, "invalid_upstream", "X-LoiMo-Relay-Upstream must contain only scheme and host");
+    return errorResponse(400, "invalid_upstream", "X-OpenKi-Relay-Upstream must contain only scheme and host");
   }
 
   const isHttps = upstream.protocol === "https:";
@@ -142,7 +142,7 @@ async function dispatch(request: Request, config: RelayConfig): Promise<Response
       "insecure_upstream",
       config.allowHttp
         ? "upstream must use http or https"
-        : "upstream must use https; set LOIMO_RELAY_ALLOW_HTTP=1 only for local testing",
+        : "upstream must use https; set OPENKI_RELAY_ALLOW_HTTP=1 only for local testing",
     );
   }
 
@@ -150,7 +150,7 @@ async function dispatch(request: Request, config: RelayConfig): Promise<Response
   const hostname = upstream.hostname.toLowerCase().replace(/\.$/, "");
   // Danh sách rỗng từ chối tất cả (fail closed), không có proxy mở.
   if (!config.allowedHosts.has(host) && !config.allowedHosts.has(hostname)) {
-    return errorResponse(403, "upstream_not_allowed", "upstream host is not in LOIMO_RELAY_HOSTS");
+    return errorResponse(403, "upstream_not_allowed", "upstream host is not in OPENKI_RELAY_HOSTS");
   }
 
   // Giữ nguyên path + query của request gốc, chỉ thay origin.
@@ -281,7 +281,7 @@ function buildUpstreamHeaders(source: Headers): Headers {
   const headers = new Headers();
   for (const [name, value] of source) {
     const lower = name.toLowerCase();
-    if (HOP_BY_HOP[lower] === true || connectionTokens.has(lower) || lower.startsWith("x-loimo-relay-")) continue;
+    if (HOP_BY_HOP[lower] === true || connectionTokens.has(lower) || lower.startsWith("x-openki-relay-")) continue;
     if (lower === "content-length") continue;
     headers.append(name, value);
   }

@@ -25,7 +25,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chipmax/loimo/internal/codearts/auth"
+	"github.com/chipmax/openki/internal/codearts/auth"
 )
 
 // CatalogTTL 账号模型目录的有效期（超过则建议重新发现）。

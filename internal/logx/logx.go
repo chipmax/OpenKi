@@ -1,4 +1,4 @@
-// Package logx is loimo's logger: daily-sharded files with retention,
+// Package logx is openki's logger: daily-sharded files with retention,
 // plus an in-memory ring surfaced to the dashboard's log viewer.
 //
 // Two independent dimensions gate a line: its category (the user's per-class

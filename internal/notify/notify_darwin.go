@@ -13,7 +13,7 @@ var osascriptScript = []string{
 	"-e", `end run`,
 }
 
-// Toast shows a notification titled "Lối Mở".
+// Toast shows a notification titled "OpenKi".
 // Best-effort: osascript delivery failures are silently ignored, as is the
 // case when the user has denied notifications to the app in System Settings.
 func Toast(title, body string) {

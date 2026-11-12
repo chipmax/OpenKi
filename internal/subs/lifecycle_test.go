@@ -94,12 +94,12 @@ func TestStopAndWaitReleasesThePort(t *testing.T) {
 	_ = ln.Close()
 }
 
-// A sidecar we never started (an orphan from a pre-fix loimo) has no
+// A sidecar we never started (an orphan from a pre-fix openki) has no
 // *os.Process to kill, so the restart guard has to reap it by the pid we
 // recorded when we launched it. The pid must be verified against the binary it
 // actually runs, or a recycled pid gets murdered.
 func TestReapOrphanTerminatesOurOwnSidecarOnly(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	port := reservedPort(t)
 	addr := "127.0.0.1:" + port
 	holder := holdPort(t, port)
@@ -120,7 +120,7 @@ func TestReapOrphanTerminatesOurOwnSidecarOnly(t *testing.T) {
 // A stale pid file that now points at somebody else's process must never be a
 // licence to kill: reapOrphan leaves the stranger alone.
 func TestReapOrphanSkipsARecycledPid(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	port := reservedPort(t)
 	addr := "127.0.0.1:" + port
 	holder := holdPort(t, port)

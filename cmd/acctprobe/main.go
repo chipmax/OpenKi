@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/chipmax/loimo/internal/qoderhub/remote"
+	"github.com/chipmax/openki/internal/qoderhub/remote"
 )
 
 // acctprobe asks each pooled account, one at a time, for a one-line answer and

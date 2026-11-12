@@ -3,11 +3,11 @@ package agents
 import (
 	"testing"
 
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/store"
 )
 
 func TestResyncDoesNotAdoptFileOnlyProvider(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)
@@ -26,7 +26,7 @@ func TestResyncDoesNotAdoptFileOnlyProvider(t *testing.T) {
 }
 
 func TestScopeNoneBlocksEveryAdapter(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)

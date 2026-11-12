@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // One channel, one file.

@@ -1,4 +1,4 @@
-# Triển khai loimo trên Windows (GUI + tray)
+# Triển khai openki trên Windows (GUI + tray)
 
 Bản Windows là ứng dụng **GUI + tray** chạy trong phiên đăng nhập của người
 dùng. Nó **không phải** Windows service và không có giao diện SCM: không dùng
@@ -13,36 +13,36 @@ dùng. Nó **không phải** Windows service và không có giao diện SCM: kh�
 - Cơ chế single-instance và autostart hiện có được thiết kế cho phiên đăng nhập.
 
 Nếu chỉ cần gateway không giao diện trên Windows Server, hãy dùng bản
-**headless** trong WSL/Linux (xem `deploy/wsl/loimo.service`), không cài bản
+**headless** trong WSL/Linux (xem `deploy/wsl/openki.service`), không cài bản
 GUI làm service.
 
 ## Cài đặt
 
-1. Đặt `loimo.exe` ở thư mục ổn định, ví dụ:
-   `%LOCALAPPDATA%\Programs\LoiMo\loimo.exe`.
+1. Đặt `openki.exe` ở thư mục ổn định, ví dụ:
+   `%LOCALAPPDATA%\Programs\OpenKi\openki.exe`.
 2. Chạy một lần, mở `http://127.0.0.1:8787`, đặt `mainKey` và chọn Agent cần
    tiêm.
-3. Dữ liệu mặc định: `%APPDATA%\loimo` (`config.json`, log, backup Agent).
-   Có thể override bằng biến môi trường `LOIMO_HOME` (chỉ nên dùng khi chạy
+3. Dữ liệu mặc định: `%APPDATA%\openki` (`config.json`, log, backup Agent).
+   Có thể override bằng biến môi trường `OPENKI_HOME` (chỉ nên dùng khi chạy
    instance phụ/kiểm thử).
 4. Giữ `allowLan: false`; trang quản trị chỉ nghe `127.0.0.1:8787`.
 
 Khởi động từ terminal (tuỳ chọn):
 
 ```powershell
-& "$env:LOCALAPPDATA\Programs\LoiMo\loimo.exe"
+& "$env:LOCALAPPDATA\Programs\OpenKi\openki.exe"
 ```
 
 Chỉ chạy gateway, không đụng cấu hình Agent:
 
 ```powershell
-& "$env:LOCALAPPDATA\Programs\LoiMo\loimo.exe" --no-inject
+& "$env:LOCALAPPDATA\Programs\OpenKi\openki.exe" --no-inject
 ```
 
 Chỉ tiêm phía Windows:
 
 ```powershell
-& "$env:LOCALAPPDATA\Programs\LoiMo\loimo.exe" --inject-scope=windows
+& "$env:LOCALAPPDATA\Programs\OpenKi\openki.exe" --inject-scope=windows
 ```
 
 `--inject-scope` nhận `host|windows|wsl|all|none`; `--no-inject` thắng mọi giá
@@ -55,13 +55,13 @@ dùng trigger **At logon** (không phải At startup) và chạy với quyền u
 tại:
 
 ```powershell
-$exe = "$env:LOCALAPPDATA\Programs\LoiMo\loimo.exe"
+$exe = "$env:LOCALAPPDATA\Programs\OpenKi\openki.exe"
 $action  = New-ScheduledTaskAction -Execute $exe
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable `
   -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
-Register-ScheduledTask -TaskName "Lối Mở" `
-  -Description "Lối Mở gateway (GUI/tray) tại đăng nhập" `
+Register-ScheduledTask -TaskName "OpenKi" `
+  -Description "OpenKi gateway (GUI/tray) tại đăng nhập" `
   -Action $action -Trigger $trigger -Settings $settings `
   -RunLevel Limited
 ```
@@ -69,7 +69,7 @@ Register-ScheduledTask -TaskName "Lối Mở" `
 Gỡ:
 
 ```powershell
-Unregister-ScheduledTask -TaskName "Lối Mở" -Confirm:$false
+Unregister-ScheduledTask -TaskName "OpenKi" -Confirm:$false
 ```
 
 Không đặt task ở mức `Highest` và không chọn "Run whether user is logged on or
@@ -92,7 +92,7 @@ Get-NetTCPConnection -LocalPort 8787 -State Listen |
 ## Cập nhật
 
 Dùng nút "Cập nhật một chạm" trong dashboard (chỉ Windows) hoặc tải bản mới và
-thay `loimo.exe` khi ứng dụng đã thoát. Sao lưu `%APPDATA%\loimo` trước
+thay `openki.exe` khi ứng dụng đã thoát. Sao lưu `%APPDATA%\openki` trước
 khi nâng cấp.
 
 ## Liên quan

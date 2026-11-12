@@ -16,7 +16,7 @@ func autostartFile() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, autostartDir, "loimo.desktop")
+	return filepath.Join(home, autostartDir, "openki.desktop")
 }
 
 // legacyAutostartFile is the entry written before the project rename.
@@ -78,10 +78,10 @@ func AutostartSet(enable bool) error {
 	}
 	content := "[Desktop Entry]\n" +
 		"Type=Application\n" +
-		"Name=Lối Mở\n" +
+		"Name=OpenKi\n" +
 		"Comment=Cổng mô hình miễn phí cục bộ\n" +
 		"Exec=\"" + exe + "\"\n" +
-		"Icon=loimo\n" +
+		"Icon=openki\n" +
 		"Terminal=false\n" +
 		"X-GNOME-Autostart-enabled=true\n"
 	if err := os.MkdirAll(filepath.Dir(f), 0o755); err != nil {

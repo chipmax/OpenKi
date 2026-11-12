@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // Two keys rotate: consecutive picks walk the list instead of hammering one

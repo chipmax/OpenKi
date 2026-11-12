@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/logx"
-	"github.com/chipmax/loimo/internal/relay"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/logx"
+	"github.com/chipmax/openki/internal/relay"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // Cross-lane routing: merged capability resolution plus the one-way fallback

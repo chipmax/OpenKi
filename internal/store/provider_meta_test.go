@@ -3,7 +3,7 @@ package store
 import "testing"
 
 func TestDeclaredMetaCarriesTheListingSchema(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := Open()
 	if err != nil {
 		t.Fatal(err)
@@ -32,7 +32,7 @@ func TestDeclaredMetaCarriesTheListingSchema(t *testing.T) {
 }
 
 func TestDeclaredMetaServesListingNumbers(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := Open()
 	if err != nil {
 		t.Fatal(err)
@@ -79,7 +79,7 @@ func TestDeclaredMetaServesListingNumbers(t *testing.T) {
 // the provider echoing its context length, and showing it as 输出 told the user
 // nothing but that the model can produce a million tokens.
 func TestDeclaredMetaDropsTheEchoedOutputCap(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := Open()
 	if err != nil {
 		t.Fatal(err)

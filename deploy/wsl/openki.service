@@ -1,5 +1,5 @@
 [Unit]
-Description=Lối Mở gateway (WSL headless)
+Description=OpenKi gateway (WSL headless)
 After=network-online.target
 Wants=network-online.target
 
@@ -8,10 +8,10 @@ Type=simple
 User=admin
 Group=admin
 Environment=HOME=/home/admin
-Environment=LOIMO_HEADLESS=1
-Environment=LOIMO_HOME=/home/admin/.config/loimo
+Environment=OPENKI_HEADLESS=1
+Environment=OPENKI_HOME=/home/admin/.config/openki
 WorkingDirectory=/home/admin
-ExecStart=/usr/local/bin/loimo --inject-scope=wsl
+ExecStart=/usr/local/bin/openki --inject-scope=wsl
 Restart=always
 RestartSec=3
 TimeoutStopSec=10

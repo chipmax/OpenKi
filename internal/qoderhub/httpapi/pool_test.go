@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/qoderhub/remote"
-	"github.com/chipmax/loimo/internal/qoderhub/service"
+	"github.com/chipmax/openki/internal/qoderhub/remote"
+	"github.com/chipmax/openki/internal/qoderhub/service"
 )
 
 // newPoolServer builds a server whose service owns a real, empty account pool.

@@ -4,8 +4,8 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // countingAgent is a throwaway adapter that only records how many times it was
@@ -26,7 +26,7 @@ func (c *countingAgent) Disable() error { return nil }
 
 func newCountingRegistry(t *testing.T, a *countingAgent) *Registry {
 	t.Helper()
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)
@@ -85,7 +85,7 @@ func TestResyncEnabledGateIsTheInjectionFix(t *testing.T) {
 // next round retries the whole list rather than stranding the failed agent on
 // stale content forever behind the gate.
 func TestResyncGatePartialFailureDoesNotCommit(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)

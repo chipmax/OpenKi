@@ -9,7 +9,7 @@ package window
 import (
 	"os/exec"
 
-	"github.com/chipmax/loimo/internal/tray"
+	"github.com/chipmax/openki/internal/tray"
 )
 
 // Linux has no HWND. Callers only ever compare the handle against zero to ask

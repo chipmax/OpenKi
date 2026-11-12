@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // Per-provider API-key rotation (issue #104): one upstream account is a rate

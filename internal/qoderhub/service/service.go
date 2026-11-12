@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chipmax/loimo/internal/qoderhub/remote"
-	"github.com/chipmax/loimo/internal/qoderhub/tooltypes"
+	"github.com/chipmax/openki/internal/qoderhub/remote"
+	"github.com/chipmax/openki/internal/qoderhub/tooltypes"
 )
 
 type SessionMode string

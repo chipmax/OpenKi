@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build loimo for Linux and package it as a Debian .deb
+# Build openki for Linux and package it as a Debian .deb
 # (system libs are used; Depends: libgtk-3-0, libayatana-appindicator3-1).
 #
 # Requirements:
@@ -14,16 +14,16 @@ VERSION="${1:-1.2.1-linux}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DIST="$ROOT/dist"
 BUILD="$ROOT/build"
-PKGDIR="$BUILD/deb-root/loimo_${VERSION}_amd64"
-OUT="$DIST/loimo_${VERSION}_amd64.deb"
+PKGDIR="$BUILD/deb-root/openki_${VERSION}_amd64"
+OUT="$DIST/openki_${VERSION}_amd64.deb"
 
 echo ">> building binary"
 mkdir -p "$DIST"
 (cd "$ROOT" && go build -trimpath \
   -ldflags "-s -w \
-    -X github.com/chipmax/loimo/internal/gateway.Version=$VERSION \
-    -X github.com/chipmax/loimo/internal/update.Current=$VERSION" \
-  -o "$DIST/loimo-linux" ./cmd/loimo)
+    -X github.com/chipmax/openki/internal/gateway.Version=$VERSION \
+    -X github.com/chipmax/openki/internal/update.Current=$VERSION" \
+  -o "$DIST/openki-linux" ./cmd/openki)
 
 echo ">> assembling package tree"
 rm -rf "$(dirname "$PKGDIR")"
@@ -31,39 +31,39 @@ mkdir -p "$PKGDIR/DEBIAN" \
          "$PKGDIR/usr/bin" \
          "$PKGDIR/usr/share/applications" \
          "$PKGDIR/usr/share/icons/hicolor/256x256/apps" \
-         "$PKGDIR/usr/share/doc/loimo" \
+         "$PKGDIR/usr/share/doc/openki" \
          "$PKGDIR/usr/share/metainfo"
-cp "$DIST/loimo-linux" "$PKGDIR/usr/bin/loimo"
-cp "$ROOT/assets/icon-256.png" "$PKGDIR/usr/share/icons/hicolor/256x256/apps/loimo.png"
+cp "$DIST/openki-linux" "$PKGDIR/usr/bin/openki"
+cp "$ROOT/assets/icon-256.png" "$PKGDIR/usr/share/icons/hicolor/256x256/apps/openki.png"
 
 # --- desktop entry ----------------------------------------------------------
-cat > "$PKGDIR/usr/share/applications/loimo.desktop" <<'EOF'
+cat > "$PKGDIR/usr/share/applications/openki.desktop" <<'EOF'
 [Desktop Entry]
 Type=Application
-Name=Lối Mở
+Name=OpenKi
 Comment=本地免费模型网关
-Exec=loimo
-Icon=loimo
+Exec=openki
+Icon=openki
 Terminal=false
 Categories=Network;Utility;
-StartupWMClass=loimo
+StartupWMClass=openki
 X-GNOME-Autostart-enabled=false
 EOF
 
 # --- control -----------------------------------------------------------------
-SIZE_KB=$(( $(stat -c%s "$DIST/loimo-linux") / 1024 + 200 ))
+SIZE_KB=$(( $(stat -c%s "$DIST/openki-linux") / 1024 + 200 ))
 cat > "$PKGDIR/DEBIAN/control" <<EOF
-Package: loimo
+Package: openki
 Version: $VERSION
 Architecture: amd64
-Maintainer: Lối Mở Linux Port <loimo@localhost>
+Maintainer: OpenKi Linux Port <openki@localhost>
 Installed-Size: $SIZE_KB
 Depends: libc6 (>= 2.34), libgtk-3-0 (>= 3.24), libayatana-appindicator3-1 (>= 0.5)
 Section: net
 Priority: optional
 Homepage: https://github.com/chipmax/OpenKi
 Description: Local free-model gateway with a tray icon
- Lối Mở wraps the OpenCode Zen free model lane into standard
+ OpenKi wraps the OpenCode Zen free model lane into standard
  OpenAI/Anthropic-compatible APIs on 127.0.0.1, auto-detects and injects
  configuration into installed AI agents (OpenCode, Codex, Claude Code,
  Aider, Qwen Code, etc.), and stays resident in the system tray. The
@@ -88,15 +88,15 @@ EOF
 chmod 755 "$PKGDIR/DEBIAN/postinst"
 
 # --- docs --------------------------------------------------------------------
-cat > "$PKGDIR/usr/share/doc/loimo/copyright" <<'EOF'
+cat > "$PKGDIR/usr/share/doc/openki/copyright" <<'EOF'
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: loimo
+Upstream-Name: openki
 Upstream-Contact: https://github.com/chipmax/OpenKi
 Source: https://github.com/chipmax/OpenKi
 
 Files: *
 Copyright: 2024-2026 LAGcomcom
-           2026 chipmax (bản fork loimo)
+           2026 chipmax (bản fork openki)
 License: GPL-3.0
  This program is free software: you can redistribute it and/or modify it
  under the terms of the GNU General Public License as published by the Free
@@ -107,21 +107,21 @@ License: GPL-3.0
  /usr/share/common-licenses/GPL-3.
 EOF
 
-cat > "$PKGDIR/usr/share/doc/loimo/changelog" <<EOF
-loimo ($VERSION) unstable; urgency=medium
+cat > "$PKGDIR/usr/share/doc/openki/changelog" <<EOF
+openki ($VERSION) unstable; urgency=medium
 
   * Linux 适配：托盘常驻、浏览器打开管理页、XDG 开机自启、
     libnotify 通知、系统代理环境变量、pgrep 进程检测。
   * 打包为自包含 AppImage 与 Debian .deb。
 
- -- Lối Mở Linux Port <loimo@localhost>  $(date -R)
+ -- OpenKi Linux Port <openki@localhost>  $(date -R)
 EOF
 
-cat > "$PKGDIR/usr/share/metainfo/loimo.metainfo.xml" <<'EOF'
+cat > "$PKGDIR/usr/share/metainfo/openki.metainfo.xml" <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>io.github.chipmax.loimo</id>
-  <name>Lối Mở</name>
+  <id>io.github.chipmax.openki</id>
+  <name>OpenKi</name>
   <summary>本地免费模型网关（托盘常驻）</summary>
   <metadata_license>MIT</metadata_license>
   <project_license>GPL-3.0</project_license>
@@ -129,9 +129,9 @@ cat > "$PKGDIR/usr/share/metainfo/loimo.metainfo.xml" <<'EOF'
     <p>把 OpenCode Zen 免费模型封装成标准 OpenAI / Anthropic 兼容接口，自动注入已安装的 AI Agent 配置，托盘常驻。</p>
   </description>
   <url type="homepage">https://github.com/chipmax/OpenKi</url>
-  <launchable type="desktop-id">loimo.desktop</launchable>
+  <launchable type="desktop-id">openki.desktop</launchable>
   <provides>
-    <binary>loimo</binary>
+    <binary>openki</binary>
   </provides>
 </component>
 EOF

@@ -20,8 +20,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // providerStreamIdle bounds silence on a relayed stream — both the wait for

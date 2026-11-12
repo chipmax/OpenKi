@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // The 模型 page's progress band is driven by server-side task state, because

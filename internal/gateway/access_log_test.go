@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/logx"
+	"github.com/chipmax/openki/internal/logx"
 )
 
 // wireLog attaches a real logger to the test server so a test can read back
@@ -40,7 +40,7 @@ func TestAccessLinePerClientRequest(t *testing.T) {
 	defer ts.Close()
 	resp := postJSON(t, ts.URL+"/v1/chat/completions", s.Store.Config().MainKey,
 		`{"model":"mimo-v2.6-flash-free","messages":[{"role":"user","content":"hi"}],"stream":false}`, nil)
-	rid := resp.Header.Get("x-loimo-request-id")
+	rid := resp.Header.Get("x-openki-request-id")
 
 	got := catEntries(l, "access")
 	if len(got) != 1 {
@@ -102,7 +102,7 @@ func TestUpstreamLinePerAttempt(t *testing.T) {
 
 	resp := postChat(t, s, `{"model":"nemotron-3.5-lightning-free","stream":false,`+
 		`"messages":[{"role":"user","content":"hi"}]}`)
-	rid := resp.Header.Get("x-loimo-request-id")
+	rid := resp.Header.Get("x-openki-request-id")
 
 	up1 := catEntries(l, "upstream")
 	if len(up1) != 2 {
@@ -145,7 +145,7 @@ func TestUpstreamLineMarksProvider(t *testing.T) {
 
 	resp := postChat(t, s, `{"model":"pv1/gpt-4o-mini","stream":false,`+
 		`"messages":[{"role":"user","content":"hi"}]}`)
-	rid := resp.Header.Get("x-loimo-request-id")
+	rid := resp.Header.Get("x-openki-request-id")
 
 	got := catEntries(l, "upstream")
 	if len(got) != 1 {
@@ -222,7 +222,7 @@ func TestContentLineIsOffByDefaultAndTruncated(t *testing.T) {
 		`"image_url":{"url":"data:image/png;base64,` + blob + `"}}]}]}`
 
 	resp := postChat(t, s, body)
-	rid := resp.Header.Get("x-loimo-request-id")
+	rid := resp.Header.Get("x-openki-request-id")
 	if n := len(catEntries(l, "content")); n != 0 {
 		t.Fatalf("content lines = %d with the class switched off, want 0", n)
 	}

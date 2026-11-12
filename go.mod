@@ -1,4 +1,4 @@
-module github.com/chipmax/loimo
+module github.com/chipmax/openki
 
 go 1.26.0
 

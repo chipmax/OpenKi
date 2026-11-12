@@ -9,8 +9,8 @@ import (
 	"github.com/jchv/go-webview2"
 	"github.com/jchv/go-webview2/webviewloader"
 
-	"github.com/chipmax/loimo/internal/notify"
-	"github.com/chipmax/loimo/internal/tray"
+	"github.com/chipmax/openki/internal/notify"
+	"github.com/chipmax/openki/internal/tray"
 )
 
 // Run creates the window, navigates to the URL and blocks until the window is
@@ -31,7 +31,7 @@ func Run(o Options) {
 	// -H=windowsgui discards. An empty version with nil error is the loader's
 	// "runtime not installed" answer (ERROR_FILE_NOT_FOUND maps to empty).
 	version, verr := webviewloader.GetInstalledVersion()
-	forced := os.Getenv("LOIMO_NO_WEBVIEW2") != ""
+	forced := os.Getenv("OPENKI_NO_WEBVIEW2") != ""
 	if ok, reason := embeddedDecision(version, verr, forced); !ok {
 		runFallback(o, reason, false)
 		return
@@ -155,7 +155,7 @@ func createWebview(dataPath string, o Options) (v webview2.WebView, reason strin
 // WebView2 environment needs both.
 func usableDataPath(dir string) (string, bool) {
 	if dir == "" {
-		dir = filepath.Join(os.TempDir(), "loimo-webview")
+		dir = filepath.Join(os.TempDir(), "openki-webview")
 	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return dir, false
@@ -173,19 +173,19 @@ func usableDataPath(dir string) (string, bool) {
 // bindWindowControls exposes the custom title bar's actions to JS. The HTML
 // title bar calls these: drag on mousedown, buttons for min/max/close.
 func bindWindowControls(w webview2.WebView, hwnd uintptr, onCloseButton func() bool) {
-	_ = w.Bind("loimoDrag", func() error {
+	_ = w.Bind("openkiDrag", func() error {
 		startDrag(hwnd)
 		return nil
 	})
-	_ = w.Bind("loimoMinimize", func() error {
+	_ = w.Bind("openkiMinimize", func() error {
 		minimizeWindow(hwnd)
 		return nil
 	})
-	_ = w.Bind("loimoToggleMax", func() error {
+	_ = w.Bind("openkiToggleMax", func() error {
 		toggleMaximize(hwnd)
 		return nil
 	})
-	_ = w.Bind("loimoClose", func() error {
+	_ = w.Bind("openkiClose", func() error {
 		if onCloseButton != nil && !onCloseButton() {
 			return nil // close-to-tray: the window stays, just hidden by caller
 		}
@@ -199,7 +199,7 @@ func bindWindowControls(w webview2.WebView, hwnd uintptr, onCloseButton func() b
 // make things worse than degrading on a bogus pre-flight.
 func embeddedDecision(version string, verr error, forced bool) (bool, string) {
 	if forced {
-		return false, "LOIMO_NO_WEBVIEW2=1 (bỏ qua cửa sổ nhúng theo cách thủ công)"
+		return false, "OPENKI_NO_WEBVIEW2=1 (bỏ qua cửa sổ nhúng theo cách thủ công)"
 	}
 	if verr != nil {
 		return true, ""

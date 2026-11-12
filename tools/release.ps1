@@ -10,16 +10,16 @@ Set-Location (Split-Path $PSScriptRoot -Parent)
 
 $tag = "v$Version"
 # No -s -w: Huorong deletes a stripped Go exe within about a minute of it
-# appearing on this machine, which is what the freshly built loimo.exe is.
-go build -trimpath -ldflags "-H=windowsgui -X github.com/chipmax/loimo/internal/gateway.Version=$Version -X github.com/chipmax/loimo/internal/update.Current=$Version" -o dist/loimo.exe ./cmd/loimo
+# appearing on this machine, which is what the freshly built openki.exe is.
+go build -trimpath -ldflags "-H=windowsgui -X github.com/chipmax/openki/internal/gateway.Version=$Version -X github.com/chipmax/openki/internal/update.Current=$Version" -o dist/openki.exe ./cmd/openki
 if ($LASTEXITCODE -ne 0) { throw "build failed" }
-go build -trimpath -o dist/loimostats.exe ./cmd/loimostats
+go build -trimpath -o dist/openkistats.exe ./cmd/openkistats
 if ($LASTEXITCODE -ne 0) { throw "build failed" }
 
 Copy-Item README.md dist/ -Force
-Compress-Archive -Path dist/loimo.exe, dist/README.md -DestinationPath "dist/loimo-$Version.zip" -Force
+Compress-Archive -Path dist/openki.exe, dist/README.md -DestinationPath "dist/openki-$Version.zip" -Force
 
-$assets = @("dist/loimo.exe", "dist/loimostats.exe", "dist/loimo-$Version.zip")
+$assets = @("dist/openki.exe", "dist/openkistats.exe", "dist/openki-$Version.zip")
 # Re-running a version that already went out used to die in gh release create;
 # upload over the existing assets instead.
 if (gh release view $tag 2>$null) {

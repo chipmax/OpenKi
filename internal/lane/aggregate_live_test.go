@@ -17,13 +17,13 @@ import (
 //
 // Skipped when the data dir is absent, so CI and other machines stay green.
 func TestLiveCatalogAggregatesRealChannelFiles(t *testing.T) {
-	home := os.Getenv("LOIMO_HOME")
+	home := os.Getenv("OPENKI_HOME")
 	if home == "" {
 		appdata := os.Getenv("APPDATA")
 		if appdata == "" {
 			t.Skip("no APPDATA")
 		}
-		home = filepath.Join(appdata, "loimo")
+		home = filepath.Join(appdata, "openki")
 	}
 	dir := filepath.Join(home, "channels")
 	entries, err := os.ReadDir(dir)

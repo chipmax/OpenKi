@@ -31,9 +31,9 @@ tools/patch_theme_anim.py
 .idea/
 *.swp
 shot-*.png
-tools/deploy_loimostats.py
+tools/deploy_openkistats.py
 .DS_Store
 
 # root-level go build outputs
-/loimo
+/openki
 /gateprobe

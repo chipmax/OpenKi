@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/logx"
-	"github.com/chipmax/loimo/internal/openref"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/logx"
+	"github.com/chipmax/openki/internal/openref"
 )
 
 // Public capacity reference (issue #28): a scheduled pull of two keyless

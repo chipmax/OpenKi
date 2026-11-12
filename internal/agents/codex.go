@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// codex injects a [model_providers.loimo] block plus a model catalog into
+// codex injects a [model_providers.openki] block plus a model catalog into
 // ~/.codex/config.toml. The provider block is appended textually so the rest
 // of the user's TOML is untouched; marker comments make enable/disable
 // idempotent. The catalog is written as a sidecar JSON file referenced by the
@@ -35,10 +35,10 @@ type codex struct {
 	name string
 }
 
-const codexMarkerBegin = "# >>> loimo managed block (do not edit)"
-const codexMarkerEnd = "# <<< loimo managed block"
-const codexCatalogKeyBegin = "# >>> loimo catalog key (do not edit)"
-const codexCatalogKeyEnd = "# <<< loimo catalog key"
+const codexMarkerBegin = "# >>> openki managed block (do not edit)"
+const codexMarkerEnd = "# <<< openki managed block"
+const codexCatalogKeyBegin = "# >>> openki catalog key (do not edit)"
+const codexCatalogKeyEnd = "# <<< openki catalog key"
 
 // The pre-rename release wrote a different marker pair and provider id. Both
 // are stripped on enable/disable so a migration cannot leave a stale
@@ -99,7 +99,7 @@ func (c *codex) Meta() (string, string, string) {
 
 func (c *codex) configPath() string { return c.p(".codex", "config.toml") }
 func (c *codex) catalogPath() string {
-	return c.p(".codex", "loimo-catalog.json")
+	return c.p(".codex", "openki-catalog.json")
 }
 
 func (c *codex) legacyCatalogPath() string {
@@ -140,8 +140,8 @@ func (c *codex) block(o Options) string {
 	// model_catalog_url lets the picker refresh the list live from the gateway;
 	// model_catalog_json (top of file) is the verified offline path.
 	return fmt.Sprintf(`%s
-[model_providers.loimo]
-name = "Lối Mở – Mô hình miễn phí"
+[model_providers.openki]
+name = "OpenKi – Mô hình miễn phí"
 base_url = "%s"
 wire_api = "responses"
 requires_openai_auth = true
@@ -177,7 +177,7 @@ func catalogJSON(o Options, def string) ([]byte, error) {
 		if m.RegionSensitive {
 			pri = 10
 		}
-		desc := "Mô hình làn miễn phí Lối Mở"
+		desc := "Mô hình làn miễn phí OpenKi"
 		if m.Blurb != "" {
 			desc = m.Blurb
 		}
@@ -186,7 +186,7 @@ func catalogJSON(o Options, def string) ([]byte, error) {
 			DisplayName: m.Name,
 			Description: desc,
 			BaseInstructions: fmt.Sprintf(
-				"You are %s (model id: %s), a coding agent serving the user's Codex app through the Lối Mở local gateway. Work toward the user's goal with the available tools and verify your changes. Always reply in the same language as the user's latest message — when the user writes Chinese, reply in Simplified Chinese. Be concise.",
+				"You are %s (model id: %s), a coding agent serving the user's Codex app through the OpenKi local gateway. Work toward the user's goal with the available tools and verify your changes. Always reply in the same language as the user's latest message — when the user writes Chinese, reply in Simplified Chinese. Be concise.",
 				m.Name, m.ID,
 			),
 			DefaultReasoning:  "medium",
@@ -199,7 +199,7 @@ func catalogJSON(o Options, def string) ([]byte, error) {
 			Visibility:        "list",
 			SupportedInAPI:    true,
 			Priority:          pri,
-			ProviderID:        "loimo",
+			ProviderID:        "openki",
 			ContextWindow:     m.ContextWindow,
 			MaxOutputTokens:   m.MaxOutput,
 		})
@@ -269,7 +269,7 @@ func stripCodexManaged(src string) string {
 // pre-existing model_catalog_json) — so Disable can put them all back
 // verbatim.
 func (c *codex) codexStatePath() string {
-	return c.p(".codex", "loimo-state.json")
+	return c.p(".codex", "openki-state.json")
 }
 
 func (c *codex) legacyCodexStatePath() string {
@@ -392,7 +392,7 @@ func (c *codex) Enable(o Options) error {
 	_ = os.Remove(c.legacyCatalogPath())
 
 	// Seed the stash from a previous enable: on re-enable the config carries
-	// loimo's own rewritten lines, and recording them as "originals" would
+	// openki's own rewritten lines, and recording them as "originals" would
 	// clobber the user's real ones. The pre-rename state file is the fallback
 	// for an install upgrading across the rename.
 	stash := c.readCodexStash()
@@ -413,16 +413,16 @@ func (c *codex) Enable(o Options) error {
 func (c *codex) applyEnable(src string, o Options, def, catalogPath string, stash map[string]string) string {
 	// Strip previous managed blocks first: on re-enable the managed
 	// model_catalog_json line must not reach the stashing passes below, or
-	// loimo's own line would be recorded as the user's "original". The
+	// openki's own line would be recorded as the user's "original". The
 	// pre-rename block is stripped in the same pass so its provider table
 	// cannot survive the migration.
 	base := stripCodexManaged(src)
 	// The desktop picker changes the model name but keeps routing through the
-	// config's active provider, so loimo must become the active provider
+	// config's active provider, so openki must become the active provider
 	// for picker selections to work at all. The user's original top-level
 	// model_provider/model lines are stashed and restored on Disable.
 	base = replaceTopLevelKeys(base, map[string]string{
-		"model_provider": `"loimo"`,
+		"model_provider": `"openki"`,
 		"model":          fmt.Sprintf("%q", def),
 	}, stash)
 	// A config that already carries a top-level model_catalog_json — the
@@ -447,7 +447,7 @@ func (c *codex) Disable() error {
 		return nil
 	}
 	// Managed blocks go first: the stash undo below must not mistake
-	// loimo's own managed model_catalog_json line for the user's. The
+	// openki's own managed model_catalog_json line for the user's. The
 	// pre-rename marker pair is included, so disabling an upgraded install
 	// removes its old provider table too.
 	clean := stripCodexManaged(string(data))

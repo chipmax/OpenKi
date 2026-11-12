@@ -1,6 +1,6 @@
-// Package store persists loimo configuration and usage statistics as
-// atomic JSON files under the OS app-data dir (%APPDATA%\loimo on Windows,
-// ~/Library/Application Support/loimo on macOS), or $LOIMO_HOME.
+// Package store persists openki configuration and usage statistics as
+// atomic JSON files under the OS app-data dir (%APPDATA%\openki on Windows,
+// ~/Library/Application Support/openki on macOS), or $OPENKI_HOME.
 package store
 
 import (
@@ -16,7 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // Home returns the data directory.
@@ -129,7 +129,7 @@ type Subscription struct {
 
 // RelayPeer is one self-hosted or serverless relay endpoint for the new
 // egress peer layer. URL is the relay's base (https://relay.example.com);
-// Token is the shared X-LoiMo-Relay-Token secret and is masked on export.
+// Token is the shared X-OpenKi-Relay-Token secret and is masked on export.
 type RelayPeer struct {
 	ID      string `json:"id"`
 	URL     string `json:"url"`
@@ -555,7 +555,7 @@ func Open() (*Store, error) {
 		feed := strings.TrimSpace(cfg.AnnouncementFeed)
 		if feed == "" ||
 			strings.Contains(feed, "raw.githubusercontent.com") &&
-				strings.Contains(feed, "loimo") && strings.HasSuffix(feed, "announcements.json") {
+				strings.Contains(feed, "openki") && strings.HasSuffix(feed, "announcements.json") {
 			cfg.AnnouncementFeed = "https://api.github.com/repos/LAGcomcom/zen-gate/contents/announcements.json?ref=master"
 		}
 	}
@@ -612,7 +612,7 @@ func Open() (*Store, error) {
 		cfg.RoutingStrategy = "catalog"
 	}
 	// v13: the fork owns its release and announcement feeds. Point both at
-	// chipmax/loimo when they still carry the upstream default; a feed
+	// chipmax/openki when they still carry the upstream default; a feed
 	// the user customized to another repo stays untouched. This is also the
 	// schema bump that marks installs understanding egressModes/relayPool and
 	// agentScope (no backfill: empty means the legacy single-egress path).
@@ -621,7 +621,7 @@ func Open() (*Store, error) {
 	// machine running more than one gateway sets an explicit scope.
 	if cfg.SchemaVersion < 13 {
 		cfg.SchemaVersion = 13
-		const fork = "chipmax/loimo"
+		const fork = "chipmax/openki"
 		const upstream = "LAGcomcom/zen-gate"
 		feed := strings.TrimSpace(cfg.UpdateFeed)
 		if feed == "" || strings.Contains(feed, upstream) {
@@ -635,14 +635,14 @@ func Open() (*Store, error) {
 			cfg.AgentScope = "all"
 		}
 	}
-	// v14: this fork changed its repository from zen-gate-vi to loimo. v13
+	// v14: this fork changed its repository from zen-gate-vi to openki. v13
 	// already moved installs off the upstream feeds, so those installs carry
 	// the old fork URL with a schema version that would otherwise never
 	// revisit it. Rewrite only the two feed defaults; a feed the user pointed
 	// at another repository still wins.
 	if cfg.SchemaVersion < 14 {
 		cfg.SchemaVersion = 14
-		const fork = "chipmax/loimo"
+		const fork = "chipmax/openki"
 		const legacyFork = "chipmax/zen-gate-vi"
 		const upstream = "LAGcomcom/zen-gate"
 		feed := strings.TrimSpace(cfg.UpdateFeed)
@@ -654,14 +654,14 @@ func Open() (*Store, error) {
 			cfg.AnnouncementFeed = "https://api.github.com/repos/" + fork + "/contents/announcements.json?ref=master"
 		}
 	}
-	// v15: the fork repository moved from loimo to OpenKi. Installs that
-	// already ran v14 carry the loimo feed with a schema version that would
+	// v15: the fork repository moved from openki to OpenKi. Installs that
+	// already ran v14 carry the openki feed with a schema version that would
 	// never revisit it, so rewrite exactly the known defaults here. A feed
 	// the user pointed at another repository still wins.
 	if cfg.SchemaVersion < 15 {
 		cfg.SchemaVersion = 15
 		const fork = "chipmax/OpenKi"
-		const legacyFork = "chipmax/loimo"
+		const legacyFork = "chipmax/openki"
 		const olderFork = "chipmax/zen-gate-vi"
 		const upstream = "LAGcomcom/zen-gate"
 		feed := strings.TrimSpace(cfg.UpdateFeed)
@@ -818,7 +818,7 @@ func defaultConfig() Config {
 	}
 }
 
-// GenerateKey mints "ofm-…" (loimo keeps the same prefix shape).
+// GenerateKey mints "ofm-…" (openki keeps the same prefix shape).
 func GenerateKey(prefix string) string {
 	b := make([]byte, 24)
 	_, _ = rand.Read(b)

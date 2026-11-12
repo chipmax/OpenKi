@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // Autostart on macOS is a per-user launchd job: a plist in
@@ -19,7 +19,7 @@ import (
 // in, without asking for admin rights.
 
 // launchdLabel is the reverse-DNS job label; it doubles as the plist name.
-const launchdLabel = "io.github.chipmax.loimo"
+const launchdLabel = "io.github.chipmax.openki"
 
 // legacyLaunchdLabel is the label written before the project rename.
 const legacyLaunchdLabel = "com.lagcomcom.zen-gate"
@@ -120,7 +120,7 @@ func AutostartSet(enable bool) error {
     <string>%s</string>
 </dict>
 </plist>
-`, launchdLabel, plistXMLEscape(exe), logPath("loimo-launchd.out"), logPath("loimo-launchd.err"))
+`, launchdLabel, plistXMLEscape(exe), logPath("openki-launchd.out"), logPath("openki-launchd.err"))
 	tmp := plist + ".tmp"
 	if err := os.WriteFile(tmp, []byte(body), 0o644); err != nil {
 		return err
@@ -145,6 +145,6 @@ func plistXMLEscape(s string) string {
 	return r.Replace(s)
 }
 
-// logPath points launchd's stdout/stderr at the loimo data dir so a
+// logPath points launchd's stdout/stderr at the openki data dir so a
 // launch-at-login instance is debuggable without a terminal.
 func logPath(name string) string { return filepath.Join(store.Home(), name) }

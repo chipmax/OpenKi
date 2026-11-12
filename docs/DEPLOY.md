@@ -1,4 +1,4 @@
-# Triển khai loimo
+# Triển khai openki
 
 Tài liệu này mô tả ma trận triển khai chuẩn cho ba môi trường: **Windows (GUI +
 tray)**, **WSL (headless + systemd)** và **VPS (headless + Caddy)**. Mọi ví dụ
@@ -25,7 +25,7 @@ Windows 10/11 (GUI + tray)                 WSL2 (headless, systemd)
         │                                          │
         ▼                                          ▼
   127.0.0.1:8787                            127.0.0.1:8788
-  loimo GUI/tray                         loimo (LOIMO_HEADLESS=1)
+  openki GUI/tray                         openki (OPENKI_HEADLESS=1)
         │                                          │
         └──────────────┬───────────────────────────┘
                        │  egressModes (đồng cấp)
@@ -36,7 +36,7 @@ Windows 10/11 (GUI + tray)                 WSL2 (headless, systemd)
   VPS (dự phòng)   tự cài          WireGuard
 
 VPS (headless, systemd)
-  Internet ── 443/TLS ── Caddy ── 127.0.0.1:8787 loimo
+  Internet ── 443/TLS ── Caddy ── 127.0.0.1:8787 openki
                           │
                           ├── /v1/*      → proxy (stream flush)
                           ├── /healthz   → proxy
@@ -52,9 +52,9 @@ VPS (headless, systemd)
 | Chế độ | GUI + tray | Headless | Headless |
 | Cổng | `8787` | `8788` | `127.0.0.1:8787` (Caddy `443`) |
 | Khởi động | Tray/autostart hoặc Task Scheduler lúc đăng nhập | `systemd` | `systemd` |
-| Chạy dưới | Phiên đăng nhập của user | User `admin` (hoặc user WSL) | User `loimo` |
-| `LOIMO_HEADLESS` | Không đặt (GUI) | `1` | `1` |
-| `LOIMO_HOME` | `%APPDATA%\loimo` (mặc định) | `/home/admin/.config/loimo` | `/var/lib/loimo` |
+| Chạy dưới | Phiên đăng nhập của user | User `admin` (hoặc user WSL) | User `openki` |
+| `OPENKI_HEADLESS` | Không đặt (GUI) | `1` | `1` |
+| `OPENKI_HOME` | `%APPDATA%\openki` (mặc định) | `/home/admin/.config/openki` | `/var/lib/openki` |
 | Tiêm cấu hình Agent | `agentScope: windows` (hoặc `host`) | `agentScope: wsl` | `--no-inject` |
 | Lộ ra Internet | Không | Không | Chỉ `/v1/*`, `/healthz` qua Caddy |
 | Quản trị | `http://127.0.0.1:8787` | `http://127.0.0.1:8788` | SSH tunnel + loopback |
@@ -96,15 +96,15 @@ Cờ CLI hỗ trợ kiểm soát theo từng lần chạy:
 Ví dụ WSL chỉ owner phía WSL:
 
 ```bash
-LOIMO_HEADLESS=1 LOIMO_HOME=/home/admin/.config/loimo \
-  loimo --inject-scope=wsl
+OPENKI_HEADLESS=1 OPENKI_HOME=/home/admin/.config/openki \
+  openki --inject-scope=wsl
 ```
 
 Ví dụ VPS không tiêm:
 
 ```bash
-LOIMO_HEADLESS=1 LOIMO_HOME=/var/lib/loimo \
-  loimo --no-inject
+OPENKI_HEADLESS=1 OPENKI_HOME=/var/lib/openki \
+  openki --no-inject
 ```
 
 ## Egress: `egressModes`
@@ -139,8 +139,8 @@ LOIMO_HEADLESS=1 LOIMO_HOME=/var/lib/loimo \
 ```
 
 Mỗi mục gồm `id`, `url`, `token`, `enabled`. `url` phải là HTTPS. `token`
-truyền qua header `X-LoiMo-Relay-Token`; đích upstream khai báo bằng
-`X-LoiMo-Relay-Upstream` và bị giới hạn bởi allowlist phía relay. Không đưa token
+truyền qua header `X-OpenKi-Relay-Token`; đích upstream khai báo bằng
+`X-OpenKi-Relay-Upstream` và bị giới hạn bởi allowlist phía relay. Không đưa token
 vào file mẫu, log hay ảnh chụp màn hình.
 
 ### Vị trí relay
@@ -156,7 +156,7 @@ thức và các bước triển khai: [RELAY.md](RELAY.md).
 
 ## Triển khai Windows
 
-1. Tải/cài bản GUI, chạy một lần để tạo `%APPDATA%\loimo\config.json`.
+1. Tải/cài bản GUI, chạy một lần để tạo `%APPDATA%\openki\config.json`.
 2. Mở `http://127.0.0.1:8787`, đặt `mainKey`, chọn Agent cần tiêm.
 3. Giữ `agentScope: "windows"`; không bật `allowLan`.
 4. Khởi động cùng phiên đăng nhập bằng tray/autostart có sẵn, hoặc Task
@@ -184,19 +184,19 @@ systemd=true
 Cài binary headless và unit mẫu:
 
 ```bash
-CGO_ENABLED=0 go build -tags headless -trimpath -o loimo ./cmd/loimo
-sudo install -o root -g root -m 0755 loimo /usr/local/bin/loimo
-sudo install -m 0644 deploy/wsl/loimo.service /etc/systemd/system/loimo.service
+CGO_ENABLED=0 go build -tags headless -trimpath -o openki ./cmd/openki
+sudo install -o root -g root -m 0755 openki /usr/local/bin/openki
+sudo install -m 0644 deploy/wsl/openki.service /etc/systemd/system/openki.service
 sudo systemctl daemon-reload
-sudo systemctl enable --now loimo
-systemctl status loimo --no-pager
-journalctl -u loimo -f
+sudo systemctl enable --now openki
+systemctl status openki --no-pager
+journalctl -u openki -f
 ```
 
-Unit mẫu dùng `User=admin`, `LOIMO_HEADLESS=1`,
-`LOIMO_HOME=/home/admin/.config/loimo`, `--inject-scope=wsl`,
+Unit mẫu dùng `User=admin`, `OPENKI_HEADLESS=1`,
+`OPENKI_HOME=/home/admin/.config/openki`, `--inject-scope=wsl`,
 `Restart=always`. Nếu user WSL khác `admin`, sửa `User=`, `Group=`, `HOME`,
-`LOIMO_HOME`, `ReadWritePaths` cho khớp. Đặt `port: 8788` trong
+`OPENKI_HOME`, `ReadWritePaths` cho khớp. Đặt `port: 8788` trong
 `config.json` của WSL.
 
 Muốn mở dashboard WSL từ Windows mà không thêm relay, đặt trong
@@ -218,22 +218,22 @@ Giả định: Debian/Ubuntu, domain `gw.example.com` trỏ A/AAAA về VPS, m�
 
 ```bash
 # 1. User riêng, không đăng nhập
-sudo useradd --system --home /var/lib/loimo --shell /usr/sbin/nologin loimo
-sudo install -d -o loimo -g loimo -m 0750 /var/lib/loimo
-sudo install -d -o root -g root -m 0755 /opt/loimo
+sudo useradd --system --home /var/lib/openki --shell /usr/sbin/nologin openki
+sudo install -d -o openki -g openki -m 0750 /var/lib/openki
+sudo install -d -o root -g root -m 0755 /opt/openki
 
 # 2. Binary headless
-CGO_ENABLED=0 go build -tags headless -trimpath -o loimo ./cmd/loimo
-sudo install -o root -g root -m 0755 loimo /opt/loimo/loimo
+CGO_ENABLED=0 go build -tags headless -trimpath -o openki ./cmd/openki
+sudo install -o root -g root -m 0755 openki /opt/openki/openki
 
 # 3. Cấu hình (tạo từ deploy/config.example.json, sửa quyền sở hữu)
-sudo install -o loimo -g loimo -m 0600 deploy/config.example.json /var/lib/loimo/config.json
-sudo -u loimo nano /var/lib/loimo/config.json
+sudo install -o openki -g openki -m 0600 deploy/config.example.json /var/lib/openki/config.json
+sudo -u openki nano /var/lib/openki/config.json
 
 # 4. systemd
-sudo install -m 0644 deploy/vps/loimo.service /etc/systemd/system/loimo.service
+sudo install -m 0644 deploy/vps/openki.service /etc/systemd/system/openki.service
 sudo systemctl daemon-reload
-sudo systemctl enable --now loimo
+sudo systemctl enable --now openki
 
 # 5. Caddy
 sudo install -m 0644 deploy/vps/Caddyfile /etc/caddy/Caddyfile
@@ -242,8 +242,8 @@ sudo caddy validate --config /etc/caddy/Caddyfile
 sudo systemctl reload caddy
 ```
 
-Unit VPS chạy `User=loimo`, `LOIMO_HEADLESS=1`,
-`LOIMO_HOME=/var/lib/loimo`, `ExecStart=/opt/loimo/loimo --no-inject`,
+Unit VPS chạy `User=openki`, `OPENKI_HEADLESS=1`,
+`OPENKI_HOME=/var/lib/openki`, `ExecStart=/opt/openki/openki --no-inject`,
 `Restart=always`, có hardening cơ bản. Caddyfile chỉ reverse proxy `/v1/*` và
 `/healthz` tới `127.0.0.1:8787`, chặn `/admin*`, và tắt buffer để stream chảy
 ngay (`flush_interval -1`).
@@ -314,8 +314,8 @@ curl -fS  -H "Authorization: Bearer $MAIN_KEY" https://gw.example.com/v1/models
 Kiểm tra supervisor và bind:
 
 ```bash
-systemctl is-active loimo caddy
-journalctl -u loimo -n 50 --no-pager
+systemctl is-active openki caddy
+journalctl -u openki -n 50 --no-pager
 ss -ltnp | grep -E '8787|8788'   # phải thấy 127.0.0.1, không phải 0.0.0.0
 ```
 
@@ -333,7 +333,7 @@ Tiêu chí đạt:
 - Stream trả chunk ngay, không đợi hết phản hồi.
 - `https://<domain>/admin*` trả `404`/`403`, không trả dashboard.
 - `ss`/`Get-NetTCPConnection` xác nhận cổng gateway chỉ bind loopback.
-- `systemctl is-active loimo` trả `active` trên WSL và VPS.
+- `systemctl is-active openki` trả `active` trên WSL và VPS.
 
 ## Sự cố thường gặp
 
@@ -351,8 +351,8 @@ Tiêu chí đạt:
 
 - [RELAY.md](RELAY.md) — giao thức relay, header, allowlist, xoay token.
 - [deploy/config.example.json](../deploy/config.example.json) — mẫu không chứa secret.
-- [deploy/wsl/loimo.service](../deploy/wsl/loimo.service)
-- [deploy/vps/loimo.service](../deploy/vps/loimo.service)
+- [deploy/wsl/openki.service](../deploy/wsl/openki.service)
+- [deploy/vps/openki.service](../deploy/vps/openki.service)
 - [deploy/vps/Caddyfile](../deploy/vps/Caddyfile)
 - [deploy/windows/README.md](../deploy/windows/README.md)
 - [../THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)

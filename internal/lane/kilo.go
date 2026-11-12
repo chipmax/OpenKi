@@ -34,7 +34,7 @@ const (
 	// how long the stream may stay silent -- so it shares that value rather than
 	// keeping a second copy that can drift back outside the retry budget.
 	kiloTurnTimeout = streamIdleTimeout
-	kiloUserAgent   = "loimo/1.4"
+	kiloUserAgent   = "openki/1.4"
 )
 
 // kiloMandatoryReasoning matches families whose endpoint refuses to run with

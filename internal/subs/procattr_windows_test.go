@@ -42,10 +42,10 @@ func inJob(t *testing.T, pid int, job windows.Handle) bool {
 	return ok != 0
 }
 
-// A sidecar that outlives loimo is the whole crash loop: it keeps the
+// A sidecar that outlives openki is the whole crash loop: it keeps the
 // inbound ports, m.cmd is gone so nothing can kill it, and every later start
 // binds a busy port. Tying the child to a kill-on-close job makes the orphan
-// structurally impossible — the OS reaps it however loimo died.
+// structurally impossible — the OS reaps it however openki died.
 func TestTieToParentEnrollsTheChildInTheKillJob(t *testing.T) {
 	cmd := startSleeper(t)
 	if err := tieToParent(cmd.Process); err != nil {
@@ -53,10 +53,10 @@ func TestTieToParentEnrollsTheChildInTheKillJob(t *testing.T) {
 	}
 	job, ok := killJobHandle()
 	if !ok {
-		t.Fatalf("no kill job exists — the child can outlive loimo and hold the ports")
+		t.Fatalf("no kill job exists — the child can outlive openki and hold the ports")
 	}
 	if !inJob(t, cmd.Process.Pid, job) {
-		t.Errorf("child pid %d is not in loimo's kill job", cmd.Process.Pid)
+		t.Errorf("child pid %d is not in openki's kill job", cmd.Process.Pid)
 	}
 
 	// The handle must be created once and kept open: closing it is what kills

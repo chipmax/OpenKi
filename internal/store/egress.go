@@ -1,6 +1,6 @@
 package store
 
-import "github.com/chipmax/loimo/internal/lane"
+import "github.com/chipmax/openki/internal/lane"
 
 // RelayEndpoints converts the stored relay pool into the lane's egress type.
 // Disabled entries are dropped here: a relay the user turned off must not be

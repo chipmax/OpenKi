@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chipmax/loimo/internal/qoderhub/remote"
+	"github.com/chipmax/openki/internal/qoderhub/remote"
 )
 
 // The account-pool surface. It exists so the settings card can show and steer

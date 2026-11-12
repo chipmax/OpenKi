@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/logx"
-	"github.com/chipmax/loimo/internal/tray"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/logx"
+	"github.com/chipmax/openki/internal/tray"
 )
 
 // The WorkBuddy 账号渠道's dashboard surface: a status readout for the

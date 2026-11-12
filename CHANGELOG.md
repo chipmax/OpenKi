@@ -7,9 +7,13 @@ phát triển (UTC+7).
 
 ### Repo
 
-- Đổi tên repo GitHub từ `loimo` thành **OpenKi**. URL release, badge, feed cập
+- Hoàn tất định danh OpenKi: module `github.com/chipmax/openki`, binary
+  `openki`/`openkistats`, biến môi trường `OPENKI_*`, thư mục dữ liệu
+  `openki`, service `openki.service` và toàn bộ README/tài liệu. Repo phát
+  hành mới: `chipmax/OpenKi`.
+- Đổi tên repo GitHub từ repo cũ sang **OpenKi**. URL release, badge, feed cập
   nhật, feed thông báo và dashboard trỏ `chipmax/OpenKi`; cấu hình cũ còn feed
-  `chipmax/loimo` được migrate ở schema v15, feed người dùng tự đặt vẫn giữ.
+  `chipmax/openki` được migrate ở schema v15, feed người dùng tự đặt vẫn giữ.
 - Bỏ `COPYING` (bản sao trùng byte-for-byte của `LICENSE`), hai ảnh chụp không
   được tham chiếu và script patch dashboard một lần; repo gọn hơn, không đổi
   tính năng.
@@ -21,9 +25,9 @@ phát triển (UTC+7).
 
 ### Thương hiệu
 
-- Đổi tên fork `zen-gate-vi` thành **Lối Mở** (`loimo`): module Go, binary
-  `loimo`/`loimostats`, biến môi trường `LOIMO_*`, provider `loimo` trong
-  agent, thư mục dữ liệu `~/.config/loimo`, service systemd và toàn bộ
+- Đổi tên fork `zen-gate-vi` thành **OpenKi** (`openki`): module Go, binary
+  `openki`/`openkistats`, biến môi trường `OPENKI_*`, provider `openki` trong
+  agent, thư mục dữ liệu `~/.config/openki`, service systemd và toàn bộ
   README/tài liệu. Các marker và provider `zen-gate` cũ vẫn được nhận diện
   để migrate cấu hình đang chạy, nhưng không còn được ghi mới.
 - Repo phát hành chuyển sang `chipmax/OpenKi`; feed cập nhật và thông báo cũ

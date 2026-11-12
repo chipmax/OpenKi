@@ -17,14 +17,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chipmax/loimo/internal/agents"
-	"github.com/chipmax/loimo/internal/announce"
-	"github.com/chipmax/loimo/internal/lane"
-	"github.com/chipmax/loimo/internal/logx"
-	"github.com/chipmax/loimo/internal/notify"
-	"github.com/chipmax/loimo/internal/relay"
-	"github.com/chipmax/loimo/internal/store"
-	"github.com/chipmax/loimo/internal/update"
+	"github.com/chipmax/openki/internal/agents"
+	"github.com/chipmax/openki/internal/announce"
+	"github.com/chipmax/openki/internal/lane"
+	"github.com/chipmax/openki/internal/logx"
+	"github.com/chipmax/openki/internal/notify"
+	"github.com/chipmax/openki/internal/relay"
+	"github.com/chipmax/openki/internal/store"
+	"github.com/chipmax/openki/internal/update"
 	neturl "net/url"
 )
 
@@ -1757,7 +1757,7 @@ func (s *Server) adminLogs(w http.ResponseWriter, r *http.Request) {
 func (s *Server) adminLogsDownload(w http.ResponseWriter, r *http.Request) {
 	q := logQueryOf(r)
 	q.Limit = 0
-	name := "loimo-log"
+	name := "openki-log"
 	if q.Day != "" {
 		name += "-" + q.Day
 	} else {
@@ -1781,7 +1781,7 @@ func (s *Server) adminLogsDownload(w http.ResponseWriter, r *http.Request) {
 func (s *Server) adminUsageCSV(w http.ResponseWriter, r *http.Request) {
 	days, _ := s.Store.SnapshotStats()
 	w.Header().Set("content-type", "text/csv; charset=utf-8")
-	w.Header().Set("content-disposition", `attachment; filename="loimo-usage.csv"`)
+	w.Header().Set("content-disposition", `attachment; filename="openki-usage.csv"`)
 	models := map[string]bool{}
 	for _, d := range days {
 		for m := range d.Models {
@@ -1830,7 +1830,7 @@ func (s *Server) adminExport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("content-type", "application/json")
-	w.Header().Set("content-disposition", `attachment; filename="loimo-config.json"`)
+	w.Header().Set("content-disposition", `attachment; filename="openki-config.json"`)
 	_, _ = w.Write(data)
 }
 
@@ -1843,7 +1843,7 @@ func (s *Server) adminImport(w http.ResponseWriter, r *http.Request) {
 	}
 	var incoming store.Config
 	if err := json.Unmarshal(body, &incoming); err != nil {
-		writeJSON(w, 400, map[string]any{"ok": false, "error": "Không phải tệp cấu hình loimo hợp lệ: " + err.Error()})
+		writeJSON(w, 400, map[string]any{"ok": false, "error": "Không phải tệp cấu hình openki hợp lệ: " + err.Error()})
 		return
 	}
 	if incoming.MainKey == "" || incoming.Port <= 0 || incoming.Port >= 65536 {

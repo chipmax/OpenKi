@@ -1,4 +1,4 @@
-// Package update checks a configurable feed for newer loimo builds.
+// Package update checks a configurable feed for newer openki builds.
 // Two feed shapes are understood:
 //   - GitHub Releases API ("https://api.github.com/repos/<o>/<r>/releases/latest")
 //     — parsed natively (tag_name/html_url/body/assets)
@@ -29,9 +29,9 @@ var SelfUpdateSupported = runtime.GOOS == "windows"
 func assetName() string {
 	switch runtime.GOOS {
 	case "windows":
-		return "loimo.exe"
+		return "openki.exe"
 	case "darwin":
-		return "loimo-darwin"
+		return "openki-darwin"
 	default:
 		return ""
 	}
@@ -85,7 +85,7 @@ func IsGitHubFeed(feedURL string) bool {
 	return strings.HasPrefix(u, "https://api.github.com/repos/") && strings.HasSuffix(u, "/releases/latest")
 }
 
-// githubRelease mirrors the slice of the Releases API response loimo needs.
+// githubRelease mirrors the slice of the Releases API response openki needs.
 type githubRelease struct {
 	TagName string `json:"tag_name"`
 	HTMLURL string `json:"html_url"`

@@ -49,8 +49,8 @@ func Loop() {
 	o := registered
 	systray.Run(func() {
 		setIcon()
-		systray.SetTitle("Lối Mở")
-		systray.SetTooltip("Lối Mở · Cổng mô hình miễn phí cục bộ")
+		systray.SetTitle("OpenKi")
+		systray.SetTooltip("OpenKi · Cổng mô hình miễn phí cục bộ")
 		mu.Lock()
 		statusCh = make(chan string, 16)
 		pending := lastStatus
@@ -67,7 +67,7 @@ func Loop() {
 		mReprobe := systray.AddMenuItem("Thăm dò lại tình trạng khả dụng", "Re-probe model availability")
 		mCopy := systray.AddMenuItem("Sao chép địa chỉ kết nối", "Copy base URL")
 		systray.AddSeparator()
-		mQuit := systray.AddMenuItem("Thoát", "Quit loimo")
+		mQuit := systray.AddMenuItem("Thoát", "Quit openki")
 		mOpen.Enable()
 		go func() {
 			for {

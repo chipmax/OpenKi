@@ -12,10 +12,10 @@
 #
 # Usage:
 #   powershell -File tools\sign-local.ps1
-#   powershell -File tools\sign-local.ps1 -Path dist\loimo.exe, dist\loimostats.exe
+#   powershell -File tools\sign-local.ps1 -Path dist\openki.exe, dist\openkistats.exe
 param(
-    [string[]]$Path = @("dist\loimo.exe"),
-    [string]$Subject = "Lối Mở Local Dev",
+    [string[]]$Path = @("dist\openki.exe"),
+    [string]$Subject = "OpenKi Local Dev",
     [string]$TimestampServer = "http://timestamp.digicert.com"
 )
 
@@ -30,7 +30,7 @@ if (-not $cert) {
     Write-Host "creating self-signed code signing cert '$Subject'"
     $cert = New-SelfSignedCertificate `
         -Type CodeSigningCert `
-        -Subject "CN=$Subject, O=Lối Mở, C=CN" `
+        -Subject "CN=$Subject, O=OpenKi, C=CN" `
         -KeyUsage DigitalSignature `
         -KeyAlgorithm RSA `
         -KeyLength 3072 `
@@ -40,7 +40,7 @@ if (-not $cert) {
             '2.5.29.37={text}1.3.6.1.5.5.7.3.3',   # EKU: code signing
             '2.5.29.19={text}'                      # basic constraints: end entity
         )
-    $cerPath = Join-Path $env:TEMP "loimo-signer.cer"
+    $cerPath = Join-Path $env:TEMP "openki-signer.cer"
     Export-Certificate -Cert $cert -FilePath $cerPath -Force | Out-Null
     # Trust it locally so the chain validates; otherwise Authenticode reports
     # "a certificate chain processed, but terminated in a root certificate which

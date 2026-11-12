@@ -17,7 +17,7 @@ import (
 // which is why the "env" mode never sees them.
 //
 // The result is cached for a few seconds so flipping the proxy in the client's
-// UI is picked up without restarting loimo.
+// UI is picked up without restarting openki.
 
 const sysProxyCacheTTL = 3 * time.Second
 

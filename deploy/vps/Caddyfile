@@ -1,4 +1,4 @@
-# Caddyfile cho loimo trên VPS.
+# Caddyfile cho openki trên VPS.
 #
 # - Thay gw.example.com bằng domain thật đã trỏ DNS về VPS.
 # - Caddy tự xin TLS (Let's Encrypt) và nghe 443/80.

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // Issue #31: the streaming delta must carry the thinking under BOTH

@@ -9,7 +9,7 @@ import "testing"
 // go through Mutate, which publishes a copy, so a config already handed out is
 // frozen for its holder.
 func TestMutateLeavesAConfigItAlreadyHandedOutAlone(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := Open()
 	if err != nil {
 		t.Fatal(err)
@@ -39,7 +39,7 @@ func TestMutateLeavesAConfigItAlreadyHandedOutAlone(t *testing.T) {
 // Copying only the top-level struct would still let a writer reach through a
 // shared slice backing array or map and change what a reader sees.
 func TestMutateCopiesNestedValues(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := Open()
 	if err != nil {
 		t.Fatal(err)
@@ -77,7 +77,7 @@ func TestMutateCopiesNestedValues(t *testing.T) {
 // trip would otherwise drop, and an absent collection stays absent rather than
 // turning into an empty one.
 func TestMutateKeepsAbsentCollectionsAbsent(t *testing.T) {
-	t.Setenv("LOIMO_HOME", t.TempDir())
+	t.Setenv("OPENKI_HOME", t.TempDir())
 	st, err := Open()
 	if err != nil {
 		t.Fatal(err)

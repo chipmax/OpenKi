@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // TestInjectableModelsMergesCustomProviders: the adapter-facing model set must

@@ -38,8 +38,8 @@ jobs:
         shell: pwsh
         run: |
           $ver = "${{ github.ref_name }}" -replace '^v','' -replace '/','-'
-          go build -trimpath -ldflags "-H=windowsgui -X github.com/chipmax/loimo/internal/gateway.Version=$ver -X github.com/chipmax/loimo/internal/update.Current=$ver" -o dist/loimo.exe ./cmd/loimo
-          go build -trimpath -o dist/loimostats.exe ./cmd/loimostats
+          go build -trimpath -ldflags "-H=windowsgui -X github.com/chipmax/openki/internal/gateway.Version=$ver -X github.com/chipmax/openki/internal/update.Current=$ver" -o dist/openki.exe ./cmd/openki
+          go build -trimpath -o dist/openkistats.exe ./cmd/openkistats
 
       - name: Package
         shell: pwsh
@@ -47,8 +47,8 @@ jobs:
           $ver = "${{ github.ref_name }}" -replace '^v','' -replace '/','-'
           Copy-Item README.md dist/README.md
           Copy-Item LICENSE dist/LICENSE
-          if (-not (Test-Path dist/loimo.exe)) { throw "loimo.exe missing" }
-          tar -a -c -f "dist/loimo-$ver.zip" -C dist loimo.exe README.md LICENSE
+          if (-not (Test-Path dist/openki.exe)) { throw "openki.exe missing" }
+          tar -a -c -f "dist/openki-$ver.zip" -C dist openki.exe README.md LICENSE
           Get-ChildItem dist
 
       - name: Release
@@ -59,7 +59,7 @@ jobs:
         run: |
           $tag = "${{ github.ref_name }}"
           $ver = $tag -replace '^v','' -replace '/','-'
-          $assets = @("dist/loimo.exe", "dist/loimostats.exe", "dist/loimo-$ver.zip")
+          $assets = @("dist/openki.exe", "dist/openkistats.exe", "dist/openki-$ver.zip")
           # A tag published once and re-run (a failed later step, a
           # workflow_dispatch) already owns the release; gh release create exits
           # non-zero there, so the binaries never got uploaded on the retry.
@@ -113,15 +113,15 @@ jobs:
         run: |
           CGO_ENABLED=0 GOOS=linux GOARCH=arm64 \
             go build -tags headless -trimpath \
-            -ldflags "-X github.com/chipmax/loimo/internal/gateway.Version=${{ steps.ver.outputs.version }} -X github.com/chipmax/loimo/internal/update.Current=${{ steps.ver.outputs.version }}" \
-            -o dist/loimo-linux-arm64 ./cmd/loimo
-          file dist/loimo-linux-arm64
+            -ldflags "-X github.com/chipmax/openki/internal/gateway.Version=${{ steps.ver.outputs.version }} -X github.com/chipmax/openki/internal/update.Current=${{ steps.ver.outputs.version }}" \
+            -o dist/openki-linux-arm64 ./cmd/openki
+          file dist/openki-linux-arm64
 
       - name: Upload to release
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.ref_name }}" dist/*.AppImage dist/*.deb dist/loimo-linux-arm64 --clobber
+        run: gh release upload "${{ github.ref_name }}" dist/*.AppImage dist/*.deb dist/openki-linux-arm64 --clobber
 
   # The macOS port builds here but is not published: the bundle is only
   # ad-hoc signed, and shipping that would hand every user a Gatekeeper warning
@@ -152,15 +152,15 @@ jobs:
           # runner. Resolve the bundle by glob instead.
           app="$(find dist -maxdepth 1 -name '*.app' -print -quit)"
           test -n "$app"
-          lipo -info "$app/Contents/MacOS/loimo"
+          lipo -info "$app/Contents/MacOS/openki"
           codesign --verify --deep --strict "$app"
           plutil -lint "$app/Contents/Info.plist"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: loimo-macos
+          name: openki-macos
           path: |
             dist/*.app
-            dist/loimo-darwin
-            dist/loimo-*-darwin.zip
+            dist/openki-darwin
+            dist/openki-*-darwin.zip
           if-no-files-found: error

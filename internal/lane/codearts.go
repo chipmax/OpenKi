@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/chipmax/loimo/internal/codearts/auth"
-	"github.com/chipmax/loimo/internal/codearts/upstream"
+	"github.com/chipmax/openki/internal/codearts/auth"
+	"github.com/chipmax/openki/internal/codearts/upstream"
 )
 
 // The CodeArts 账号渠道: a credential-bearing lane source for Huawei Cloud's

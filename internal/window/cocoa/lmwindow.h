@@ -19,7 +19,7 @@ extern void lm_dispatch_create(void);
 // Frees a string allocated by Go's C.CString.
 extern void lm_free(void *p);
 
-// Stands in for the Windows-only SetAppUserModelID so cmd/loimo can stay
+// Stands in for the Windows-only SetAppUserModelID so cmd/openki can stay
 // platform-free.
 extern void lm_noop_string(const char *unused);
 

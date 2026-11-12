@@ -13,7 +13,7 @@ import (
 
 // omp (the omp coding agent) reads ~/.omp/agent/models.yml: a providers map
 // keyed by provider id, each carrying baseUrl/api/apiKey and a model list.
-// loimo injects one provider named "loimo" and leaves every other
+// openki injects one provider named "openki" and leaves every other
 // provider untouched.
 //
 // Two installs can coexist: the gateway may run inside WSL while omp is also
@@ -22,7 +22,7 @@ import (
 // separate, explicitly toggleable entry rather than being silently mixed with
 // the Linux one.
 
-const ompProviderID = "loimo"
+const ompProviderID = "openki"
 
 // legacyOMPProviderID is the provider key written by releases before the
 // project was renamed. Enable replaces it; Disable also removes it so a
@@ -69,7 +69,7 @@ func isWSL() bool {
 func fileExists(p string) bool { _, err := os.Stat(p); return err == nil }
 
 func (o *omp) Meta() (string, string, string) {
-	return o.id, o.name, "models.yml: tiêm nhà cung cấp loimo (OpenAI-compatible)"
+	return o.id, o.name, "models.yml: tiêm nhà cung cấp openki (OpenAI-compatible)"
 }
 
 func (o *omp) modelsPath() string {

@@ -12,11 +12,11 @@ Bản thân mã gốc trong opencode2api lại được adapted từ:
   - ai-route — https://github.com/sudogeeker/ai-route (internal/warp)
     Giấy phép: MIT (xem doc.go trong package này).
 
-Việc sao chép được thực hiện cho fork loimo theo yêu cầu tích hợp
+Việc sao chép được thực hiện cho fork openki theo yêu cầu tích hợp
 tính năng WARP pool (userspace WireGuard + gVisor netstack, không cần
-TUN/root) vào loimo. Không có thay đổi thuật toán nào tại thời điểm
-sao chép; phần nối vào loimo nằm ở internal/lane/warp.go.
+TUN/root) vào openki. Không có thay đổi thuật toán nào tại thời điểm
+sao chép; phần nối vào openki nằm ở internal/lane/warp.go.
 
-Lưu ý license khi phân phối lại: phần kết hợp loimo + package này
+Lưu ý license khi phân phối lại: phần kết hợp openki + package này
 phải tuân theo GPL-3.0 đối với các phần derived từ opencode2api.
 Chi tiết: xem WARP-INTEGRATION.md ở thư mục gốc của fork.

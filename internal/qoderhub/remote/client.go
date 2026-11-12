@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chipmax/loimo/internal/qoderhub/tooltypes"
+	"github.com/chipmax/openki/internal/qoderhub/tooltypes"
 )
 
 const (

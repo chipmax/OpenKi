@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build loimo for Linux and package it as a self-contained .AppImage
+# Build openki for Linux and package it as a self-contained .AppImage
 # (GTK3 + libayatana-appindicator bundled).
 #
 # Requirements:
@@ -19,40 +19,40 @@ DIST="$ROOT/dist"
 BUILD="$ROOT/build"
 APPDIR="$BUILD/AppDir"
 TOOLS="$BUILD/tools"
-NAME="loimo-linux"
-APPIMAGE_OUT="$DIST/Loi_Mo-x86_64.AppImage"
+NAME="openki-linux"
+APPIMAGE_OUT="$DIST/OpenKi-x86_64.AppImage"
 
 # --- 1. compile -----------------------------------------------------------
 mkdir -p "$DIST"
 echo ">> building $NAME (version $VERSION)"
 (cd "$ROOT" && go build -trimpath \
   -ldflags "-s -w \
-    -X github.com/chipmax/loimo/internal/gateway.Version=$VERSION \
-    -X github.com/chipmax/loimo/internal/update.Current=$VERSION" \
-  -o "$DIST/$NAME" ./cmd/loimo)
+    -X github.com/chipmax/openki/internal/gateway.Version=$VERSION \
+    -X github.com/chipmax/openki/internal/update.Current=$VERSION" \
+  -o "$DIST/$NAME" ./cmd/openki)
 
 # --- 2. AppDir skeleton -----------------------------------------------------
 rm -rf "$APPDIR"
 mkdir -p "$APPDIR/usr/bin" \
          "$APPDIR/usr/share/applications" \
          "$APPDIR/usr/share/icons/hicolor/256x256/apps"
-cp "$DIST/$NAME" "$APPDIR/usr/bin/loimo"
-cp "$ROOT/assets/icon-256.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/loimo.png"
-cp "$ROOT/assets/icon-256.png" "$APPDIR/loimo.png"
+cp "$DIST/$NAME" "$APPDIR/usr/bin/openki"
+cp "$ROOT/assets/icon-256.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/openki.png"
+cp "$ROOT/assets/icon-256.png" "$APPDIR/openki.png"
 
-cat > "$APPDIR/usr/share/applications/loimo.desktop" <<'EOF'
+cat > "$APPDIR/usr/share/applications/openki.desktop" <<'EOF'
 [Desktop Entry]
 Type=Application
-Name=Lối Mở
+Name=OpenKi
 Comment=本地免费模型网关
-Exec=loimo
-Icon=loimo
+Exec=openki
+Icon=openki
 Terminal=false
 Categories=Network;Utility;
-StartupWMClass=loimo
+StartupWMClass=openki
 X-GNOME-Autostart-enabled=false
 EOF
-cp "$APPDIR/usr/share/applications/loimo.desktop" "$APPDIR/loimo.desktop"
+cp "$APPDIR/usr/share/applications/openki.desktop" "$APPDIR/openki.desktop"
 
 cat > "$APPDIR/AppRun" <<'EOF'
 #!/bin/sh
@@ -60,9 +60,9 @@ SELF="$0"
 HERE="$(dirname "$(readlink -f "$SELF")")"
 export GSETTINGS_SCHEMA_DIR="$HERE/usr/share/glib-2.0/schemas"
 export LD_LIBRARY_PATH="$HERE/usr/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-exec "$HERE/usr/bin/loimo" "$@"
+exec "$HERE/usr/bin/openki" "$@"
 EOF
-chmod +x "$APPDIR/AppRun" "$APPDIR/usr/bin/loimo"
+chmod +x "$APPDIR/AppRun" "$APPDIR/usr/bin/openki"
 
 # --- 3. bundle dynamic libs with linuxdeploy ---------------------------------
 mkdir -p "$TOOLS"
@@ -82,9 +82,9 @@ fi
 echo ">> bundling libraries with linuxdeploy"
 run_appimage "$TOOLS/linuxdeploy-x86_64.AppImage" \
   --appdir "$APPDIR" \
-  --executable "$APPDIR/usr/bin/loimo" \
-  --desktop-file "$APPDIR/usr/share/applications/loimo.desktop" \
-  --icon-file "$APPDIR/loimo.png"
+  --executable "$APPDIR/usr/bin/openki" \
+  --desktop-file "$APPDIR/usr/share/applications/openki.desktop" \
+  --icon-file "$APPDIR/openki.png"
 
 # --- 4. GTK runtime extras (schemas + pixbuf loaders) -------------------------
 mkdir -p "$APPDIR/usr/share/glib-2.0/schemas" \

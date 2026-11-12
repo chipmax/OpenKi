@@ -13,8 +13,8 @@ func TestEgressRelayRewritesAndLabels(t *testing.T) {
 	var gotPath, gotUpstream, gotToken string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
-		gotUpstream = r.Header.Get("X-LoiMo-Relay-Upstream")
-		gotToken = r.Header.Get("X-LoiMo-Relay-Token")
+		gotUpstream = r.Header.Get("X-OpenKi-Relay-Upstream")
+		gotToken = r.Header.Get("X-OpenKi-Relay-Token")
 		w.Header().Set("content-type", "application/json")
 		_, _ = io.WriteString(w, `{"ok":true}`)
 	}))
@@ -49,7 +49,7 @@ func TestEgressRelayRewritesAndLabels(t *testing.T) {
 	if gotToken != "tok" {
 		t.Errorf("relay token = %q", gotToken)
 	}
-	if got := resp.Header.Get("X-LoiMo-Egress"); got != "relay:r1" {
+	if got := resp.Header.Get("X-OpenKi-Egress"); got != "relay:r1" {
 		t.Errorf("egress label = %q", got)
 	}
 }

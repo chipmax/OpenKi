@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/openki/internal/lane"
 )
 
 // fakeSubs is the dashboard-facing sidecar surface with a stub rotator: the

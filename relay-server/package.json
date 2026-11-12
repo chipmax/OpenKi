@@ -1,10 +1,10 @@
 {
-  "name": "loimo-relay",
+  "name": "openki-relay",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "license": "MIT",
-  "description": "Relay egress tối giản cho loimo, chạy trên Bun + TypeScript",
+  "description": "Relay egress tối giản cho openki, chạy trên Bun + TypeScript",
   "scripts": {
     "start": "bun run src/index.ts",
     "typecheck": "tsc --noEmit",

@@ -8,18 +8,18 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/openki/internal/store"
 )
 
 // Single instance on macOS is an advisory flock on a lock file rather than a
 // named mutex: the kernel releases it when the process dies, so a crash can
 // never leave a stale lock behind — the failure mode a lock file needs to be
 // careful about and a PID file does not have.
-const lockFileName = "loimo.lock"
+const lockFileName = "openki.lock"
 
 // bundleID must match CFBundleIdentifier in the .app Info.plist written by
 // tools/build-macos.sh; it is how the second launch finds its predecessor.
-const bundleID = "io.github.chipmax.loimo"
+const bundleID = "io.github.chipmax.openki"
 
 // lockFile is held open for the life of the process: closing it would drop the
 // flock and let a second instance through.

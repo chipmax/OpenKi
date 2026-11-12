@@ -1885,12 +1885,12 @@ func (l *Lane) attemptModel(ctx context.Context, req Request, model, effort stri
 // exitKindForPlan names the transport that a CallRecord's exit belongs to. It
 // is derived from what the lane actually knows: a rotator node id, the WARP
 // switch when no rotator is installed, and direct otherwise. Relay peers are a
-// separate layer and stay visible in the response's X-LoiMo-Egress header.
+// separate layer and stay visible in the response's X-OpenKi-Egress header.
 func exitKindForPlan(p ExitPlan) string {
 	switch {
 	case p.NodeID == "":
 		// The equal-peer selector can serve relay/WARP/sing-box without a
-		// lane rotator; the response's X-LoiMo-Egress header names which
+		// lane rotator; the response's X-OpenKi-Egress header names which
 		// peer, so the record says "peer" instead of claiming direct.
 		if egressExplicit.Load() {
 			return "peer"

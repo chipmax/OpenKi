@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/chipmax/openki/internal/qoderhub/httpapi"
@@ -61,9 +62,13 @@ func (h *Hub) Pool() *remote.Pool {
 	return h.pool
 }
 
-// Start brings the hub up. Warmup happens asynchronously — a slow or absent
-// IDE login must never delay openki's own startup.
-func Start() (*Hub, error) {
+// Start brings the hub up behind authKey. The embedded hub used to listen on
+// loopback with no authentication and ACAO:*, so any local process or web page
+// could spend the Qoder login and mutate its account pool. openki passes its
+// gateway key; the managed provider and the admin probes send it back.
+// Warmup happens asynchronously — a slow or absent IDE login must never delay
+// openki's own startup.
+func Start(authKey string) (*Hub, error) {
 	addr := net.JoinHostPort(HubHost, fmt.Sprintf("%d", HubPort))
 	// Fail fast on a busy port so the caller can fall back to whatever
 	// already answers there instead of half-starting.
@@ -87,6 +92,9 @@ func Start() (*Hub, error) {
 	svc := service.New(cfg)
 	h := &Hub{svc: svc, addr: addr, pool: pool}
 	h.server = httpapi.NewServer(addr, svc)
+	if key := strings.TrimSpace(authKey); key != "" {
+		h.server.SetAuthKeys([]string{key})
+	}
 
 	go func() {
 		warmCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)

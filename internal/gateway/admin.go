@@ -226,8 +226,16 @@ func (s *Server) handleAdmin(w http.ResponseWriter, r *http.Request, rest string
 }
 
 // adminAllowed enforces the dashboard fence: loopback Host (DNS-rebinding
-// guard) + loopback remote; mutating requests additionally require a
-// same-origin Origin/Referer when the client supplies one.
+// guard) + loopback remote. A mutating request from a browser must carry the
+// dashboard's CSRF header and, when it supplies Origin/Referer, that value
+// must name this exact scheme/host/port. The header is what a cross-site page
+// cannot send without a CORS preflight; the origin comparison is the second
+// lock, because substring checks accepted 127.0.0.1.evil.com and
+// 127.0.0.1@evil.com.
+//
+// Non-browser clients (curl, tests) carry no Origin/Sec-Fetch-Site and remain
+// compatible. Admin is loopback-only, so a local process that can forge both
+// headers is inside the trust boundary already.
 func adminAllowed(w http.ResponseWriter, r *http.Request, mutating bool) bool {
 	// Normalise the Host regardless of whether it carries a port. The old
 	// code only checked a Host containing ":", so a reverse proxy that
@@ -263,18 +271,65 @@ func adminAllowed(w http.ResponseWriter, r *http.Request, mutating bool) bool {
 		return false
 	}
 	if mutating {
-		for _, h := range []string{"origin", "referer"} {
-			v := strings.TrimSpace(r.Header.Get(h))
-			if v == "" {
+		// Browsers mark their requests. A cross-site page cannot add this
+		// custom header without a CORS preflight, and the admin mux answers no
+		// preflight, so requiring it here stops both fetch() and form CSRF.
+		origin := strings.TrimSpace(r.Header.Get("Origin"))
+		referer := strings.TrimSpace(r.Header.Get("Referer"))
+		fetchSite := strings.TrimSpace(r.Header.Get("Sec-Fetch-Site"))
+		if origin != "" || referer != "" || fetchSite != "" {
+			if strings.TrimSpace(r.Header.Get("X-OpenKi-Admin")) != "1" {
+				writeJSON(w, 403, map[string]any{"error": "cross-site admin request rejected"})
+				return false
+			}
+		}
+		switch strings.ToLower(fetchSite) {
+		case "", "same-origin", "none":
+		default:
+			writeJSON(w, 403, map[string]any{"error": "cross-site admin request rejected"})
+			return false
+		}
+		scheme := "http"
+		if r.TLS != nil {
+			scheme = "https"
+		}
+		for _, raw := range []string{origin, referer} {
+			if raw == "" {
 				continue
 			}
-			if !strings.Contains(v, "://127.0.0.1") && !strings.Contains(v, "://localhost") && !strings.Contains(v, "://[::1]") {
+			u, err := neturl.Parse(raw)
+			if err != nil || u.Host == "" || !strings.EqualFold(u.Scheme, scheme) ||
+				!sameHostPort(u.Host, r.Host, scheme) {
 				writeJSON(w, 403, map[string]any{"error": "cross-site admin request rejected"})
 				return false
 			}
 		}
 	}
 	return true
+}
+
+// sameHostPort compares an Origin/Referer host with the request Host without
+// treating a missing default port as a different host. Exact equality is the
+// point: a suffix or substring match would accept 127.0.0.1.evil.com.
+func sameHostPort(originHost, requestHost, scheme string) bool {
+	oh, op := splitHostDefault(originHost, scheme)
+	rh, rp := splitHostDefault(requestHost, scheme)
+	return strings.EqualFold(oh, rh) && op == rp
+}
+
+func splitHostDefault(raw, scheme string) (string, string) {
+	raw = strings.TrimSpace(raw)
+	if h, p, err := net.SplitHostPort(raw); err == nil {
+		return strings.ToLower(h), p
+	}
+	defaultPort := "80"
+	if strings.EqualFold(scheme, "https") {
+		defaultPort = "443"
+	}
+	if strings.HasPrefix(raw, "[") && strings.HasSuffix(raw, "]") {
+		return strings.ToLower(strings.Trim(raw, "[]")), defaultPort
+	}
+	return strings.ToLower(raw), defaultPort
 }
 
 // effectiveExitRate resolves the settings payload's rate: a configured value

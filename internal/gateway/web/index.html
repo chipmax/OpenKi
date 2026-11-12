@@ -1056,7 +1056,7 @@ function friendlyError(status, payload, path){
 async function api(path,body){
   const requestId = ++refreshBusy;
   try {
-    const r = await fetch("/admin/api"+path, body?{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)}:{});
+    const r = await fetch("/admin/api"+path, body?{method:"POST",headers:{"content-type":"application/json","x-openki-admin":"1"},body:JSON.stringify(body)}:{});
     const j = await r.json().catch(()=>({}));
     if(!r.ok || j.ok===false){ const msg=friendlyError(r.status,j,path); toast(msg); return null; }
     return j;
@@ -2463,8 +2463,11 @@ async function renderCodeartsCard(){
   }
   state.textContent = st.enabled ? "Đã bật" : "Đã tắt";
   const exp = st.expiresAtMs ? new Date(st.expiresAtMs).toLocaleString() : "Không rõ";
-  body.innerHTML = 'Tài khoản <b>' + (st.nickname || st.uid || "-") + '</b> · Thông tin xác thực STS có hiệu lực đến ' + exp +
-    ' · Mô hình trong danh mục <b>' + (st.models || 0) + '</b> · Lần điểm danh trước ' + (st.lastCheckinDate || "—") +
+  // Nickname, uid and the check-in date are upstream/config data, not markup.
+  // They used to reach innerHTML raw, so one imported config value could run
+  // script in the admin origin and read /admin/api/export?secrets=1.
+  body.innerHTML = 'Tài khoản <b>' + esc(st.nickname || st.uid || "-") + '</b> · Thông tin xác thực STS có hiệu lực đến ' + esc(exp) +
+    ' · Mô hình trong danh mục <b>' + esc(String(st.models || 0)) + '</b> · Lần điểm danh trước ' + esc(st.lastCheckinDate || "—") +
     (st.canRefresh ? '' : '<br><span style="color:#c88">Thiếu thông tin xác thực có thể gia hạn, hãy uỷ quyền lại một lần</span>');
 }
 function bindCodeartsCard(){
@@ -2481,7 +2484,7 @@ function bindCodeartsCard(){
     const state = $("#ca-state"), body = $("#ca-body");
     state.textContent = "Đang chờ uỷ quyền…";
     body.innerHTML = 'Trang uỷ quyền đã được mở trong trình duyệt mặc định (đăng nhập tài khoản 华为云 + uỷ quyền tài khoản).' +
-      'Khi không tự động bật lên <a href="' + j.authUrl + '" target="_blank" rel="noopener">Nhấn vào đây để mở trang uỷ quyền</a>。' +
+      'Khi không tự động bật lên <a href="' + esc(safeHref(j.authUrl)) + '" target="_blank" rel="noopener">Nhấn vào đây để mở trang uỷ quyền</a>。' +
       'Sau khi hoàn tất, ở đây sẽ tự động đổi thông tin xác thực STS và kéo danh mục mô hình (thời hạn hiệu lực tối đa 5 phút).';
     const deadline = Date.now() + 5*60*1000;
     if (caPollTimer) clearInterval(caPollTimer);
@@ -2741,7 +2744,7 @@ function renderProviders(s){
         body = { name: name||"provider", baseUrl: url, apiKey: el.querySelector("#pv-key").value, protocol: pvProto() };
       }
       const r = await fetch("/admin/api/providers/models", {method:"POST",
-        headers:{"content-type":"application/json"}, body: JSON.stringify(body)});
+        headers:{"content-type":"application/json","x-openki-admin":"1"}, body: JSON.stringify(body)});
       btn.disabled = false; btn.textContent = "Kéo danh sách mô hình";
       const j = await r.json().catch(()=>({}));
       if(!j.ok){ toast(j.error || "Kéo thất bại"); return; }
@@ -2775,7 +2778,7 @@ function renderProviders(s){
           const probeBody = {name, baseUrl: url, protocol: body.protocol};
           if(keyLines.length) probeBody.apiKeys = keyLines; else probeBody.apiKey = body.apiKey;
           const fr = await fetch("/admin/api/providers/models", {method:"POST",
-            headers:{"content-type":"application/json"}, body: JSON.stringify(probeBody)});
+            headers:{"content-type":"application/json","x-openki-admin":"1"}, body: JSON.stringify(probeBody)});
           const fj = await fr.json().catch(()=>({}));
           if(fj.ok){
             pvFetched = fj.models || [];
@@ -4336,7 +4339,7 @@ function renderNetwork(s){
       const box = el.querySelector("#proxy-test-result");
       box.textContent = "Đang kiểm tra…"; box.style.color = "var(--ink-mute)";
       try {
-        const r = await fetch("/admin/api/proxy-test", {method:"POST", headers:{"content-type":"application/json"},
+        const r = await fetch("/admin/api/proxy-test", {method:"POST", headers:{"content-type":"application/json","x-openki-admin":"1"},
           body: JSON.stringify({mode: el.querySelector("#set-proxy").dataset.value, url: el.querySelector("#set-proxy-url").value})});
         const j = await r.json();
         if (j.ok) {
@@ -4352,7 +4355,7 @@ function renderNetwork(s){
       const box = el.querySelector("#proton-test-result");
       box.textContent = "Đang kiểm tra…"; box.style.color = "var(--ink-mute)";
       try {
-        const r = await fetch("/admin/api/proxy-test", {method:"POST", headers:{"content-type":"application/json"},
+        const r = await fetch("/admin/api/proxy-test", {method:"POST", headers:{"content-type":"application/json","x-openki-admin":"1"},
           body: JSON.stringify({mode:"proton", protonSocks5: el.querySelector("#set-proton-url").value.trim()})});
         const j = await r.json();
         if (j.ok) {

@@ -48,6 +48,11 @@ jobs:
           Copy-Item README.md dist/README.md
           Copy-Item LICENSE dist/LICENSE
           if (-not (Test-Path dist/openki.exe)) { throw "openki.exe missing" }
+          # The updater refuses to swap an executable without this sibling
+          # asset. Publish the digest the same release job built, never a
+          # value copied from a previous run.
+          $hash = (Get-FileHash dist/openki.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  openki.exe" | Set-Content -Encoding ascii dist/openki.exe.sha256
           tar -a -c -f "dist/openki-$ver.zip" -C dist openki.exe README.md LICENSE
           Get-ChildItem dist
 
@@ -59,7 +64,7 @@ jobs:
         run: |
           $tag = "${{ github.ref_name }}"
           $ver = $tag -replace '^v','' -replace '/','-'
-          $assets = @("dist/openki.exe", "dist/openkistats.exe", "dist/openki-$ver.zip")
+          $assets = @("dist/openki.exe", "dist/openki.exe.sha256", "dist/openkistats.exe", "dist/openki-$ver.zip")
           # A tag published once and re-run (a failed later step, a
           # workflow_dispatch) already owns the release; gh release create exits
           # non-zero there, so the binaries never got uploaded on the retry.

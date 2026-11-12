@@ -119,8 +119,11 @@ func NewServer(addr string, svc *service.Service) *Server {
 	s.http = &http.Server{
 		Addr: addr,
 		// Auth wraps the mux directly: unauthenticated requests are dropped before
-		// their body is read/parsed (keeps the silent drop cheap).
-		Handler:           withCORS(s.withAuth(mux)),
+		// their body is read/parsed (keeps the silent drop cheap). There is no
+		// CORS layer on purpose: the hub is a server-side sidecar for the
+		// managed provider, so a web page has no legitimate reason to read it.
+		// The old ACAO:* let any local web origin call /pool and /v1.
+		Handler:           s.withAuth(mux),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 	return s
@@ -2107,19 +2110,6 @@ func extractRequestKey(r *http.Request) string {
 		return strings.TrimSpace(auth[7:])
 	}
 	return auth
-}
-
-func withCORS(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, HEAD, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-api-key, anthropic-version")
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
 }
 
 func maxConcurrentRequests() int {

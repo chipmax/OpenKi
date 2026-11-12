@@ -546,7 +546,9 @@ func main() {
 	// Embedded QoderCN gateway (Qoder 账号渠道): rides this process, serves
 	// 127.0.0.1:8095 for the managed provider. A busy port is not fatal — an
 	// external qodercn-gateway the user runs themselves keeps serving.
-	qoderHub, qoderHubErr := qoderhub.Start()
+	qoderKey := strings.TrimSpace(st.Config().MainKey)
+	gateway.SetQoderHubKey(qoderKey)
+	qoderHub, qoderHubErr := qoderhub.Start(qoderKey)
 	if qoderHubErr != nil {
 		logger.Infof("Cổng Qoder tích hợp chưa khởi động: %v", qoderHubErr)
 	} else {

@@ -43,6 +43,41 @@ const (
 // real bind even under test.
 var qoderBaseURL = qoderGatewayURL
 
+// The embedded hub is authenticated with the gateway key. The provider and
+// every probe/action below send it; the hub rejects callers that do not. The
+// key is process-wide because probeQoder and probeQoderPool are package-level
+// functions shared by the dashboard and channel wall.
+var (
+	qoderAuthMu  sync.RWMutex
+	qoderAuthKey string
+)
+
+// SetQoderHubKey is called once at startup with the same key passed to
+// qoderhub.Start. Empty disables the header (tests and an external sidecar
+// that does not authenticate).
+func SetQoderHubKey(key string) {
+	qoderAuthMu.Lock()
+	qoderAuthKey = strings.TrimSpace(key)
+	qoderAuthMu.Unlock()
+}
+
+func currentQoderHubKey() string {
+	qoderAuthMu.RLock()
+	defer qoderAuthMu.RUnlock()
+	return qoderAuthKey
+}
+
+func qoderRequest(method, rawURL string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequest(method, rawURL, body)
+	if err != nil {
+		return nil, err
+	}
+	if key := currentQoderHubKey(); key != "" {
+		req.Header.Set("Authorization", "Bearer "+key)
+	}
+	return req, nil
+}
+
 type qoderStatus struct {
 	Running       bool               `json:"running"`
 	LoggedIn      bool               `json:"loggedIn"`
@@ -88,7 +123,11 @@ func qoderGet(path string) (int, []byte, error) {
 		timeout = qoderProbeSlow
 	}
 	client := &http.Client{Timeout: timeout}
-	resp, err := client.Get(qoderBaseURL + path)
+	req, err := qoderRequest(http.MethodGet, qoderBaseURL+path, nil)
+	if err != nil {
+		return 0, nil, err
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -413,6 +452,7 @@ func (s *Server) ensureQoderProvider(st qoderStatus) bool {
 		p := store.Provider{
 			ID: qoderProviderID, Name: "Kênh tài khoản Qoder",
 			BaseURL: qoderGatewayURL + "/v1", Protocol: store.ProtocolOpenAI,
+			APIKey:  currentQoderHubKey(),
 			Enabled: true, Models: st.ModelIDs,
 			Note: "Sidecar qodercn-gateway do openki quản lý tự động điều hành, trạng thái đăng nhập theo Qoder IDE",
 		}
@@ -432,6 +472,7 @@ func (s *Server) ensureQoderProvider(st qoderStatus) bool {
 	// form, and this sync must never resurrect them. Only capacities (the
 	// listing meta, with verified corrections applied) re-sync here.
 	changed := !p.Enabled
+	hubKey := currentQoderHubKey()
 	s.Store.Mutate(func(c *store.Config) {
 		for i := range c.Providers {
 			if c.Providers[i].ID != qoderProviderID {
@@ -439,6 +480,9 @@ func (s *Server) ensureQoderProvider(st qoderStatus) bool {
 			}
 			if !c.Providers[i].Enabled {
 				c.Providers[i].Enabled = true
+			}
+			if hubKey != "" {
+				c.Providers[i].APIKey = hubKey
 			}
 			if len(st.Catalog) > 0 {
 				mergeCatalog(&c.Providers[i], st.Catalog)
@@ -515,7 +559,13 @@ func (s *Server) adminQoderPool(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	client := &http.Client{Timeout: qoderProbeSlow}
-	resp, err := client.Post(qoderBaseURL+"/pool/account", "application/json", bytes.NewReader(payload))
+	req, err := qoderRequest(http.MethodPost, qoderBaseURL+"/pool/account", bytes.NewReader(payload))
+	if err != nil {
+		writeJSON(w, 500, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := client.Do(req)
 	if err != nil {
 		writeJSON(w, 502, map[string]any{"ok": false, "error": "Không kết nối được cổng Qoder tích hợp: " + err.Error()})
 		return

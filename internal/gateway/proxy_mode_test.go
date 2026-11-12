@@ -75,6 +75,37 @@ func TestSettingsPoolModeInstallsStaticRotator(t *testing.T) {
 	}
 }
 
+func TestSettingsAppliesProtonPeerAndRejectsBadListener(t *testing.T) {
+	up := fakeUpstream(t, []string{"[DONE]"})
+	defer up.Close()
+	s := newTestServer(t, up)
+	t.Cleanup(func() { lane.SetProxy("direct", "") })
+
+	ts := httptest.NewServer(s.mux)
+	defer ts.Close()
+	if code := patchSettings(t, ts.URL,
+		`{"egressModes":["proton"],"protonSocks5":"http://127.0.0.1:8080"}`); code != 400 {
+		t.Fatalf("HTTP listener as Proton = %d, want 400", code)
+	}
+	if got := s.Store.Config().EgressModes; len(got) != 0 {
+		t.Fatalf("rejected Proton settings were stored: %v", got)
+	}
+	if code := patchSettings(t, ts.URL,
+		`{"egressModes":["proton"],"protonSocks5":"socks5h://127.0.0.1:1080"}`); code != 200 {
+		t.Fatalf("valid Proton settings = %d, want 200", code)
+	}
+	cfg := s.Store.Config()
+	if len(cfg.EgressModes) != 1 || cfg.EgressModes[0] != "proton" {
+		t.Fatalf("EgressModes = %v, want [proton]", cfg.EgressModes)
+	}
+	if cfg.ProtonSocks5 != "socks5h://127.0.0.1:1080" {
+		t.Fatalf("ProtonSocks5 = %q", cfg.ProtonSocks5)
+	}
+	if !lane.EgressExplicit() {
+		t.Fatal("saving Proton did not install the egress selector")
+	}
+}
+
 func TestSettingsRejectsInvalidProxyPoolEntry(t *testing.T) {
 	up := fakeUpstream(t, []string{"[DONE]"})
 	defer up.Close()

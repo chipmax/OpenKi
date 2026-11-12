@@ -1,11 +1,11 @@
 package lane
 
-// Equal egress peers: relay, sing-box and WARP.
+// Equal egress peers: relay, sing-box, WARP and Proton VPN.
 //
 // Historically each of these was a proxy mode (or a wrapper) that won over the
 // others: WarpEnabled overrode ProxyMode, "rotate" was the only subscription
 // path, and a relay did not exist. The user can now tick any combination of
-// the three. They are equal peers: each request starts at the next peer in a
+// the four. They are equal peers: each request starts at the next peer in a
 // round-robin, a transport failure moves to the next peer, and a 429/403 moves
 // to the next peer before the lane's own quota retry sees the response. An
 // empty mode list keeps the legacy single-choice behaviour untouched.
@@ -14,7 +14,8 @@ package lane
 //   - relay is a RoundTripper that rewrites the URL to a Bun relay;
 //   - WARP is a RoundTripper that swaps the dialer for a Cloudflare lease;
 //   - sing-box is a dialer-level Rotator (via rotateDialContext), wrapped in a
-//     transport so it can sit next to the other two.
+//     transport so it can sit next to the other peers;
+//   - Proton is a transport that dials one operator-managed SOCKS5 listener.
 //
 // Making them all RoundTrippers is what lets the selector choose one per
 // request and fall back without knowing how the peer reaches the network.
@@ -49,6 +50,7 @@ type EgressOptions struct {
 	Modes        []string
 	Relays       []RelayEndpoint
 	WarpPoolSize int
+	ProtonURL    string
 	BaseMode     string
 	BaseURL      string
 }
@@ -107,6 +109,13 @@ func SetEgress(o EgressOptions) (note string) {
 		case "warp":
 			strict := len(modes) > 1 // with alternatives, a dead pool must move on
 			peers = append(peers, egressPeer{name: "warp", rt: newWarpPeer(base, o.WarpPoolSize, strict)})
+		case "proton":
+			rt, err := NewProtonTransport(o.ProtonURL)
+			if err != nil {
+				notes = append(notes, "proton đã bật nhưng SOCKS5 chưa dùng được: "+err.Error())
+				continue
+			}
+			peers = append(peers, egressPeer{name: "proton", rt: rt})
 		}
 	}
 	if len(peers) == 0 {
@@ -156,7 +165,7 @@ func normalizeEgressModes(in []string) ([]string, error) {
 			continue
 		}
 		switch m {
-		case "relay", "singbox", "warp":
+		case "relay", "singbox", "warp", "proton":
 		default:
 			return nil, fmt.Errorf("egress mode không xác định: %s", raw)
 		}

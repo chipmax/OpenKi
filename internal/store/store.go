@@ -168,6 +168,11 @@ type Config struct {
 	// direct/http(s):///socks5(h)://; credentials may be embedded in the URL
 	// and are never echoed back in node ids.
 	ProxyPool []string `json:"proxyPool,omitempty"`
+	// ProtonSocks5 is the local SOCKS5 listener exposed by a Proton VPN client
+	// (for example socks5h://127.0.0.1:1080). It is used when "proton" is
+	// present in EgressModes. Empty means lane.DefaultProtonSocks5; OpenKi
+	// never stores Proton account credentials or manages the tunnel itself.
+	ProtonSocks5 string `json:"protonSocks5,omitempty"`
 	// WarpEnabled turns on the userspace Cloudflare WARP egress pool
 	// (internal/warp, ported from opencode2api) for lane traffic. It takes
 	// precedence over ProxyMode; ProxyMode == "warp" is the equivalent
@@ -201,12 +206,13 @@ type Config struct {
 	SubsEnabled   bool           `json:"subsEnabled,omitempty"`
 	Subscriptions []Subscription `json:"subscriptions,omitempty"`
 	SingBoxPath   string         `json:"singBoxPath,omitempty"`
-	// EgressModes selects the lane's egress peers. The three roles are equal
+	// EgressModes selects the lane's egress peers. The four roles are equal
 	// and may be combined in any order: "relay" (RelayPool below), "singbox"
 	// (the Rotator installed by the subscription sidecar or the static pool),
-	// and "warp" (the userspace Cloudflare WARP pool). An empty list keeps the
-	// legacy ProxyMode/WarpEnabled decision untouched, so an upgraded config
-	// behaves exactly as before until the user opts in.
+	// "warp" (the userspace Cloudflare WARP pool), and "proton" (the local
+	// SOCKS5 listener in ProtonSocks5). An empty list keeps the legacy
+	// ProxyMode/WarpEnabled decision untouched, so an upgraded config behaves
+	// exactly as before until the user opts in.
 	EgressModes []string `json:"egressModes,omitempty"`
 	// RelayPool lists self-hosted or Vercel relays. Each entry is one egress
 	// peer: requests are spread across enabled entries and retried on the next
@@ -514,6 +520,12 @@ func Open() (*Store, error) {
 	}
 	if cfg.ProxyMode == "" {
 		cfg.ProxyMode = "env"
+	}
+	if strings.TrimSpace(cfg.ProtonSocks5) == "" {
+		// The listener address is not a secret and has a conventional default;
+		// keeping it populated makes the dashboard show what "proton" will dial
+		// even on an install that only hand-edited egressModes.
+		cfg.ProtonSocks5 = lane.DefaultProtonSocks5
 	}
 	// v2: failover ships enabled; the version gate keeps an explicitly
 	// disabled setting sticky on later boots.

@@ -503,6 +503,7 @@ func (s *Server) adminState(w http.ResponseWriter) {
 		"fingerprintHash":         lane.FingerprintHash(),
 		"freeTierGateAt":          lane.FreeTierGateAt(),
 		"proxyPool":               cfg.ProxyPool,
+		"protonSocks5":            cfg.ProtonSocks5,
 		"egressModes":             cfg.EgressModes,
 		"relayPool":               cfg.RelayPool,
 		"agentScope":              cfg.AgentScope,
@@ -611,6 +612,7 @@ func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {
 		ExitTokensPerMinute     *int               `json:"exitTokensPerMinute"`
 		FingerprintMode         *string            `json:"fingerprintMode"`
 		ProxyPool               *[]string          `json:"proxyPool"`
+		ProtonSocks5            *string            `json:"protonSocks5"`
 		EgressModes             *[]string          `json:"egressModes"`
 		RelayPool               *[]store.RelayPeer `json:"relayPool"`
 		AgentScope              *string            `json:"agentScope"`
@@ -718,6 +720,18 @@ func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {
 			dirty["proxyPool"] = true
 		}
 	}
+	if in.ProtonSocks5 != nil {
+		clean, err := lane.NormalizeProtonSocks5(*in.ProtonSocks5)
+		if err != nil {
+			writeJSON(w, 400, map[string]any{"ok": false, "error": "SOCKS5 Proton không hợp lệ: " + err.Error()})
+			return
+		}
+		if clean != cfg.ProtonSocks5 {
+			cfg.ProtonSocks5 = clean
+			changed = true
+			dirty["protonSocks5"] = true
+		}
+	}
 	if in.ProxyMode != nil {
 		switch *in.ProxyMode {
 		case "env", "direct", "custom", "system", "rotate", "pool", "warp":
@@ -790,7 +804,7 @@ func (s *Server) adminSettings(w http.ResponseWriter, r *http.Request) {
 		changed = true
 		dirty["relayPool"] = true
 	}
-	if dirty["egressModes"] || dirty["relayPool"] {
+	if dirty["egressModes"] || dirty["relayPool"] || dirty["protonSocks5"] {
 		if note := s.applyEgress(cfg); note != "" {
 			if proxyNote == "" {
 				proxyNote = note
@@ -1056,6 +1070,9 @@ func (s *Server) commitSettings(next *store.Config, dirty map[string]bool) {
 		}
 		if dirty["proxyPool"] {
 			c.ProxyPool = append([]string(nil), next.ProxyPool...)
+		}
+		if dirty["protonSocks5"] {
+			c.ProtonSocks5 = next.ProtonSocks5
 		}
 		if dirty["egressModes"] {
 			c.EgressModes = append([]string(nil), next.EgressModes...)
@@ -1359,8 +1376,9 @@ func (s *Server) announcementViews() (active, archive []map[string]any) {
 // reports reachability, latency and the exit it would present.
 func (s *Server) adminProxyTest(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Mode string `json:"mode"`
-		URL  string `json:"url"`
+		Mode         string `json:"mode"`
+		URL          string `json:"url"`
+		ProtonSocks5 string `json:"protonSocks5"`
 	}
 	if err := decodeBody(r, &in); err != nil {
 		writeJSON(w, 400, map[string]any{"ok": false, "error": err.Error()})
@@ -1374,10 +1392,10 @@ func (s *Server) adminProxyTest(w http.ResponseWriter, r *http.Request) {
 	if proxyURL == "" {
 		proxyURL = s.Store.Config().ProxyURL
 	}
-	transport := &http.Transport{}
+	var transport *http.Transport
 	switch mode {
 	case "direct":
-		transport.Proxy = nil
+		transport = &http.Transport{}
 	case "custom":
 		u, err := neturl.Parse(strings.TrimSpace(proxyURL))
 		if err != nil || u.Host == "" {
@@ -1385,9 +1403,20 @@ func (s *Server) adminProxyTest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		fixed := u
-		transport.Proxy = func(*http.Request) (*neturl.URL, error) { return fixed, nil }
+		transport = &http.Transport{Proxy: func(*http.Request) (*neturl.URL, error) { return fixed, nil }}
+	case "proton":
+		raw := strings.TrimSpace(in.ProtonSocks5)
+		if raw == "" {
+			raw = s.Store.Config().ProtonSocks5
+		}
+		t, err := lane.NewProtonTransport(raw)
+		if err != nil {
+			writeJSON(w, 400, map[string]any{"ok": false, "error": "SOCKS5 Proton không hợp lệ: " + err.Error()})
+			return
+		}
+		transport = t
 	default:
-		transport.Proxy = http.ProxyFromEnvironment
+		transport = &http.Transport{Proxy: http.ProxyFromEnvironment}
 	}
 	client := &http.Client{Timeout: 10 * time.Second, Transport: transport}
 
@@ -1489,6 +1518,7 @@ func (s *Server) applyEgress(cfg store.Config) string {
 		Modes:        cfg.EgressModeList(),
 		Relays:       cfg.RelayEndpoints(),
 		WarpPoolSize: cfg.WarpPoolSize,
+		ProtonURL:    cfg.ProtonSocks5,
 		BaseMode:     cfg.ProxyMode,
 		BaseURL:      cfg.ProxyURL,
 	})

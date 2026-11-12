@@ -22,6 +22,13 @@ phát triển (UTC+7).
   rảnh. Bỏ relay/nft/portproxy và shortcut relay cũ.
 - Kiểm tra source trên dashboard dùng HTTP client trực tiếp thay vì lane proxy
   (hết timeout khi proxy pool chưa sẵn sàng) và nhận checkout `~/src/OpenKi`.
+- Tích hợp **Proton VPN** thành egress peer thứ tư: `egressModes` nhận
+  `proton`, `protonSocks5` trỏ listener SOCKS5 cục bộ (mặc định
+  `socks5h://127.0.0.1:1080`), có nút kiểm tra và nhãn `X-OpenKi-Egress:
+  proton`. OpenKi không giữ tài khoản Proton và không quản lý tunnel.
+- README viết lại ngắn gọn, Linux/WSL-first; bỏ phần giới thiệu trùng lặp và
+  các tham chiếu thương hiệu không cần thiết. Attribution WARP vẫn nằm trong
+  `THIRD_PARTY_NOTICES.md`/`internal/warp/NOTICE` theo GPL-3.0.
 
 ### Thương hiệu
 

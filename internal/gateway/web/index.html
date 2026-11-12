@@ -1019,6 +1019,15 @@ function fmtN(n){ return n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e3?(n/1e3).toFixed(0)
 /* Thông tin hệ thống hiển thị một nhãn cho mỗi chế độ proxy — một chế độ chưa được ánh xạ từng in ra
    raw key ("system", "rotate") trong đó Cài đặt có tên cho nó bằng tiếng Trung. */
 function proxyLabel(mode,url){ if(mode==="custom") return url||"URL tuỳ chỉnh (chưa điền)"; return {system:"Theo proxy hệ thống",env:"Theo biến môi trường",direct:"Kết nối trực tiếp",rotate:"Luân phiên đăng ký proxy (sing-box)",pool:"Xoay vòng danh sách proxy tĩnh"}[mode]||mode||"Không rõ"; }
+/* EgressModes is the newer peer layer; when it is non-empty it, not the legacy
+   proxyMode, is what actually carries lane traffic. Showing proxyMode in that
+   state made the dashboard say "static pool" while Proton was serving. */
+function egressLabel(settings){
+  const modes=(settings&&settings.egressModes)||[];
+  if(!modes.length) return proxyLabel(settings&&settings.proxyMode, settings&&settings.proxyURL);
+  const names={relay:"Relay",singbox:"sing-box",warp:"WARP",proton:"Proton VPN"};
+  return modes.map(m=>names[m]||m).join(" + ");
+}
 /* The 10-second state refresh must never overwrite the field the user is
    typing in. */
 function fill(el,v){ if(el&&document.activeElement!==el) el.value=(v==null?"":String(v)); }
@@ -4092,7 +4101,7 @@ function netExitRows(s){
     key: "current", tone: eg.ip ? "ok" : "unknown",
     status: eg.ip ? "Đang dùng" : "Chưa rõ",
     endpoint: eg.ip || "Chưa rõ lối ra", name: "IP hiện tại",
-    source: "Hiện tại", proto: proxyLabel(s.settings.proxyMode, s.settings.proxyURL),
+    source: "Hiện tại", proto: egressLabel(s.settings),
     country: eg.country || "—", latency: "—", last: "—",
     note: "Đường ra đang phục vụ các yêu cầu mới",
   });
@@ -4230,6 +4239,22 @@ function renderNetwork(s){
           <span class="muted" style="font-size:12px" id="proxy-test-result"></span>
         </div>
         <div style="margin-top:12px">
+          <div class="dim" style="margin-bottom:6px">Egress peer (chọn một hoặc nhiều; bỏ trống = dùng chế độ proxy ở trên)</div>
+          <div class="row" id="set-egress-modes" style="gap:14px; flex-wrap:wrap">
+            <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="relay"> Relay</label>
+            <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="singbox"> sing-box</label>
+            <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="warp"> WARP</label>
+            <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="proton"> Proton VPN</label>
+          </div>
+          <div class="row" style="margin-top:8px; gap:8px; flex-wrap:wrap">
+            <span class="dim">Proton SOCKS5</span>
+            <input type="text" id="set-proton-url" placeholder="socks5h://127.0.0.1:1080" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:240px;font-family:var(--mono)">
+            <button class="ghost" id="btn-proton-test">Kiểm tra Proton</button>
+            <span class="muted" style="font-size:12px" id="proton-test-result"></span>
+          </div>
+          <div class="muted" style="font-size:11.5px;margin-top:5px">Proton là một đầu ra đơn, dùng SOCKS5 do client Proton (hoặc pVPN) mở trên loopback. OpenKi không giữ mật khẩu Proton và không tự bật/tắt tunnel; chỉ dùng listener đã chạy. Có thể chọn thêm peer khác để dự phòng.</div>
+        </div>
+        <div style="margin-top:12px">
           <div class="dim" style="margin-bottom:6px">Danh sách proxy tĩnh (mỗi dòng một URL; dùng với chế độ 「Xoay vòng danh sách proxy tĩnh」)</div>
           <textarea id="set-proxy-pool" rows="3" placeholder="socks5h://127.0.0.1:13001&#10;http://user:pass@127.0.0.1:7890&#10;direct" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:100%;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
           <div class="muted" style="font-size:11.5px;margin-top:5px">Mỗi hội thoại bám một đầu ra (giữ cache tiền tố); khi đầu ra bị giới hạn, yêu cầu tự thử đầu ra khác. Hỗ trợ <code class="k">http(s)://</code>, <code class="k">socks5(h)://</code>, <code class="k">direct</code>.</div>
@@ -4287,6 +4312,8 @@ function renderNetwork(s){
     const urlInput = el.querySelector("#set-proxy-url");
     urlInput.addEventListener("input", ()=>netDirty.add("proxyUrl"));
     el.querySelector("#set-proxy-pool").addEventListener("input", ()=>netDirty.add("proxyPool"));
+    el.querySelector("#set-proton-url").addEventListener("input", ()=>netDirty.add("protonSocks5"));
+    el.querySelectorAll("#set-egress-modes input").forEach(cb=>cb.addEventListener("change", ()=>netDirty.add("egressModes")));
     el.querySelector("#set-exit-tpm").addEventListener("input", ()=>netDirty.add("exitTpm"));
     el.querySelector("#set-fingerprint").addEventListener("change", ()=>netDirty.add("fingerprint"));
     el.querySelector("#net-save").onclick = async ()=>{
@@ -4294,6 +4321,8 @@ function renderNetwork(s){
         proxyMode: el.querySelector("#set-proxy").dataset.value,
         proxyURL: el.querySelector("#set-proxy-url").value.trim(),
         proxyPool: el.querySelector("#set-proxy-pool").value.split("\n").map(x=>x.trim()).filter(Boolean),
+        egressModes: [...el.querySelectorAll("#set-egress-modes input:checked")].map(x=>x.value),
+        protonSocks5: el.querySelector("#set-proton-url").value.trim(),
         exitTokensPerMinute: parseInt(el.querySelector("#set-exit-tpm").value)||0,
         fingerprintMode: el.querySelector("#set-fingerprint").value || "auto",
       });
@@ -4318,6 +4347,22 @@ function renderNetwork(s){
           box.style.color = "var(--bad)";
         }
       } catch(err) { box.textContent = "Kiểm tra thất bại: " + err.message; box.style.color = "var(--bad)"; }
+    };
+    el.querySelector("#btn-proton-test").onclick = async () => {
+      const box = el.querySelector("#proton-test-result");
+      box.textContent = "Đang kiểm tra…"; box.style.color = "var(--ink-mute)";
+      try {
+        const r = await fetch("/admin/api/proxy-test", {method:"POST", headers:{"content-type":"application/json"},
+          body: JSON.stringify({mode:"proton", protonSocks5: el.querySelector("#set-proton-url").value.trim()})});
+        const j = await r.json();
+        if (j.ok) {
+          box.innerHTML = `✓ Proton thông · HTTP ${j.status} · ${j.latencyMs}ms · đầu ra ${esc(j.egressIP||"?")} (${esc(j.egressCountry||"?")})`;
+          box.style.color = "var(--mint)";
+        } else {
+          box.innerHTML = `✗ ${esc(j.error||"Không thông")}`;
+          box.style.color = "var(--bad)";
+        }
+      } catch(err) { box.textContent = "Kiểm tra Proton thất bại: " + err.message; box.style.color = "var(--bad)"; }
     };
     const lanBtn = el.querySelector("#tg-lan");
     lanBtn.onclick = async ()=>{
@@ -4388,7 +4433,7 @@ function renderNetwork(s){
   const eg = s.egress || {};
   el.querySelector("#net-egress").textContent = eg.ip || "Không rõ";
   el.querySelector("#net-country").textContent = eg.country || "?";
-  el.querySelector("#net-mode").textContent = proxyLabel(s.settings.proxyMode, s.settings.proxyURL);
+  el.querySelector("#net-mode").textContent = egressLabel(s.settings);
   el.querySelector("#net-lan-line").textContent = `Cổng ${s.port} · ${s.lanBaseURL ? "LAN: " + s.lanBaseURL : "Chỉ loopback (127.0.0.1)"}`;
   paintNetworkExits(s);
   if(!netDirty.has("proxyMode")){
@@ -4401,6 +4446,12 @@ function renderNetwork(s){
   if(!netDirty.has("proxyUrl") && document.activeElement !== url) url.value = s.settings.proxyURL || "";
   const pool = el.querySelector("#set-proxy-pool");
   if(!netDirty.has("proxyPool") && document.activeElement !== pool) pool.value = (s.settings.proxyPool||[]).join("\n");
+  const proton = el.querySelector("#set-proton-url");
+  if(!netDirty.has("protonSocks5") && document.activeElement !== proton) proton.value = s.settings.protonSocks5 || "";
+  if(!netDirty.has("egressModes")){
+    const selected = new Set(s.settings.egressModes || []);
+    el.querySelectorAll("#set-egress-modes input").forEach(cb => { cb.checked = selected.has(cb.value); });
+  }
   const tpm = el.querySelector("#set-exit-tpm");
   if(!netDirty.has("exitTpm") && document.activeElement !== tpm) tpm.value = s.settings.exitTokensPerMinute ?? 300000;
   const fp = el.querySelector("#set-fingerprint");

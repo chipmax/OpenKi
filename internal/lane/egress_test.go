@@ -102,11 +102,11 @@ func TestEgressEmptyModesRestoresLegacy(t *testing.T) {
 }
 
 func TestNormalizeEgressModes(t *testing.T) {
-	got, err := NormalizeEgressModes([]string{" WARP ", "relay", "warp", ""})
+	got, err := NormalizeEgressModes([]string{" WARP ", "relay", "warp", "proton", ""})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Join(got, ",") != "warp,relay" {
+	if strings.Join(got, ",") != "warp,relay,proton" {
 		t.Fatalf("normalized = %v", got)
 	}
 	if _, err := NormalizeEgressModes([]string{"socks"}); err == nil {

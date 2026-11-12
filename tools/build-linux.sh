@@ -44,7 +44,7 @@ cat > "$APPDIR/usr/share/applications/openki.desktop" <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=OpenKi
-Comment=本地免费模型网关
+Comment=Cổng mô hình miễn phí cục bộ
 Exec=openki
 Icon=openki
 Terminal=false

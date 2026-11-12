@@ -4,6 +4,7 @@
   "mainKey": "<MAIN_KEY_PLACEHOLDER>",
   "agentScope": "all",
   "egressModes": ["relay", "singbox", "warp"],
+  "protonSocks5": "socks5h://127.0.0.1:1080",
   "singBoxPath": "<PATH_TO_SING_BOX_BINARY>",
   "relayPool": [
     {

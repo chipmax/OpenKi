@@ -41,7 +41,7 @@ cat > "$PKGDIR/usr/share/applications/openki.desktop" <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=OpenKi
-Comment=本地免费模型网关
+Comment=Cổng mô hình miễn phí cục bộ
 Exec=openki
 Icon=openki
 Terminal=false
@@ -122,7 +122,7 @@ cat > "$PKGDIR/usr/share/metainfo/openki.metainfo.xml" <<'EOF'
 <component type="desktop-application">
   <id>io.github.chipmax.openki</id>
   <name>OpenKi</name>
-  <summary>本地免费模型网关（托盘常驻）</summary>
+  <summary>Cổng mô hình miễn phí cục bộ (chạy trong khay hệ thống)</summary>
   <metadata_license>MIT</metadata_license>
   <project_license>GPL-3.0</project_license>
   <description>

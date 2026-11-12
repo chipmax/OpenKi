@@ -48,6 +48,13 @@ func (s *Server) serveDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("content-type", "text/html; charset=utf-8")
+	// The dashboard is embedded in the binary and changes when OpenKi is
+	// upgraded. Without an explicit policy a browser may reuse the previous
+	// page after the restart, so the user keeps seeing the old branding and
+	// old controls even though /health already reports the new build.
+	w.Header().Set("cache-control", "no-store, no-cache, must-revalidate, max-age=0")
+	w.Header().Set("pragma", "no-cache")
+	w.Header().Set("expires", "0")
 	_, _ = w.Write(dashboardHTML)
 }
 

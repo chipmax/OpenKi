@@ -70,9 +70,9 @@ client Proton (hoặc wrapper pVPN) đã mở:
 curl --proxy socks5h://127.0.0.1:1080 https://www.cloudflare.com/cdn-cgi/trace
 ```
 
-Trong **Mạng → Proxy thượng nguồn**, bật `Proton VPN`, nhập URL
-`socks5h://127.0.0.1:1080`, bấm **Kiểm tra Proton**, rồi **Lưu proxy**. Hoặc sửa
-`config.json`:
+Trong **Mạng → Đầu ra & Proton VPN**, tích `Proton VPN`, nhập URL
+`socks5h://127.0.0.1:1080` (hoặc địa chỉ tunnel của pVPN), bấm **Kiểm tra
+Proton**, rồi **Lưu & bật Proton**. Hoặc sửa `config.json`:
 
 ```json
 {

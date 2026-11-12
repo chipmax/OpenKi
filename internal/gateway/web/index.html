@@ -958,7 +958,7 @@
 <body>
 <div id="app">
   <header id="titlebar">
-    <div class="wm"><span class="mark" aria-hidden="true"></span>ZEN<span class="tick">—</span>GATE</div>
+    <div class="wm"><span class="mark" aria-hidden="true"></span>OPEN<span class="tick">—</span>KI</div>
     <div class="wbtns">
       <button id="w-min" title="Thu nhỏ">—</button>
       <button id="w-max" title="Phóng to / khôi phục">▢</button>
@@ -969,7 +969,7 @@
     <aside class="side" id="side">
       <div class="brand-row">
         <img src="/favicon.png" alt="">
-        <div><div class="bw">ZEN<span class="tick">—</span>GATE</div><div class="ver" id="side-ver"></div></div>
+        <div><div class="bw">OPEN<span class="tick">—</span>KI</div><div class="ver" id="side-ver"></div></div>
       </div>
       <div class="status-card">
         <div class="row1"><span class="dot" id="svcdot"></span><span id="svcstat">Đang kết nối…</span></div>
@@ -4190,12 +4190,37 @@ function renderNetwork(s){
     el.innerHTML = `
       <h2 class="pt">Mạng <span class="sub">Đầu ra, trạng thái và phân bổ lưu lượng——cấu hình proxy nằm bên dưới</span></h2>
       <div class="sumstrip" id="net-summary">
-        <div class="cell"><div class="v mono" id="net-egress">—</div><div class="l">IP đầu ra hiện tại</div></div>
+        <div class="cell"><div class="v mono" id="net-egress-ip">—</div><div class="l">IP đầu ra hiện tại</div></div>
         <div class="cell"><div class="v" id="net-country">—</div><div class="l">Quốc gia</div></div>
         <div class="cell"><div class="v" id="net-total">—</div><div class="l">Đầu ra đã cấu hình</div></div>
         <div class="cell"><div class="v" id="net-ok">—</div><div class="l">Khả dụng</div></div>
         <div class="cell"><div class="v" id="net-attn">—</div><div class="l">Cần chú ý</div></div>
         <div class="cell"><div class="v" id="net-mode" style="font-size:14px;line-height:1.35">—</div><div class="l">Chế độ egress</div></div>
+      </div>
+      <div class="card" id="net-egress-card">
+        <div class="row" style="align-items:center; gap:8px">
+          <h3 style="margin:0">Đầu ra &amp; Proton VPN <span class="muted" style="font-size:11.5px;font-weight:400">Chọn peer và kiểm tra listener trước khi lưu</span></h3>
+          <span style="flex:1"></span>
+          <span class="pill hidsync" id="proton-state">Chưa bật</span>
+        </div>
+        <div class="row" id="set-egress-modes" style="gap:14px; flex-wrap:wrap; margin-top:8px">
+          <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="relay"> Relay</label>
+          <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="singbox"> sing-box</label>
+          <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="warp"> WARP</label>
+          <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="proton"> Proton VPN</label>
+        </div>
+        <div class="row" style="margin-top:10px; gap:8px; flex-wrap:wrap">
+          <span class="dim">Proton SOCKS5</span>
+          <input type="text" id="set-proton-url" placeholder="socks5h://127.0.0.1:1080" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:240px;font-family:var(--mono)">
+          <button class="ghost" id="btn-proton-test">Kiểm tra Proton</button>
+          <button class="act" id="btn-proton-save">Lưu &amp; bật Proton</button>
+          <span class="muted" style="font-size:12px" id="proton-test-result"></span>
+        </div>
+        <div class="muted" style="font-size:11.5px;margin-top:5px">Proton là một đầu ra đơn, dùng SOCKS5 do client Proton (hoặc pVPN) mở trên loopback hoặc địa chỉ tunnel riêng. OpenKi không giữ mật khẩu Proton và không tự bật/tắt tunnel; chỉ dùng listener đã chạy. Có thể chọn thêm peer khác để dự phòng.</div>
+        <div class="row" style="margin-top:12px">
+          <button class="act" id="net-save">Lưu proxy</button>
+          <span class="muted" style="font-size:12px">Lưu là áp dụng nóng ngay cho các yêu cầu suy luận/danh sách/dò kiểm tra.</span>
+        </div>
       </div>
       <div class="card" id="net-exits">
         <div class="row" style="margin-bottom:8px">
@@ -4242,22 +4267,6 @@ function renderNetwork(s){
           <span class="muted" style="font-size:12px" id="proxy-test-result"></span>
         </div>
         <div style="margin-top:12px">
-          <div class="dim" style="margin-bottom:6px">Egress peer (chọn một hoặc nhiều; bỏ trống = dùng chế độ proxy ở trên)</div>
-          <div class="row" id="set-egress-modes" style="gap:14px; flex-wrap:wrap">
-            <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="relay"> Relay</label>
-            <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="singbox"> sing-box</label>
-            <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="warp"> WARP</label>
-            <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="proton"> Proton VPN</label>
-          </div>
-          <div class="row" style="margin-top:8px; gap:8px; flex-wrap:wrap">
-            <span class="dim">Proton SOCKS5</span>
-            <input type="text" id="set-proton-url" placeholder="socks5h://127.0.0.1:1080" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:240px;font-family:var(--mono)">
-            <button class="ghost" id="btn-proton-test">Kiểm tra Proton</button>
-            <span class="muted" style="font-size:12px" id="proton-test-result"></span>
-          </div>
-          <div class="muted" style="font-size:11.5px;margin-top:5px">Proton là một đầu ra đơn, dùng SOCKS5 do client Proton (hoặc pVPN) mở trên loopback. OpenKi không giữ mật khẩu Proton và không tự bật/tắt tunnel; chỉ dùng listener đã chạy. Có thể chọn thêm peer khác để dự phòng.</div>
-        </div>
-        <div style="margin-top:12px">
           <div class="dim" style="margin-bottom:6px">Danh sách proxy tĩnh (mỗi dòng một URL; dùng với chế độ 「Xoay vòng danh sách proxy tĩnh」)</div>
           <textarea id="set-proxy-pool" rows="3" placeholder="socks5h://127.0.0.1:13001&#10;http://user:pass@127.0.0.1:7890&#10;direct" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:100%;font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
           <div class="muted" style="font-size:11.5px;margin-top:5px">Mỗi hội thoại bám một đầu ra (giữ cache tiền tố); khi đầu ra bị giới hạn, yêu cầu tự thử đầu ra khác. Hỗ trợ <code class="k">http(s)://</code>, <code class="k">socks5(h)://</code>, <code class="k">direct</code>.</div>
@@ -4277,7 +4286,7 @@ function renderNetwork(s){
         <div class="muted" style="font-size:11.5px;margin-top:5px">0 = tắt governor token theo exit. Fingerprint đổi nóng; dùng <code class="k">gateprobe</code> trước khi chuyển sang <code class="k">off</code>.</div>
         <div class="muted" style="font-size:11.5px;margin-top:3px">Fingerprint hash: <code class="k" id="net-fp-hash">—</code></div>
         <div class="row" style="margin-top:12px">
-          <button class="act" id="net-save">Lưu proxy</button>
+          <button class="act" id="net-save-legacy">Lưu proxy</button>
           <span class="muted" style="font-size:12px">Lưu là áp dụng nóng ngay cho các yêu cầu suy luận/danh sách/dò kiểm tra.</span>
         </div>
       </details>
@@ -4319,7 +4328,7 @@ function renderNetwork(s){
     el.querySelectorAll("#set-egress-modes input").forEach(cb=>cb.addEventListener("change", ()=>netDirty.add("egressModes")));
     el.querySelector("#set-exit-tpm").addEventListener("input", ()=>netDirty.add("exitTpm"));
     el.querySelector("#set-fingerprint").addEventListener("change", ()=>netDirty.add("fingerprint"));
-    el.querySelector("#net-save").onclick = async ()=>{
+    const saveNetwork = async ()=>{
       const j = await api("/settings", {
         proxyMode: el.querySelector("#set-proxy").dataset.value,
         proxyURL: el.querySelector("#set-proxy-url").value.trim(),
@@ -4334,6 +4343,13 @@ function renderNetwork(s){
         toast(j.note ? j.note : "Đã lưu cài đặt mạng (áp dụng nóng ngay)");
         refresh();
       }
+    };
+    el.querySelector("#net-save").onclick = saveNetwork;
+    el.querySelector("#net-save-legacy").onclick = saveNetwork;
+    el.querySelector("#btn-proton-save").onclick = async ()=>{
+      const cb = el.querySelector('#set-egress-modes input[value="proton"]');
+      if(cb && !cb.checked){ cb.checked = true; netDirty.add("egressModes"); }
+      await saveNetwork();
     };
     el.querySelector("#btn-proxy-test").onclick = async () => {
       const box = el.querySelector("#proxy-test-result");
@@ -4434,11 +4450,18 @@ function renderNetwork(s){
     el.dataset.rendered = "1";
   }
   const eg = s.egress || {};
-  el.querySelector("#net-egress").textContent = eg.ip || "Không rõ";
+  el.querySelector("#net-egress-ip").textContent = eg.ip || "Không rõ";
   el.querySelector("#net-country").textContent = eg.country || "?";
   el.querySelector("#net-mode").textContent = egressLabel(s.settings);
   el.querySelector("#net-lan-line").textContent = `Cổng ${s.port} · ${s.lanBaseURL ? "LAN: " + s.lanBaseURL : "Chỉ loopback (127.0.0.1)"}`;
   paintNetworkExits(s);
+  const protonState = el.querySelector("#proton-state");
+  if(protonState){
+    const on = (s.settings.egressModes || []).includes("proton");
+    const configured = String(s.settings.protonSocks5 || "").trim() !== "";
+    protonState.textContent = on ? "Đang bật" : configured ? "Đã cấu hình, chưa bật" : "Chưa bật";
+    protonState.className = "pill " + (on ? "ok" : configured ? "warn" : "hidsync");
+  }
   if(!netDirty.has("proxyMode")){
     makeDropdown(el.querySelector("#set-proxy"),
       [["system","Theo proxy hệ thống"],["env","Theo biến môi trường"],["direct","Kết nối trực tiếp"],["custom","URL tuỳ chỉnh"],["rotate","Luân phiên đăng ký proxy (sing-box)"],["pool","Xoay vòng danh sách proxy tĩnh"]],

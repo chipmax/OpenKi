@@ -1,4 +1,4 @@
-# Thông báo bên thứ ba — openki
+# Thông báo bên thứ ba — OpenKi
 
 Dự án này phát hành theo **GNU GPL-3.0-only** (xem [LICENSE](LICENSE)). Các thành phần dưới đây được giữ nguyên giấy phép gốc;
 chúng tương thích với GPL-3.0 và không làm thay đổi nghĩa vụ GPL của bản phân

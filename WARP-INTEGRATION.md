@@ -1,4 +1,4 @@
-# Tích hợp WARP pool (opencode2api) vào fork openki
+# Tích hợp WARP pool (opencode2api) vào fork OpenKi
 
 ## Thiết kế
 

@@ -1,4 +1,4 @@
-# Ghi chú Việt hoá mã nguồn Go — openki
+# Ghi chú Việt hoá mã nguồn Go — OpenKi
 
 Ngày thực hiện: 2026-11-11 · Phạm vi: các file `.go` (không gồm `web/index.html` — phần đó thuộc đợt dịch giao diện web riêng).
 

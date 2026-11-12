@@ -195,8 +195,19 @@ type Lane struct {
 	channelGate func(string) bool
 	// OnChannelRoster receives each channel's live roster after a catalog
 	// rebuild, for the per-channel files (store.WriteChannelRoster).
-	OnChannelRoster  func(channel string, models []ModelInfo)
-	egress           Egress
+	OnChannelRoster func(channel string, models []ModelInfo)
+	egress          Egress
+	// egressAt is when the last successful DetectEgress sample completed.
+	// egress is sampled every two minutes; without this timestamp the UI
+	// shows an IP with no age and labels a stale watch result "current".
+	egressAt time.Time
+	// lastExitPeer/lastExitIP/lastExitAt describe the most recent upstream
+	// attempt that completed successfully. The selector can rotate peers per
+	// request, so the periodic egress sample and the path that actually served
+	// traffic are not necessarily the same.
+	lastExitPeer     string
+	lastExitIP       string
+	lastExitAt       time.Time
 	defaultMaxTokens int
 	exposeRegion     bool
 	failoverEnabled  bool
@@ -608,6 +619,60 @@ func (l *Lane) Snapshot() ([]ModelInfo, map[string]ProbeResult, Egress) {
 	return cat, av, l.egress
 }
 
+// EgressInfo is the dashboard's evidence about the path traffic takes:
+// the periodic watch sample (IP/Country/CheckedAt) plus the peer and address
+// of the most recent successful upstream attempt (Peer/LastIP/LastAt).
+type EgressState struct {
+	IP        string
+	Country   string
+	CheckedAt int64
+	Peer      string
+	LastIP    string
+	LastAt    int64
+}
+
+// EgressInfo snapshots the watch result and the last served exit under the
+// same lock, so the dashboard cannot combine a fresh peer with an older IP.
+func (l *Lane) EgressInfo() EgressState {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	return EgressState{
+		IP:        l.egress.IP,
+		Country:   l.egress.Country,
+		CheckedAt: unixMilli(l.egressAt),
+		Peer:      l.lastExitPeer,
+		LastIP:    l.lastExitIP,
+		LastAt:    unixMilli(l.lastExitAt),
+	}
+}
+
+func unixMilli(t time.Time) int64 {
+	if t.IsZero() {
+		return 0
+	}
+	return t.UnixMilli()
+}
+
+// SampleEgressNow forces one public-IP sample through the lane's current
+// transport and records it. The dashboard's "Dò tất cả đầu ra" button uses
+// this instead of waiting up to two minutes for the watcher; the sample is
+// evidence about one request, not a promise that the next request takes the
+// same peer (rotation deliberately changes it).
+func (l *Lane) SampleEgressNow(ctx context.Context) Egress {
+	eg := DetectEgress(ctx)
+	if eg.IP == "" {
+		return eg
+	}
+	l.mu.Lock()
+	if eg.Country == "" {
+		eg.Country = l.egress.Country
+	}
+	l.egress = eg
+	l.egressAt = time.Now()
+	l.mu.Unlock()
+	return eg
+}
+
 // ServableModels lists models a client picker may show. A probe verdict is not
 // a filter here: it is one exit sampled once, and deleting the id from
 // GET /v1/models is how a working model becomes unselectable for every client.
@@ -1017,6 +1082,9 @@ func (l *Lane) ProbeRound(ctx context.Context, manual bool) {
 	if egressChanged(l.egress, eg) {
 		l.egress = eg
 	}
+	if eg.IP != "" {
+		l.egressAt = time.Now()
+	}
 	l.lastProbeAt = time.Now()
 	if quotaWall {
 		l.backoffRounds++
@@ -1139,6 +1207,9 @@ func (l *Lane) StartLoops(ctx context.Context, probeInterval time.Duration) {
 				changed := egressChanged(l.egress, eg)
 				if changed {
 					l.egress = eg
+				}
+				if eg.IP != "" {
+					l.egressAt = time.Now()
 				}
 				l.mu.Unlock()
 				if changed {
@@ -1918,13 +1989,14 @@ func (l *Lane) record(ctx context.Context, rec CallRecord, result StreamResult, 
 	}
 	if identity := egressIdentityFrom(ctx); identity != nil {
 		peer, ip := identity.get()
-		if rec.EgressIP == "" {
+		if ip != "" {
 			rec.EgressIP = ip
 		}
-		// The equal-peer selector names the transport class "peer" before the
-		// RoundTripper runs. Once the winning peer reports itself, keep that
-		// detail instead of hiding WARP behind the generic label.
-		if rec.ExitKind == "peer" && peer != "" {
+		// The plan names the rotator slot ("proxy"/"singbox") before the
+		// transport runs. The winning transport is the stronger evidence: a
+		// pool fallback can still be wrapped by the equal-peer selector, so a
+		// request planned as "proxy" may actually leave through Proton/relay.
+		if peer != "" {
 			rec.ExitKind = peer
 		}
 	}
@@ -1956,6 +2028,21 @@ func (l *Lane) record(ctx context.Context, rec CallRecord, result StreamResult, 
 	}
 	if result.Usage.TotalTokens == 0 && err == nil && result.SawFinish {
 		rec.NoUsage = true
+	}
+	// The periodic watch samples whichever peer the selector happened to
+	// pick; this records the exit that actually finished a turn, which is what
+	// the dashboard's "current path" must mean.
+	if rec.Ok && (rec.ExitKind != "" || rec.EgressIP != "") {
+		at := rec.At
+		if at == 0 {
+			at = time.Now().UnixMilli()
+			rec.At = at
+		}
+		l.mu.Lock()
+		l.lastExitPeer = rec.ExitKind
+		l.lastExitIP = rec.EgressIP
+		l.lastExitAt = time.UnixMilli(at)
+		l.mu.Unlock()
 	}
 	l.OnCall(rec)
 }

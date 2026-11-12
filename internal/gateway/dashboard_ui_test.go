@@ -44,7 +44,7 @@ func TestProtonControlsLiveInVisibleNetworkCard(t *testing.T) {
 		t.Fatalf("expected egress card before the exit table and the fold (card=%d exits=%d fold=%d)", card, exits, fold)
 	}
 	visible := html[card:exits]
-	for _, id := range []string{`id="set-proton-url"`, `id="btn-proton-test"`, `id="btn-proton-save"`} {
+	for _, id := range []string{`id="set-proton-url"`, `id="btn-proton-test"`} {
 		if !strings.Contains(visible, id) {
 			t.Errorf("%s is not inside the visible network card", id)
 		}
@@ -54,6 +54,38 @@ func TestProtonControlsLiveInVisibleNetworkCard(t *testing.T) {
 	}
 	if !strings.Contains(visible, `value="proton"`) {
 		t.Error("the visible card has no Proton egress checkbox")
+	}
+	// One sticky save owns every network field. A second save button inside
+	// the card or the fold would send a different (usually complete) payload.
+	if strings.Count(html, `id="net-save-all"`) != 1 {
+		t.Errorf("network page has %d save buttons, want exactly one", strings.Count(html, `id="net-save-all"`))
+	}
+	for _, stale := range []string{`id="btn-proton-save"`, `id="net-save-legacy"`, `id="net-save"`} {
+		if strings.Contains(html, stale) {
+			t.Errorf("stale network save control remains: %s", stale)
+		}
+	}
+}
+
+// The tunnel card is status-only by design: the gateway runs unprivileged and
+// pvpnctl needs root. The copy button is not a tunnel control.
+func TestVPNCardIsReadOnly(t *testing.T) {
+	html := string(dashboardHTML)
+	vpn := indexAfter(t, html, `id="net-vpn"`)
+	end := strings.Index(html[vpn:], `id="net-exits"`)
+	if end < 0 {
+		t.Fatal("vpn card is not followed by the exit table")
+	}
+	card := html[vpn : vpn+end]
+	for _, want := range []string{`id="vpn-state"`, `id="vpn-ip"`, `id="vpn-server"`, `id="vpn-copy"`} {
+		if !strings.Contains(card, want) {
+			t.Errorf("vpn card is missing %s", want)
+		}
+	}
+	for _, forbidden := range []string{`id="vpn-connect"`, `id="vpn-disconnect"`, `id="vpn-restart"`} {
+		if strings.Contains(card, forbidden) {
+			t.Errorf("vpn card exposes a tunnel control: %s", forbidden)
+		}
 	}
 }
 

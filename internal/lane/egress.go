@@ -102,7 +102,7 @@ func SetEgress(o EgressOptions) (note string) {
 			// pulled in a goroutine), so the peer is installed even when the
 			// pool is empty right now. rotateDialContext falls back to a plain
 			// dial until a node exists, exactly like the legacy rotate mode.
-			peers = append(peers, egressPeer{name: "singbox", rt: newSingBoxRoundTripper()})
+			peers = append(peers, egressPeer{name: "singbox", rt: labeledTransport{name: "singbox", rt: newSingBoxRoundTripper()}})
 			if CurrentRotator() == nil {
 				notes = append(notes, "sing-box đã bật nhưng chưa có node nào; dial sẽ tạm đi trực tiếp")
 			}
@@ -115,7 +115,10 @@ func SetEgress(o EgressOptions) (note string) {
 				notes = append(notes, "proton đã bật nhưng SOCKS5 chưa dùng được: "+err.Error())
 				continue
 			}
-			peers = append(peers, egressPeer{name: "proton", rt: rt})
+			// The selector only knows the peer was tried; the transport label
+			// is what lets CallRecord say "proton" instead of the generic
+			// "peer" after a successful turn.
+			peers = append(peers, egressPeer{name: "proton", rt: labeledTransport{name: "proton", rt: rt}})
 		}
 	}
 	if len(peers) == 0 {
@@ -281,6 +284,7 @@ func (r *relayRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 			lastErr = err
 			continue
 		}
+		setEgressIdentity(clone.Context(), "relay", "")
 		resp, err := r.base.RoundTrip(clone)
 		if err == nil {
 			if resp.Header != nil {
@@ -356,6 +360,19 @@ func relayTarget(base string, orig *url.URL) (*url.URL, error) {
 type egressPeer struct {
 	name string
 	rt   http.RoundTripper
+}
+
+// labeledTransport stamps the peer name onto the attempt context before the
+// underlying RoundTripper runs. WARP already does this itself because it also
+// learns the lease IP; relay/proton/sing-box only need the name.
+type labeledTransport struct {
+	name string
+	rt   http.RoundTripper
+}
+
+func (l labeledTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	setEgressIdentity(req.Context(), l.name, "")
+	return l.rt.RoundTrip(req)
 }
 
 type egressSelector struct {

@@ -22,6 +22,7 @@ import (
 	"github.com/chipmax/openki/internal/lane"
 	"github.com/chipmax/openki/internal/logx"
 	"github.com/chipmax/openki/internal/notify"
+	"github.com/chipmax/openki/internal/pvpn"
 	"github.com/chipmax/openki/internal/relay"
 	"github.com/chipmax/openki/internal/store"
 	"github.com/chipmax/openki/internal/update"
@@ -98,6 +99,18 @@ func (s *Server) handleAdmin(w http.ResponseWriter, r *http.Request, rest string
 		writeJSON(w, 200, map[string]any{"ok": true, "key": s.Store.Config().MainKey})
 	case rest == "proxy-test" && r.Method == http.MethodPost:
 		s.adminProxyTest(w, r)
+	case rest == "egress/sample" && r.Method == http.MethodPost:
+		// One bounded sample through the lane's current transport. It does not
+		// start a probe round; the dashboard already has separate buttons for
+		// models and subscription nodes.
+		ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+		defer cancel()
+		eg := s.Lane.SampleEgressNow(ctx)
+		if eg.IP == "" {
+			writeJSON(w, 200, map[string]any{"ok": false, "error": "Không lấy được IP công khai; kiểm tra proxy/tunnel rồi thử lại"})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"ok": true, "egressIP": eg.IP, "egressCountry": eg.Country})
 	case rest == "logs" && r.Method == http.MethodGet:
 		s.adminLogs(w, r)
 	case rest == "logs/download" && r.Method == http.MethodGet:
@@ -352,7 +365,8 @@ func effectiveExitRate(p *int) int {
 
 func (s *Server) adminState(w http.ResponseWriter) {
 	cfg := s.Store.Config()
-	cat, av, egress := s.Lane.Snapshot()
+	cat, av, _ := s.Lane.Snapshot()
+	egInfo := s.Lane.EgressInfo()
 	probeDone, probeTotal := s.currentProbeProgress()
 	type modelRow struct {
 		ID            string             `json:"id"`
@@ -589,13 +603,31 @@ func (s *Server) adminState(w http.ResponseWriter) {
 		settings[k] = v
 	}
 	system := s.systemInfo(cfg)
+	egressView := map[string]any{
+		"ip":        egInfo.IP,
+		"country":   egInfo.Country,
+		"peer":      egInfo.Peer,
+		"lastIp":    egInfo.LastIP,
+		"lastAt":    egInfo.LastAt,
+		"checkedAt": egInfo.CheckedAt,
+	}
+	// The tunnel status is read-only and cached in pvpn.Read. A missing helper
+	// (non-Debian host, tests) is represented as available:false, never as an
+	// error that would break the whole dashboard.
+	var vpn pvpn.Status
+	if s.vpnStatus != nil {
+		vpn = s.vpnStatus(context.Background())
+	} else {
+		vpn = pvpn.Status{ControlEnabled: false}
+	}
 	writeJSON(w, 200, map[string]any{
 		"baseURL":             s.BaseURL(),
 		"lanBaseURL":          s.LANBaseURL(),
 		"port":                cfg.Port,
 		"mainKey":             cfg.MainKey,
 		"agentKeys":           cfg.AgentKeys,
-		"egress":              egress,
+		"egress":              egressView,
+		"vpn":                 vpn,
 		"system":              system,
 		"models":              models,
 		"agents":              agentsView,

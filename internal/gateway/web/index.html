@@ -204,7 +204,8 @@
   th { color:var(--ink-mute); font-weight:500; font-size:11.5px; letter-spacing:.04em; }
   tr:last-child td { border-bottom:0; }
   .exit-wrap { overflow-x:auto; border-radius:10px; }
-  .exit-wrap .exit-table { min-width:790px; }
+  .exit-wrap .exit-table { min-width:940px; }
+  .exit-wrap .exit-table th:nth-child(2), .exit-wrap .exit-table td:nth-child(2) { min-width:200px; }
   .exit-wrap .exit-table td { padding:8px 10px; }
   .exit-wrap .exit-table tr:hover td { background:var(--panel-2); }
   .exit-wrap .exit-table .ep { font-family:var(--mono); font-size:11.5px; word-break:break-all; }
@@ -213,6 +214,38 @@
   .exit-wrap .exit-table .note { font-size:11.5px; color:var(--ink-mute); line-height:1.45; }
   .sumstrip #net-summary { margin-bottom:12px; }
   .sumstrip .v.mono { font-size:20px; }
+  /* IPv6 is 39 characters: the old 24px mono value clipped or forced the whole
+     strip wider than the viewport. Let the address wrap inside its own cell
+     and keep the label baseline aligned. */
+  #net-summary .v.ip { font-size:clamp(13px,1.7vw,20px); line-height:1.3; overflow-wrap:anywhere; word-break:break-all; letter-spacing:0; }
+  #net-summary .v.sm { font-size:14px; line-height:1.35; }
+  #net-health.ok { color:var(--ok); }
+  #net-health.warn { color:var(--warn); }
+  #net-health.bad { color:var(--bad); }
+  #net-health.unknown { color:var(--ink-mute); }
+  #net-egress-meta { overflow-wrap:anywhere; }
+  #net-summary .cell { min-width:0; }
+  #net-summary .l { min-width:0; }
+  /* One sticky save replaces the three page-local save buttons. It only
+     appears when a network field is dirty, so it cannot cover content while
+     the user is reading. */
+  .netsticky { position:sticky; bottom:12px; z-index:20; display:none; align-items:center; gap:12px;
+    margin:12px 0 0; padding:10px 14px; border:1px solid var(--hairline); border-radius:12px;
+    background:color-mix(in srgb,var(--panel) 92%,transparent); backdrop-filter:blur(8px);
+    box-shadow:0 8px 24px rgba(0,0,0,.24); }
+  .netsticky.show { display:flex; }
+  .netsticky .txt { min-width:0; flex:1; font-size:12.5px; color:var(--ink-dim); overflow-wrap:anywhere; }
+  .netsticky .txt b { color:var(--ink); }
+  .netnotice { border-left:2px solid var(--warn); background:var(--warn-bg); color:var(--ink-dim);
+    border-radius:8px; padding:8px 11px; font-size:11.5px; line-height:1.55; margin-top:10px; }
+  .netnotice.ok { border-left-color:var(--ok); background:var(--ok-bg); }
+  .netnotice code { font-family:var(--mono); }
+  .vpnrow { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .vpnrow .vpnaddr { font-family:var(--mono); font-size:12px; overflow-wrap:anywhere; }
+  .vpnmeta { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:7px 14px; margin-top:9px; }
+  .vpnmeta .kv { display:flex; justify-content:space-between; gap:10px; font-size:12px; min-width:0; }
+  .vpnmeta .k { color:var(--ink-mute); flex:none; }
+  .vpnmeta .v { font-family:var(--mono); text-align:right; overflow-wrap:anywhere; min-width:0; }
   #page-usage table tr:hover td { background:var(--panel-2); }
   .pill { display:inline-block; padding:1px 9px; border-radius:999px; font-size:11.5px; }
   .pill.ok { background:var(--ok-bg); color:var(--ok); }
@@ -917,6 +950,12 @@
     .sumstrip { display:grid; grid-template-columns:repeat(3,1fr); }
     .sumstrip .cell:nth-child(3n) { border-right:0; }
     .sumstrip .cell:nth-child(n+4) { border-top:1px solid var(--hairline-soft); }
+    /* The network strip has four cells, not five: 2×2 avoids a lone cell in
+       the second row and gives the IPv6 address half the width. */
+    #net-summary { grid-template-columns:repeat(2,1fr) !important; }
+    #net-summary .cell:nth-child(3n) { border-right:1px solid var(--hairline-soft); }
+    #net-summary .cell:nth-child(2n) { border-right:0; }
+    #net-summary .cell:nth-child(n+3) { border-top:1px solid var(--hairline-soft); }
     /* Thanh tóm tắt giờ có 6 ô (trúng cache chiếm một ô): 3 cột ×2 hàng, 2 cột ×3 hàng đều chia hết,
        không còn cần quy tắc vá lỗ trước đây là「ô cuối cùng trải ngang hai cột」 nữa. */
     .ann-date { display:none; }
@@ -952,6 +991,15 @@
     .cwall-grid { grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); }
     .cwall-filter { width:100%; min-width:0; }
     .cwall-tools { flex-wrap:wrap; }
+  }
+  @media (max-width:560px) {
+    /* One column keeps a 39-character IPv6 address readable instead of
+       wrapping it every few characters in a 2×2 strip. */
+    #net-summary { grid-template-columns:1fr !important; }
+    #net-summary .cell { border-right:0 !important; }
+    #net-summary .cell + .cell { border-top:1px solid var(--hairline-soft); }
+    .netsticky { position:fixed; left:12px; right:12px; bottom:10px; transform:none; width:auto; max-width:none; }
+    .netsticky .txt { font-size:12px; }
   }
 </style>
 </head>
@@ -4080,7 +4128,29 @@ const settingsDirty = new Set();
 function clearSettingsDirty(){ settingsDirty.clear(); }
 
 const netDirty = new Set();
+const NET_DIRTY_LABELS = {
+  proxyMode: "chế độ proxy", proxyUrl: "URL proxy", proxyPool: "danh sách tĩnh",
+  egressModes: "peer đầu ra", protonSocks5: "SOCKS5 Proton",
+  exitTpm: "token/phút", fingerprint: "fingerprint",
+};
 let netf = { q: "", state: "" };
+
+// paintNetDirty is global because the dropdown's change callback and the
+// form's input listeners both feed it; it must survive the 10-second rerender.
+function paintNetDirty(){
+  const el = $("#page-network"); if(!el) return;
+  const bar = el.querySelector("#net-savebar"); if(!bar) return;
+  const has = netDirty.size > 0;
+  bar.classList.toggle("show", has);
+  const text = el.querySelector("#net-dirty-text");
+  if(text){
+    const names = [...netDirty].map(k => NET_DIRTY_LABELS[k] || k);
+    text.innerHTML = has ? `<b>${names.length}</b> thay đổi chưa lưu: ${esc(names.join(", "))}` : "";
+  }
+  const save = el.querySelector("#net-save-all");
+  if(save) save.disabled = !has;
+}
+function markNetDirty(key){ netDirty.add(key); paintNetDirty(); }
 
 function relMs(ms){
   const n = Number(ms) || 0;
@@ -4092,22 +4162,61 @@ function relMs(ms){
   return Math.floor(d/86_400_000) + " ngày trước";
 }
 
-// netExitRows flattens the three sources the gateway actually knows:
-// the current path, subscription nodes (with probed IP/latency), and the
-// static pool (endpoint + transport park state). It never invents a public IP
-// for a static endpoint: that needs traffic or a probe.
+// EGRESS_FRESH_MS tolerates two missed two-minute watch samples before the
+// dashboard calls the evidence stale. A sample is not a liveness probe: the
+// UI must distinguish "this is the path now" from "this was the path recently".
+const EGRESS_FRESH_MS = 10 * 60 * 1000;
+const EGRESS_PEER_NAMES = {
+  direct: "Trực tiếp", proxy: "Proxy tĩnh", singbox: "sing-box",
+  relay: "Relay", warp: "WARP", proton: "Proton VPN", peer: "Peer",
+};
+function egressPeerName(peer){
+  const p = String(peer || "").trim();
+  if(!p) return "Chưa rõ peer";
+  return EGRESS_PEER_NAMES[p] || p;
+}
+function maxRel(...stamps){
+  return relMs(Math.max(0, ...stamps.map(Number)));
+}
+
+// netExitRows flattens the three sources the gateway actually knows: the last
+// served exit plus the periodic IP sample, subscription nodes (probed), and
+// the static pool (endpoint + transport park state). The current row never
+// claims a public IP for a static endpoint; that needs traffic or a probe.
 function netExitRows(s){
   const now = Date.now();
-  const rows = [];
   const eg = s.egress || {};
-  rows.push({
-    key: "current", tone: eg.ip ? "ok" : "unknown",
-    status: eg.ip ? "Đang dùng" : "Chưa rõ",
-    endpoint: eg.ip || "Chưa rõ lối ra", name: "IP hiện tại",
-    source: "Hiện tại", proto: egressLabel(s.settings),
-    country: eg.country || "—", latency: "—", last: "—",
-    note: "Đường ra đang phục vụ các yêu cầu mới",
-  });
+  const lastAt = Number(eg.lastAt) || 0;
+  const checkedAt = Number(eg.checkedAt) || 0;
+  const lastIP = String(eg.lastIp || "").trim();
+  const sampleIP = String(eg.ip || "").trim();
+  const ip = lastIP || sampleIP;
+  const lastFresh = lastAt > 0 && now - lastAt < EGRESS_FRESH_MS;
+  const sampleFresh = checkedAt > 0 && now - checkedAt < EGRESS_FRESH_MS;
+  const peer = eg.peer ? egressPeerName(eg.peer) : "Chưa rõ peer";
+  let tone = "unknown", status = "Chưa rõ", when = 0;
+  let note = "Chưa có mẫu IP; bấm「Dò tất cả đầu ra」để lấy bằng chứng đầu tiên";
+  if(lastFresh){
+    tone = "ok"; status = "Đang phục vụ"; when = lastAt;
+    note = `Lưu lượng thành công gần nhất qua ${peer}`;
+    if(sampleIP && lastIP && sampleIP !== lastIP){
+      note += `; mẫu định kỳ thấy ${sampleIP} (${relMs(checkedAt)})`;
+    }
+  } else if(sampleFresh && ip){
+    tone = "ok"; status = "Đã quan sát"; when = checkedAt;
+    note = `IP lấy từ mẫu định kỳ ${relMs(checkedAt)}; chưa có yêu cầu thành công gần đây để xác nhận peer`;
+  } else if(ip){
+    tone = "warn"; status = "Dữ liệu cũ"; when = Math.max(lastAt, checkedAt);
+    note = "Mẫu cuối đã cũ; bấm「Dò tất cả đầu ra」để cập nhật";
+  }
+  const rows = [{
+    key: "current", tone, status,
+    endpoint: ip || "Chưa rõ",
+    name: lastFresh ? "Lưu lượng gần nhất" : (sampleIP ? "Mẫu IP định kỳ" : "Chưa có mẫu"),
+    source: "Hiện tại", proto: eg.peer ? peer : "—",
+    country: eg.country || "—", latency: "—",
+    last: relMs(when), note,
+  }];
   const nodes = (s.subscriptions && s.subscriptions.singbox && s.subscriptions.singbox.nodes) || [];
   for(const n of nodes){
     const cooling = (Number(n.coolUntil) || 0) > now;
@@ -4121,12 +4230,12 @@ function netExitRows(s){
       source: "Đăng ký", proto: n.proto || "—",
       country: n.country || "—",
       latency: n.latencyMs ? n.latencyMs + " ms" : "—",
-      last: relMs(n.lastOkMs || n.lastCheck),
+      last: relMs(Math.max(Number(n.lastOkMs) || 0, Number(n.lastCheck) || 0)),
       note: cooling
         ? "Còn " + Math.max(1, Math.ceil(((Number(n.coolUntil) || now) - now) / 60000)) + " phút; hết làm mát tự quay lại"
         : n.alive
-          ? (n.lastOkMs ? "Đã phục vụ lưu lượng thật" : "Mới dò, chưa có lưu lượng")
-          : "Dò thất bại; bấm「Dò lại node đăng ký」để thử lại",
+          ? (n.lastOkMs ? "Đã phục vụ lưu lượng thật" : "Dò thành công, chưa có lưu lượng thật")
+          : "Dò thất bại; bấm「Dò node đăng ký」để thử lại",
     });
   }
   for(const p of (s.proxyPoolStatus || [])){
@@ -4148,16 +4257,67 @@ function netExitRows(s){
   return rows.sort((a,b) => (a.key === "current" ? -1 : b.key === "current" ? 1 : rank[a.tone] - rank[b.tone]));
 }
 
+// networkHealth derives the summary from evidence, not from configuration:
+// fresh served traffic is stronger than an IP sample, which is stronger than
+// "we have a config". A green health label must never hide failing peers.
+function networkHealth(s, configured){
+  const eg = s.egress || {};
+  const now = Date.now();
+  const lastAt = Number(eg.lastAt) || 0;
+  const checkedAt = Number(eg.checkedAt) || 0;
+  const lastFresh = lastAt > 0 && now - lastAt < EGRESS_FRESH_MS;
+  const sampleFresh = checkedAt > 0 && now - checkedAt < EGRESS_FRESH_MS;
+  const hasIP = !!(String(eg.lastIp || "").trim() || String(eg.ip || "").trim());
+  const ok = configured.filter(r => r.tone === "ok").length;
+  const bad = configured.filter(r => r.tone === "bad").length;
+  const warn = configured.filter(r => r.tone === "warn").length;
+  const unknown = configured.filter(r => r.tone === "unknown").length;
+  const issues = bad + warn;
+  if(!hasIP && !configured.length){
+    return {label:"Chưa cấu hình", tone:"unknown", detail:"Chưa có đường ra nào; mở「Proxy thượng nguồn」để thêm"};
+  }
+  if(!hasIP){
+    return {label:"Chưa rõ", tone:"unknown", detail:`${configured.length} đầu ra đã cấu hình · chưa có mẫu IP`};
+  }
+  if(lastFresh && issues === 0){
+    const reserve = configured.length
+      ? `${ok}/${configured.length} đầu ra dự phòng đã xác minh${unknown ? ` · ${unknown} chưa dò` : ""}`
+      : "chưa cấu hình đầu ra dự phòng";
+    return {label:"Ổn định", tone:"ok", detail:`Lưu lượng ${relMs(lastAt)} · ${reserve}`};
+  }
+  if(lastFresh){
+    return {label:"Có cảnh báo", tone:"warn", detail:`Lưu lượng ${relMs(lastAt)} · ${bad} lỗi, ${warn} cần chú ý, ${unknown} chưa dò trong ${configured.length} đầu ra`};
+  }
+  if(sampleFresh){
+    return {label:"Đang quan sát", tone:"warn", detail:`IP mẫu ${relMs(checkedAt)} · chưa có lưu lượng thành công gần đây`};
+  }
+  return {label:"Dữ liệu cũ", tone:"warn", detail:`Mẫu cuối ${maxRel(lastAt, checkedAt)} · bấm「Dò tất cả đầu ra」`};
+}
+
 function paintNetworkExits(s){
   const el = $("#page-network"); if(!el) return;
   const rows = netExitRows(s);
   const configured = rows.filter(r => r.source !== "Hiện tại");
   const nodes = (s.subscriptions && s.subscriptions.singbox && s.subscriptions.singbox.nodes) || [];
   const pools = s.proxyPoolStatus || [];
+  const eg = s.egress || {};
+  const lastAt = Number(eg.lastAt) || 0;
+  const checkedAt = Number(eg.checkedAt) || 0;
+  const ip = String(eg.lastIp || eg.ip || "").trim();
+  const fresh = (lastAt && Date.now() - lastAt < EGRESS_FRESH_MS) || (checkedAt && Date.now() - checkedAt < EGRESS_FRESH_MS);
+  const health = networkHealth(s, configured);
   $("#net-total").textContent = String(configured.length);
-  $("#net-ok").textContent = String(configured.filter(r => r.tone === "ok").length);
-  $("#net-attn").textContent = String(configured.filter(r => r.tone === "bad" || r.tone === "warn").length);
-  $("#net-exit-sub").textContent = `${nodes.length} đăng ký · ${pools.length} tĩnh · 1 hiện tại`;
+  $("#net-egress-ip").textContent = ip || "Chưa rõ";
+  $("#net-egress-ip").title = ip || "Chưa có mẫu IP công khai";
+  const meta = [];
+  meta.push(eg.country || "Chưa rõ quốc gia");
+  meta.push(eg.peer ? egressPeerName(eg.peer) : "chưa xác định peer");
+  if(fresh) meta.push(`mẫu ${relMs(Math.max(lastAt, checkedAt))}`);
+  $("#net-egress-meta").textContent = meta.join(" · ");
+  $("#net-health").textContent = health.label;
+  $("#net-health").className = "v sm " + health.tone;
+  $("#net-health-detail").textContent = health.detail;
+  $("#net-exit-sub").textContent = `${nodes.length} đăng ký · ${pools.length} tĩnh · ${(s.settings.egressModes||[]).length} peer`;
   const needle = netf.q.trim().toLowerCase();
   const shown = rows.filter(r => {
     if(netf.state && r.tone !== netf.state) return false;
@@ -4168,11 +4328,11 @@ function paintNetworkExits(s){
   if(tbody){
     tbody.innerHTML = shown.map(r => {
       const name = r.name && r.name !== r.endpoint ? `<div class="ep-sub">${esc(r.name)}</div>` : "";
-      return `<tr>
+      return `<tr title="${esc(r.note)}">
         <td><span class="pill ${r.tone}">${esc(r.status)}</span></td>
         <td><div class="ep">${esc(r.endpoint)}</div>${name}</td>
         <td>${esc(r.source)}</td>
-        <td class="mono">${esc(r.proto)}</td>
+        <td>${esc(r.proto)}</td>
         <td>${esc(r.country)}</td>
         <td class="mono">${esc(r.latency)}</td>
         <td class="last">${esc(r.last)}</td>
@@ -4184,24 +4344,83 @@ function paintNetworkExits(s){
   if(empty) empty.style.display = shown.length ? "none" : "";
 }
 
+// paintVPN renders the read-only tunnel status. It must not infer that the
+// OpenKi egress equals the pVPN exit: an egress peer may be relay/WARP while
+// the tunnel is up, so the card explicitly says "trạng thái tunnel".
+function paintVPN(s){
+  const el = $("#page-network"); if(!el) return;
+  const v = s.vpn || {};
+  const state = el.querySelector("#vpn-state");
+  if(!state) return;
+  let tone = "hidsync", label = "Không khả dụng";
+  if(!v.available){
+    tone = "unknown"; label = "Không có pvpnctl";
+  } else if(v.error){
+    tone = "warn"; label = "Không đọc được";
+  } else if(v.connected){
+    tone = "ok"; label = "Đã kết nối";
+  } else {
+    tone = "warn"; label = "Chưa kết nối";
+  }
+  state.className = "pill " + tone;
+  state.textContent = label;
+  el.querySelector("#vpn-server").textContent = v.server || "—";
+  el.querySelector("#vpn-ip").textContent = v.ip || "—";
+  el.querySelector("#vpn-ip").title = v.ip || "";
+  el.querySelector("#vpn-country").textContent = v.country || "—";
+  el.querySelector("#vpn-proto").textContent = v.protocol || "—";
+  el.querySelector("#vpn-duration").textContent = v.duration || "—";
+  el.querySelector("#vpn-checked").textContent = v.checkedAt ? relMs(v.checkedAt) : "—";
+  const copy = el.querySelector("#vpn-copy");
+  if(copy){ copy.disabled = !v.ip; copy.dataset.copy = v.ip || ""; }
+  const note = el.querySelector("#vpn-note");
+  if(!v.available){
+    note.textContent = "Không tìm thấy pvpnctl. Đây là trạng thái chỉ đọc; cài helper hoặc đặt OPENKI_PVPNCTL nếu binary nằm ở đường dẫn khác.";
+  } else if(v.error){
+    note.textContent = "Không đọc được trạng thái: " + v.error;
+  } else if(!v.connected){
+    note.textContent = "Tunnel chưa kết nối. OpenKi không tự bật tunnel; dùng pvpnctl trong WSL nếu cần.";
+  } else {
+    note.textContent = "Tunnel đang chạy. Đây là trạng thái của pVPN, không nhất thiết là peer mà OpenKi đang dùng ở bảng trên.";
+  }
+}
+
+// paintLegacyLayer makes the coexistence rule visible: when the equal-peer
+// selector is active, proxyMode only supplies the base transport for relay and
+// WARP (and is not used by sing-box/Proton/direct peers).
+function paintLegacyLayer(s){
+  const el = $("#page-network"); if(!el) return;
+  const warn = el.querySelector("#net-legacy-warn");
+  if(!warn) return;
+  const modes = s.settings.egressModes || [];
+  if(!modes.length){
+    warn.style.display = "none";
+    return;
+  }
+  const base = modes.some(m => m === "relay" || m === "warp");
+  warn.style.display = "";
+  warn.className = "netnotice";
+  warn.innerHTML = base
+    ? `Lớp peer đang bật. Chế độ proxy bên dưới chỉ cung cấp kết nối gốc cho <b>Relay/WARP</b>; sing-box và Proton dùng listener riêng, còn 「Trực tiếp」bỏ qua proxy gốc. Đổi chế độ không tắt các peer.`
+    : `Lớp peer đang bật. Chế độ proxy và danh sách tĩnh bên dưới <b>không tham gia</b> định tuyến hiện tại; chúng chỉ có hiệu lực khi bỏ hết peer.`;
+}
+
 function renderNetwork(s){
   const el = $("#page-network");
   if(!el.dataset.rendered){
     el.innerHTML = `
       <h2 class="pt">Mạng <span class="sub">Đầu ra, trạng thái và phân bổ lưu lượng——cấu hình proxy nằm bên dưới</span></h2>
-      <div class="sumstrip" id="net-summary">
-        <div class="cell"><div class="v mono" id="net-egress-ip">—</div><div class="l">IP đầu ra hiện tại</div></div>
-        <div class="cell"><div class="v" id="net-country">—</div><div class="l">Quốc gia</div></div>
+      <div class="sumstrip" id="net-summary" aria-label="Tóm tắt đường ra">
+        <div class="cell"><div class="v mono ip" id="net-egress-ip">—</div><div class="l" id="net-egress-meta">Đang đọc trạng thái…</div></div>
+        <div class="cell"><div class="v sm" id="net-health">—</div><div class="l" id="net-health-detail">Sức khoẻ đường ra</div></div>
         <div class="cell"><div class="v" id="net-total">—</div><div class="l">Đầu ra đã cấu hình</div></div>
-        <div class="cell"><div class="v" id="net-ok">—</div><div class="l">Khả dụng</div></div>
-        <div class="cell"><div class="v" id="net-attn">—</div><div class="l">Cần chú ý</div></div>
-        <div class="cell"><div class="v" id="net-mode" style="font-size:14px;line-height:1.35">—</div><div class="l">Chế độ egress</div></div>
+        <div class="cell"><div class="v" id="net-mode" style="font-size:14px;line-height:1.35">—</div><div class="l">Lớp egress đang dùng</div></div>
       </div>
       <div class="card" id="net-egress-card">
         <div class="row" style="align-items:center; gap:8px">
-          <h3 style="margin:0">Đầu ra &amp; Proton VPN <span class="muted" style="font-size:11.5px;font-weight:400">Chọn peer và kiểm tra listener trước khi lưu</span></h3>
+          <h3 style="margin:0">Đường ra &amp; Proton VPN <span class="muted" style="font-size:11.5px;font-weight:400">Chọn peer, kiểm tra listener, rồi lưu một lần ở cuối trang</span></h3>
           <span style="flex:1"></span>
-          <span class="pill hidsync" id="proton-state">Chưa bật</span>
+          <span class="pill hidsync" id="proton-state" aria-live="polite">Chưa bật</span>
         </div>
         <div class="row" id="set-egress-modes" style="gap:14px; flex-wrap:wrap; margin-top:8px">
           <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="relay"> Relay</label>
@@ -4210,17 +4429,31 @@ function renderNetwork(s){
           <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="proton"> Proton VPN</label>
         </div>
         <div class="row" style="margin-top:10px; gap:8px; flex-wrap:wrap">
-          <span class="dim">Proton SOCKS5</span>
-          <input type="text" id="set-proton-url" placeholder="socks5h://127.0.0.1:1080" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:240px;font-family:var(--mono)">
-          <button class="ghost" id="btn-proton-test">Kiểm tra Proton</button>
-          <button class="act" id="btn-proton-save">Lưu &amp; bật Proton</button>
-          <span class="muted" style="font-size:12px" id="proton-test-result"></span>
+          <label class="dim" for="set-proton-url">SOCKS5 của Proton / pVPN</label>
+          <input type="text" id="set-proton-url" placeholder="socks5h://127.0.0.1:1080" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:min(340px,100%);font-family:var(--mono)">
+          <button class="ghost" id="btn-proton-test">Kiểm tra listener</button>
+          <span class="muted" style="font-size:12px" id="proton-test-result" aria-live="polite"></span>
         </div>
-        <div class="muted" style="font-size:11.5px;margin-top:5px">Proton là một đầu ra đơn, dùng SOCKS5 do client Proton (hoặc pVPN) mở trên loopback hoặc địa chỉ tunnel riêng. OpenKi không giữ mật khẩu Proton và không tự bật/tắt tunnel; chỉ dùng listener đã chạy. Có thể chọn thêm peer khác để dự phòng.</div>
-        <div class="row" style="margin-top:12px">
-          <button class="act" id="net-save">Lưu proxy</button>
-          <span class="muted" style="font-size:12px">Lưu là áp dụng nóng ngay cho các yêu cầu suy luận/danh sách/dò kiểm tra.</span>
+        <div class="muted" style="font-size:11.5px;margin-top:5px">OpenKi chỉ mở kết nối tới listener SOCKS5 đã chạy; không giữ mật khẩu Proton và không tự bật/tắt tunnel. pVPN trạng thái ở thẻ bên dưới là chỉ đọc.</div>
+      </div>
+      <div class="card" id="net-vpn">
+        <div class="row" style="align-items:center; gap:8px">
+          <h3 style="margin:0">VPN (pVPN) <span class="muted" style="font-size:11.5px;font-weight:400">Chỉ đọc · trạng thái tunnel trên máy này</span></h3>
+          <span style="flex:1"></span>
+          <span class="pill hidsync" id="vpn-state" aria-live="polite">Đang đọc…</span>
         </div>
+        <div class="vpnrow" style="margin-top:8px">
+          <span id="vpn-server" class="mono">—</span>
+          <span id="vpn-ip" class="vpnaddr">—</span>
+          <button class="ghost" data-copy="" id="vpn-copy" title="Sao chép IP công khai của tunnel" style="padding:2px 9px;font-size:11.5px">Sao chép IP</button>
+        </div>
+        <div class="vpnmeta">
+          <div class="kv"><span class="k">Quốc gia</span><span class="v" id="vpn-country">—</span></div>
+          <div class="kv"><span class="k">Giao thức</span><span class="v" id="vpn-proto">—</span></div>
+          <div class="kv"><span class="k">Thời gian</span><span class="v" id="vpn-duration">—</span></div>
+          <div class="kv"><span class="k">Lần đọc</span><span class="v" id="vpn-checked">—</span></div>
+        </div>
+        <div class="muted" style="font-size:11.5px;margin-top:7px" id="vpn-note">Điều khiển tunnel cần quyền root nên không mở từ dashboard; dùng <code class="k">pvpnctl</code> trong WSL.</div>
       </div>
       <div class="card" id="net-exits">
         <div class="row" style="margin-bottom:8px">
@@ -4235,20 +4468,21 @@ function renderNetwork(s){
           <span class="mchip" data-nf="warn">Chờ / làm mát</span>
           <span class="mchip" data-nf="unknown">Chưa rõ</span>
           <span style="flex:1"></span>
-          <button class="ghost" id="net-probe-subs" title="Dò IP, quốc gia và độ trễ của từng node đăng ký">Dò lại node đăng ký</button>
+          <button class="ghost" id="net-probe-all" title="Dò IP công khai của đường ra hiện tại, Proton và toàn bộ node đăng ký">Dò tất cả đầu ra</button>
+          <button class="ghost" id="net-probe-subs" title="Chỉ dò IP, quốc gia và độ trễ của từng node đăng ký">Dò node đăng ký</button>
           <button class="ghost" id="net-refresh" title="Đọc lại trạng thái từ gateway">Làm mới</button>
         </div>
         <div class="exit-wrap">
           <table class="exit-table" aria-label="Danh sách đầu ra">
             <thead><tr>
-              <th style="width:112px">Trạng thái</th>
-              <th>Đầu ra / IP</th>
-              <th style="width:82px">Nguồn</th>
-              <th style="width:86px">Giao thức</th>
-              <th style="width:72px">Quốc gia</th>
-              <th style="width:72px">Độ trễ</th>
-              <th style="width:96px">Lần cuối</th>
-              <th style="width:170px">Ghi chú</th>
+              <th scope="col" style="width:112px">Trạng thái</th>
+              <th scope="col">Đầu ra / IP</th>
+              <th scope="col" style="width:82px">Nguồn</th>
+              <th scope="col" style="width:112px">Peer / giao thức</th>
+              <th scope="col" style="width:72px">Quốc gia</th>
+              <th scope="col" style="width:72px">Độ trễ</th>
+              <th scope="col" style="width:96px">Lần cuối</th>
+              <th scope="col" style="width:190px">Ghi chú</th>
             </tr></thead>
             <tbody id="net-exit-rows"></tbody>
           </table>
@@ -4257,7 +4491,8 @@ function renderNetwork(s){
         <div class="muted" style="font-size:11.5px;margin-top:8px" id="net-lan-line">Đang chỉ nghe loopback (127.0.0.1).</div>
       </div>
       <details class="card fold" id="net-proxy">
-        <summary>Proxy thượng nguồn <span class="sub">Chế độ, danh sách tĩnh, giới hạn token và fingerprint</span></summary>
+        <summary>Proxy thượng nguồn <span class="sub">Lớp cũ: chế độ, danh sách tĩnh, giới hạn token và fingerprint</span></summary>
+        <div class="netnotice" id="net-legacy-warn" style="display:none"></div>
         <div class="row">
           <div class="dim" style="display:inline-flex; align-items:center; gap:8px">Chế độ proxy <span id="set-proxy"></span></div>
           <input type="text" id="set-proxy-url" placeholder="http://127.0.0.1:7890" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:220px;font-family:var(--mono)">
@@ -4285,10 +4520,6 @@ function renderNetwork(s){
         </div>
         <div class="muted" style="font-size:11.5px;margin-top:5px">0 = tắt governor token theo exit. Fingerprint đổi nóng; dùng <code class="k">gateprobe</code> trước khi chuyển sang <code class="k">off</code>.</div>
         <div class="muted" style="font-size:11.5px;margin-top:3px">Fingerprint hash: <code class="k" id="net-fp-hash">—</code></div>
-        <div class="row" style="margin-top:12px">
-          <button class="act" id="net-save-legacy">Lưu proxy</button>
-          <span class="muted" style="font-size:12px">Lưu là áp dụng nóng ngay cho các yêu cầu suy luận/danh sách/dò kiểm tra.</span>
-        </div>
       </details>
       <div class="card" id="net-lan">
         <h3>Mạng LAN</h3>
@@ -4320,36 +4551,74 @@ function renderNetwork(s){
         </div>
         <div id="subs-nodes" style="margin-top:10px"></div>
         <div class="muted" style="font-size:11.5px;margin-top:6px">Luân phiên = mỗi yêu cầu đổi sang một đầu ra trong số các node khoẻ mạnh (hạn mức tính theo IP đầu ra, mỗi node là một hạn mức độc lập); node quay số thất bại sẽ tự đổi node tiếp theo. Bật sẽ chuyển chế độ proxy thượng nguồn sang 「Luân phiên đăng ký proxy」; tắt sẽ khôi phục 「Theo biến môi trường」.</div>
+      </div>
+      <div class="netsticky" id="net-savebar" role="region" aria-label="Lưu cài đặt mạng">
+        <span class="txt" id="net-dirty-text" aria-live="polite"></span>
+        <button class="ghost" id="net-discard">Hoàn tác</button>
+        <button class="act" id="net-save-all" disabled>Lưu thay đổi</button>
       </div>`;
-    const urlInput = el.querySelector("#set-proxy-url");
-    urlInput.addEventListener("input", ()=>netDirty.add("proxyUrl"));
-    el.querySelector("#set-proxy-pool").addEventListener("input", ()=>netDirty.add("proxyPool"));
-    el.querySelector("#set-proton-url").addEventListener("input", ()=>netDirty.add("protonSocks5"));
-    el.querySelectorAll("#set-egress-modes input").forEach(cb=>cb.addEventListener("change", ()=>netDirty.add("egressModes")));
-    el.querySelector("#set-exit-tpm").addEventListener("input", ()=>netDirty.add("exitTpm"));
-    el.querySelector("#set-fingerprint").addEventListener("change", ()=>netDirty.add("fingerprint"));
-    const saveNetwork = async ()=>{
-      const j = await api("/settings", {
-        proxyMode: el.querySelector("#set-proxy").dataset.value,
-        proxyURL: el.querySelector("#set-proxy-url").value.trim(),
-        proxyPool: el.querySelector("#set-proxy-pool").value.split("\n").map(x=>x.trim()).filter(Boolean),
-        egressModes: [...el.querySelectorAll("#set-egress-modes input:checked")].map(x=>x.value),
-        protonSocks5: el.querySelector("#set-proton-url").value.trim(),
-        exitTokensPerMinute: parseInt(el.querySelector("#set-exit-tpm").value)||0,
-        fingerprintMode: el.querySelector("#set-fingerprint").value || "auto",
-      });
-      if(j){
-        netDirty.clear();
-        toast(j.note ? j.note : "Đã lưu cài đặt mạng (áp dụng nóng ngay)");
-        refresh();
-      }
+    const markNet = (k)=>{ markNetDirty(k); };
+    const selectedEgress = ()=>[...el.querySelectorAll("#set-egress-modes input:checked")].map(x=>x.value);
+    const paintProtonPreview = ()=>{
+      const state = el.querySelector("#proton-state");
+      if(!state) return;
+      const on = selectedEgress().includes("proton");
+      const configured = el.querySelector("#set-proton-url").value.trim() !== "";
+      state.textContent = on ? "Đang bật" : configured ? "Đã cấu hình, chưa bật" : "Chưa bật";
+      state.className = "pill " + (on ? "ok" : configured ? "warn" : "hidsync");
     };
-    el.querySelector("#net-save").onclick = saveNetwork;
-    el.querySelector("#net-save-legacy").onclick = saveNetwork;
-    el.querySelector("#btn-proton-save").onclick = async ()=>{
-      const cb = el.querySelector('#set-egress-modes input[value="proton"]');
-      if(cb && !cb.checked){ cb.checked = true; netDirty.add("egressModes"); }
-      await saveNetwork();
+    el.querySelector("#set-proxy-url").addEventListener("input", ()=>markNet("proxyUrl"));
+    el.querySelector("#set-proxy-pool").addEventListener("input", ()=>markNet("proxyPool"));
+    el.querySelector("#set-proton-url").addEventListener("input", ()=>{ markNet("protonSocks5"); paintProtonPreview(); });
+    el.querySelectorAll("#set-egress-modes input").forEach(cb=>cb.addEventListener("change", ()=>{
+      markNet("egressModes");
+      paintProtonPreview();
+      paintLegacyLayer({settings:{egressModes:selectedEgress()}});
+    }));
+    el.querySelector("#set-exit-tpm").addEventListener("input", ()=>markNet("exitTpm"));
+    el.querySelector("#set-fingerprint").addEventListener("change", ()=>markNet("fingerprint"));
+    const subnetInputs = () => {
+      const nodes = (s.subscriptions && s.subscriptions.singbox && s.subscriptions.singbox.nodes) || [];
+      return nodes.length;
+    };
+    // saveNetwork sends only dirty keys. The endpoint is already partial, but
+    // posting every field made an untouched dropdown look like a deliberate
+    // change and could overwrite a value another dashboard tab had just saved.
+    const saveNetwork = async ()=>{
+      const payload = {};
+      const sent = [];
+      const put = (dirtyKey, payloadKey, value)=>{
+        if(!netDirty.has(dirtyKey)) return;
+        payload[payloadKey] = value; sent.push(dirtyKey);
+      };
+      put("proxyMode", "proxyMode", el.querySelector("#set-proxy").dataset.value || "env");
+      put("proxyUrl", "proxyURL", el.querySelector("#set-proxy-url").value.trim());
+      put("proxyPool", "proxyPool", el.querySelector("#set-proxy-pool").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean));
+      put("egressModes", "egressModes", [...el.querySelectorAll("#set-egress-modes input:checked")].map(x=>x.value));
+      put("protonSocks5", "protonSocks5", el.querySelector("#set-proton-url").value.trim());
+      if(netDirty.has("exitTpm")){
+        const raw = el.querySelector("#set-exit-tpm").value.trim();
+        const n = raw === "" ? 0 : Number(raw);
+        if(!Number.isInteger(n) || n < 0 || n > 1000000){
+          toast("Token/phút phải là số nguyên trong khoảng 0–1.000.000"); return;
+        }
+        payload.exitTokensPerMinute = n; sent.push("exitTpm");
+      }
+      put("fingerprint", "fingerprintMode", el.querySelector("#set-fingerprint").value || "auto");
+      if(!sent.length){ toast("Không có thay đổi cần lưu"); return; }
+      const j = await api("/settings", payload);
+      if(!j) return;
+      for(const k of sent) netDirty.delete(k);
+      paintNetDirty();
+      toast(j.note ? j.note : "Đã lưu cài đặt mạng (áp dụng nóng ngay)");
+      refresh();
+    };
+    el.querySelector("#net-save-all").onclick = saveNetwork;
+    el.querySelector("#net-discard").onclick = ()=>{
+      netDirty.clear();
+      delete el.dataset.rendered;
+      renderNetwork(STATE || s);
+      toast("Đã hoàn tác các thay đổi chưa lưu");
     };
     el.querySelector("#btn-proxy-test").onclick = async () => {
       const box = el.querySelector("#proxy-test-result");
@@ -4360,7 +4629,7 @@ function renderNetwork(s){
         const j = await r.json();
         if (j.ok) {
           box.innerHTML = `✓ Kết nối được · HTTP ${j.status} · ${j.latencyMs}ms · đầu ra ${esc(j.egressIP||"?")} (${esc(j.egressCountry||"?")})`;
-          box.style.color = "var(--mint)";
+          box.style.color = "var(--ok)";
         } else {
           box.innerHTML = `✗ ${esc(j.error||"Không thông")}`;
           box.style.color = "var(--bad)";
@@ -4376,7 +4645,7 @@ function renderNetwork(s){
         const j = await r.json();
         if (j.ok) {
           box.innerHTML = `✓ Proton thông · HTTP ${j.status} · ${j.latencyMs}ms · đầu ra ${esc(j.egressIP||"?")} (${esc(j.egressCountry||"?")})`;
-          box.style.color = "var(--mint)";
+          box.style.color = "var(--ok)";
         } else {
           box.innerHTML = `✗ ${esc(j.error||"Không thông")}`;
           box.style.color = "var(--bad)";
@@ -4438,8 +4707,42 @@ function renderNetwork(s){
         paintNetworkExits(STATE || s);
       };
     });
+    const probeAll = el.querySelector("#net-probe-all");
+    probeAll.onclick = async ()=>{
+      const old = probeAll.textContent;
+      probeAll.disabled = true; probeAll.textContent = "Đang dò…";
+      const jobs = [];
+      const modes = s.settings.egressModes || [];
+      const mode = el.querySelector("#set-proxy").dataset.value || s.settings.proxyMode || "env";
+      const protonURL = el.querySelector("#set-proton-url").value.trim();
+      if(modes.includes("proton") || mode === "proton"){
+        jobs.push(api("/proxy-test", {mode:"proton", protonSocks5: protonURL}).then(j=>{
+          const box = el.querySelector("#proton-test-result");
+          if(!box) return;
+          if(j && j.ok){ box.innerHTML = `✓ ${esc(j.egressIP||"?")} (${esc(j.egressCountry||"?")}) · ${j.latencyMs}ms`; box.style.color = "var(--ok)"; }
+          else if(j){ box.innerHTML = `✗ ${esc(j.error||"Không thông")}`; box.style.color = "var(--bad)"; }
+        }));
+      }
+      if(["direct","env","custom","system"].includes(mode)){
+        jobs.push(api("/proxy-test", {mode, url: el.querySelector("#set-proxy-url").value.trim()}).then(j=>{
+          const box = el.querySelector("#proxy-test-result");
+          if(!box) return;
+          if(j && j.ok){ box.innerHTML = `✓ ${esc(j.egressIP||"?")} (${esc(j.egressCountry||"?")}) · ${j.latencyMs}ms`; box.style.color = "var(--ok)"; }
+          else if(j){ box.innerHTML = `✗ ${esc(j.error||"Không thông")}`; box.style.color = "var(--bad)"; }
+        }));
+      }
+      jobs.push(api("/egress/sample", {}));
+      if(subnetInputs() > 0) jobs.push(api("/subs/probe", {}));
+      if(!jobs.length){ toast("Chưa có đầu ra nào để dò"); }
+      else {
+        await Promise.allSettled(jobs);
+        toast("Đã dò xong; bảng cập nhật sau vài giây");
+      }
+      probeAll.disabled = false; probeAll.textContent = old;
+      refresh(); setTimeout(refresh, 8000);
+    };
     el.querySelector("#net-probe-subs").onclick = async ()=>{
-      if(!((s.subscriptions && s.subscriptions.singbox && (s.subscriptions.singbox.nodes||[]).length))){
+      if(subnetInputs() === 0){
         toast("Chưa có node đăng ký nào để dò"); return;
       }
       toast("Đang dò IP, quốc gia và độ trễ của từng node…");
@@ -4449,12 +4752,12 @@ function renderNetwork(s){
     el.querySelector("#net-refresh").onclick = ()=>refresh();
     el.dataset.rendered = "1";
   }
-  const eg = s.egress || {};
-  el.querySelector("#net-egress-ip").textContent = eg.ip || "Không rõ";
-  el.querySelector("#net-country").textContent = eg.country || "?";
   el.querySelector("#net-mode").textContent = egressLabel(s.settings);
   el.querySelector("#net-lan-line").textContent = `Cổng ${s.port} · ${s.lanBaseURL ? "LAN: " + s.lanBaseURL : "Chỉ loopback (127.0.0.1)"}`;
   paintNetworkExits(s);
+  paintVPN(s);
+  paintLegacyLayer(s);
+  paintNetDirty();
   const protonState = el.querySelector("#proton-state");
   if(protonState){
     const on = (s.settings.egressModes || []).includes("proton");
@@ -4466,7 +4769,7 @@ function renderNetwork(s){
     makeDropdown(el.querySelector("#set-proxy"),
       [["system","Theo proxy hệ thống"],["env","Theo biến môi trường"],["direct","Kết nối trực tiếp"],["custom","URL tuỳ chỉnh"],["rotate","Luân phiên đăng ký proxy (sing-box)"],["pool","Xoay vòng danh sách proxy tĩnh"]],
       s.settings.proxyMode || "env",
-      ()=>netDirty.add("proxyMode"));
+      ()=>markNetDirty("proxyMode"));
   }
   const url = el.querySelector("#set-proxy-url");
   if(!netDirty.has("proxyUrl") && document.activeElement !== url) url.value = s.settings.proxyURL || "";

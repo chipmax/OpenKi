@@ -54,6 +54,19 @@ phát triển (UTC+7).
   **Lưu & bật Proton**. Dashboard gửi `Cache-Control: no-store` để bản nâng
   cấp không bị trình duyệt dùng lại trang cũ (thương hiệu zen-gate/thiếu
   Proton).
+- Rà lại toàn bộ trang Mạng: tóm tắt 4 ô (IP + peer + độ mới, sức khoẻ, số đầu
+  ra, lớp egress), IPv6 dài tự xuống dòng thay vì đẩy ngang; bảng đầu ra phân
+  biệt IP đang phục vụ với mẫu định kỳ, có `scope` cho header và cột peer.
+  Chỉ còn **một thanh lưu** dính đáy trang, chỉ gửi các trường đã sửa; thêm
+  **Dò tất cả đầu ra** gọi `POST /admin/api/egress/sample` để lấy mẫu IP ngay
+  thay vì chờ watcher 2 phút. Thẻ **VPN (pVPN)** chỉ đọc trạng thái tunnel,
+  nêu rõ không nhất thiết trùng IP egress; cảnh báo lớp proxy cũ hiện ngay
+  khi lớp peer đang bật.
+- Ghi nhận peer thực sự phục vụ lượt thành công (`lastExitPeer`/`lastExitAt`) từ
+  transport đã thắng, kể cả khi kế hoạch chọn slot proxy; dashboard phân biệt
+  "đang phục vụ" với mẫu IP định kỳ thay vì gán nhãn peer theo cấu hình.
+- Đánh bóng trang Mạng: nhãn sức khoẻ nói rõ số đầu ra dự phòng đã xác minh
+  và số chưa dò, tránh "0/8 khả dụng" bị hiểu là tất cả đều hỏng.
 - Trang "Cập nhật" riêng: so commit đang chạy với `master`, hiển thị checkout
   nguồn, lệnh `git pull`/build/cài/restart cho Linux và nút sao chép. Bản
   Linux không còn quảng cáo "một chạm"; mục Cập nhật trong Cài đặt được gỡ.

@@ -72,7 +72,10 @@ curl --proxy socks5h://127.0.0.1:1080 https://www.cloudflare.com/cdn-cgi/trace
 
 Trong **Mạng → Đầu ra & Proton VPN**, tích `Proton VPN`, nhập URL
 `socks5h://127.0.0.1:1080` (hoặc địa chỉ tunnel của pVPN), bấm **Kiểm tra
-Proton**, rồi **Lưu & bật Proton**. Hoặc sửa `config.json`:
+listener**, rồi bấm **Lưu thay đổi** trên thanh lưu duy nhất ở cuối trang. Thẻ
+**VPN (pVPN)** ngay dưới đó chỉ đọc trạng thái tunnel (`pvpnctl status`), không
+phải IP mà OpenKi đang dùng; nút **Dò tất cả đầu ra** lấy mẫu IP thật qua
+transport hiện tại. Hoặc sửa `config.json`:
 
 ```json
 {
@@ -86,6 +89,11 @@ Listener phải bind loopback hoặc địa chỉ tunnel riêng (pVPN có thể 
 `192.168.110.88:1080` thay vì loopback); không mở SOCKS5 không xác thực ra LAN.
 Kiểm tra bằng `ss -ltnp` và chặn cổng đó bằng firewall nếu máy có interface
 khác.
+
+OpenKi đọc trạng thái pVPN bằng helper root-owned `/opt/pvpn/pvpnctl` (hoặc
+`OPENKI_PVPNCTL` nếu đặt ở nơi khác). Lệnh là argv cố định, không qua shell;
+OpenKi không đọc mật khẩu, không đăng nhập và không bật/tắt tunnel. Trạng thái
+được cache 15 giây để dashboard 10 giây không fork helper liên tục.
 
 Chi tiết triển khai: [docs/OPERATIONS.md](docs/OPERATIONS.md) và
 [docs/DEPLOY.md](docs/DEPLOY.md).
@@ -109,7 +117,7 @@ go test ./...
 
 Kiểm tra fingerprint upstream: `openki -gate-check` (xem
 [docs/GATE-AB.md](docs/GATE-AB.md)). Kiểm tra Proton trên dashboard bằng nút
-**Kiểm tra Proton**.
+**Kiểm tra listener**.
 
 ## Cập nhật
 

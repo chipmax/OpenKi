@@ -25,6 +25,7 @@ import (
 	"github.com/chipmax/openki/internal/autotag"
 	"github.com/chipmax/openki/internal/lane"
 	"github.com/chipmax/openki/internal/logx"
+	"github.com/chipmax/openki/internal/pvpn"
 	"github.com/chipmax/openki/internal/relay"
 	"github.com/chipmax/openki/internal/store"
 	"time"
@@ -100,6 +101,9 @@ type Server struct {
 	// buttons are doing right now — kept server-side because the dashboard
 	// rebuilds its card grid every 10s.
 	probeTasks *taskRegistry
+	// vpnStatus reads the local pVPN helper. Nil (unit tests, non-Debian
+	// builds) simply omits the tunnel card; it is never a control surface.
+	vpnStatus func(context.Context) pvpn.Status
 }
 
 // SetTagger wires the AI capability tagger.
@@ -257,7 +261,8 @@ func (s *Server) autostartState() bool {
 
 // New builds a server; Handler is immediately usable (for tests).
 func New(l *lane.Lane, st *store.Store) *Server {
-	s := &Server{Lane: l, Store: st, listen: net.Listen, probeTasks: newTaskRegistry()}
+	s := &Server{Lane: l, Store: st, listen: net.Listen, probeTasks: newTaskRegistry(),
+		vpnStatus: pvpn.Read}
 	// The lane reports every physical attempt here — including the failovers a
 	// client never sees — so both the usage stats and the per-request log lines
 	// are fed from the server itself.

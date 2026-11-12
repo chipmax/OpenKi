@@ -55,6 +55,11 @@ type Server struct {
 	mux      *http.ServeMux
 	srvMu    sync.Mutex
 	srv      *http.Server
+	// ln is the live listener. Rebind closes it directly: closing only the
+	// http.Server races with its Serve goroutine, and a Serve that starts
+	// after Close returns without releasing the socket, so the fallback bind
+	// finds the port still occupied.
+	ln net.Listener
 	// listen opens the TCP listener; tests swap it to force a bind refusal.
 	listen func(network, addr string) (net.Listener, error)
 	// logger is injected by main; nil-safe helpers fall back to empty.
@@ -361,6 +366,7 @@ func (s *Server) Start() error {
 	}
 	s.srvMu.Lock()
 	s.srv = srv
+	s.ln = ln
 	s.srvMu.Unlock()
 	go func() {
 		// Capture the server locally: a later Rebind replaces the field while
@@ -406,8 +412,16 @@ func (s *Server) Rebind() error {
 func (s *Server) closeListener() {
 	s.srvMu.Lock()
 	defer s.srvMu.Unlock()
+	// Close the listener first. srv.Close only releases listeners Serve has
+	// already registered; before that, Serve returns ErrServerClosed without
+	// touching the socket and the port stays bound.
+	if s.ln != nil {
+		_ = s.ln.Close()
+		s.ln = nil
+	}
 	if s.srv != nil {
 		_ = s.srv.Close()
+		s.srv = nil
 	}
 }
 

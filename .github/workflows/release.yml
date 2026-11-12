@@ -146,15 +146,20 @@ jobs:
 
       - name: Verify
         run: |
-          lipo -info "dist/Lối Mở.app/Contents/MacOS/loimo"
-          codesign --verify --deep --strict "dist/Lối Mở.app"
-          plutil -lint "dist/Lối Mở.app/Contents/Info.plist"
+          # APFS normalises the Vietnamese diacritics in the bundle name to
+          # NFD, so a literal NFC path from the script does not resolve on the
+          # runner. Resolve the bundle by glob instead.
+          app="$(find dist -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$app"
+          lipo -info "$app/Contents/MacOS/loimo"
+          codesign --verify --deep --strict "$app"
+          plutil -lint "$app/Contents/Info.plist"
 
       - uses: actions/upload-artifact@v4
         with:
           name: loimo-macos
           path: |
-            dist/Lối Mở.app
+            dist/*.app
             dist/loimo-darwin
             dist/loimo-*-darwin.zip
           if-no-files-found: error

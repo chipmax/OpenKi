@@ -77,8 +77,8 @@ phát triển (UTC+7).
   Chỉ còn **một thanh lưu** dính đáy trang, chỉ gửi các trường đã sửa; thêm
   **Dò tất cả đầu ra** gọi `POST /admin/api/egress/sample` để lấy mẫu IP ngay
   thay vì chờ watcher 2 phút. Thẻ **VPN (pVPN)** chỉ đọc trạng thái tunnel,
-  nêu rõ không nhất thiết trùng IP egress; cảnh báo lớp proxy cũ hiện ngay
-  khi lớp peer đang bật.
+  nêu rõ không nhất thiết trùng IP egress; cảnh báo lớp proxy cũ nằm ngoài
+  mục thu gọn và nêu rõ số proxy tĩnh không tham gia định tuyến khi peer bật.
 - Ghi nhận peer thực sự phục vụ lượt thành công (`lastExitPeer`/`lastExitAt`) từ
   transport đã thắng, kể cả khi kế hoạch chọn slot proxy; dashboard phân biệt
   "đang phục vụ" với mẫu IP định kỳ thay vì gán nhãn peer theo cấu hình.

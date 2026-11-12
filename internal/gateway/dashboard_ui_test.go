@@ -40,6 +40,12 @@ func TestProtonControlsLiveInVisibleNetworkCard(t *testing.T) {
 	card := indexAfter(t, html, `id="net-egress-card"`)
 	exits := indexAfter(t, html, `id="net-exits"`)
 	fold := indexAfter(t, html, `id="net-proxy"`)
+	// The coexistence warning must be visible on the page, not tucked inside
+	// the collapsed legacy-proxy fold where a static pool looks active.
+	warn := indexAfter(t, html, `id="net-legacy-warn"`)
+	if !(exits < warn && warn < fold) {
+		t.Fatalf("expected legacy-layer warning between the exit table and the fold (exits=%d warn=%d fold=%d)", exits, warn, fold)
+	}
 	if !(card < exits && exits < fold) {
 		t.Fatalf("expected egress card before the exit table and the fold (card=%d exits=%d fold=%d)", card, exits, fold)
 	}

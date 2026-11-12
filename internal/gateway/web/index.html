@@ -4404,11 +4404,14 @@ function paintLegacyLayer(s){
     return;
   }
   const base = modes.some(m => m === "relay" || m === "warp");
+  const active = egressLabel(s.settings);
+  const pools = (s.proxyPoolStatus || []).length;
+  const poolText = pools ? `${pools} proxy tĩnh` : "Danh sách proxy tĩnh";
   warn.style.display = "";
   warn.className = "netnotice";
   warn.innerHTML = base
-    ? `Lớp peer đang bật. Chế độ proxy bên dưới chỉ cung cấp kết nối gốc cho <b>Relay/WARP</b>; sing-box và Proton dùng listener riêng, còn 「Trực tiếp」bỏ qua proxy gốc. Đổi chế độ không tắt các peer.`
-    : `Lớp peer đang bật. Chế độ proxy và danh sách tĩnh bên dưới <b>không tham gia</b> định tuyến hiện tại; chúng chỉ có hiệu lực khi bỏ hết peer.`;
+    ? `Đang bật peer <b>${esc(active)}</b>. Chế độ proxy và ${poolText} bên dưới chỉ cung cấp kết nối gốc cho <b>Relay/WARP</b>; sing-box và Proton dùng listener riêng, còn 「Trực tiếp」bỏ qua proxy gốc.`
+    : `Đang bật peer <b>${esc(active)}</b>. ${poolText} bên dưới <b>không tham gia</b> định tuyến hiện tại; chỉ dùng khi bỏ hết peer và chọn chế độ 「Xoay vòng danh sách proxy tĩnh」.`;
 }
 
 function renderNetwork(s){
@@ -4496,9 +4499,9 @@ function renderNetwork(s){
         <div id="net-exit-empty" class="muted" style="display:none;font-size:12px;padding:14px 2px">Không có đầu ra nào khớp bộ lọc.</div>
         <div class="muted" style="font-size:11.5px;margin-top:8px" id="net-lan-line">Đang chỉ nghe loopback (127.0.0.1).</div>
       </div>
+      <div class="netnotice" id="net-legacy-warn" style="display:none"></div>
       <details class="card fold" id="net-proxy">
         <summary>Proxy thượng nguồn <span class="sub">Lớp cũ: chế độ, danh sách tĩnh, giới hạn token và fingerprint</span></summary>
-        <div class="netnotice" id="net-legacy-warn" style="display:none"></div>
         <div class="row">
           <div class="dim" style="display:inline-flex; align-items:center; gap:8px">Chế độ proxy <span id="set-proxy"></span></div>
           <input type="text" id="set-proxy-url" placeholder="http://127.0.0.1:7890" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:220px;font-family:var(--mono)">
@@ -4579,7 +4582,7 @@ function renderNetwork(s){
     el.querySelectorAll("#set-egress-modes input").forEach(cb=>cb.addEventListener("change", ()=>{
       markNet("egressModes");
       paintProtonPreview();
-      paintLegacyLayer({settings:{egressModes:selectedEgress()}});
+      paintLegacyLayer({settings:{egressModes:selectedEgress()}, proxyPoolStatus:s.proxyPoolStatus});
     }));
     el.querySelector("#set-exit-tpm").addEventListener("input", ()=>markNet("exitTpm"));
     el.querySelector("#set-fingerprint").addEventListener("change", ()=>markNet("fingerprint"));

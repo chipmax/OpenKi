@@ -106,11 +106,21 @@ jobs:
       - name: Build .deb
         run: tools/build-deb.sh "${{ steps.ver.outputs.version }}"
 
+      # The GUI AppImage/.deb are amd64 only (GTK + appindicator). ARM boards
+      # and servers get the same headless binary the container uses.
+      - name: Build Linux arm64 headless
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 \
+            go build -tags headless -trimpath \
+            -ldflags "-X github.com/chipmax/loimo/internal/gateway.Version=${{ steps.ver.outputs.version }} -X github.com/chipmax/loimo/internal/update.Current=${{ steps.ver.outputs.version }}" \
+            -o dist/loimo-linux-arm64 ./cmd/loimo
+          file dist/loimo-linux-arm64
+
       - name: Upload to release
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.ref_name }}" dist/*.AppImage dist/*.deb --clobber
+        run: gh release upload "${{ github.ref_name }}" dist/*.AppImage dist/*.deb dist/loimo-linux-arm64 --clobber
 
   # The macOS port builds here but is not published: the bundle is only
   # ad-hoc signed, and shipping that would hand every user a Gatekeeper warning

@@ -13,9 +13,9 @@ phát triển (UTC+7).
 - Bỏ `COPYING` (bản sao trùng byte-for-byte của `LICENSE`), hai ảnh chụp không
   được tham chiếu và script patch dashboard một lần; repo gọn hơn, không đổi
   tính năng.
-- WSL dùng NAT + `localhostForwarding` thay cho relay/nft/portproxy, nên
-  `http://127.0.0.1:8787` trên Windows vào thẳng gateway; bỏ dịch vụ relay cục
-  bộ và firewall đi kèm.
+- WSL dùng `networkingMode=mirrored` để Windows dùng chung loopback; giữ một
+  phiên WSL ẩn lúc đăng nhập vì localhost forwarding của WSL rớt khi phiên
+  rảnh. Bỏ relay/nft/portproxy và shortcut relay cũ.
 - Kiểm tra source trên dashboard dùng HTTP client trực tiếp thay vì lane proxy
   (hết timeout khi proxy pool chưa sẵn sàng) và nhận checkout `~/src/OpenKi`.
 

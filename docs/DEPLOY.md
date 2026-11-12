@@ -199,6 +199,18 @@ Unit mẫu dùng `User=admin`, `LOIMO_HEADLESS=1`,
 `LOIMO_HOME`, `ReadWritePaths` cho khớp. Đặt `port: 8788` trong
 `config.json` của WSL.
 
+Muốn mở dashboard WSL từ Windows mà không thêm relay, đặt trong
+`%UserProfile%\.wslconfig`:
+
+```ini
+[wsl2]
+networkingMode=mirrored
+```
+
+rồi `wsl --shutdown`. WSL có thể bỏ listener localhost khi không còn phiên
+nào, nên giữ một phiên ẩn lúc đăng nhập (ví dụ shortcut
+`wsl.exe -d Debian -e sleep infinity`) nếu cần dashboard thường trực.
+
 ## Triển khai VPS
 
 Giả định: Debian/Ubuntu, domain `gw.example.com` trỏ A/AAAA về VPS, mở `22`,

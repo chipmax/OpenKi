@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // A day bucket written by an older build has no "agents"/"models" object, so

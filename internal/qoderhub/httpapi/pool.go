@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"zen-gate/internal/qoderhub/remote"
+	"github.com/chipmax/loimo/internal/qoderhub/remote"
 )
 
 // The account-pool surface. It exists so the settings card can show and steer

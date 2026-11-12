@@ -4,8 +4,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // The CodeArts switch follows the WorkBuddy contract: it must persist, and it

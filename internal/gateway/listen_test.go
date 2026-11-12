@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // routableIPv4 is this machine's LAN address, or "" when the box has no
@@ -38,7 +38,7 @@ func freePort(t *testing.T) int {
 // setting and returns it plus its port.
 func lanTestServer(t *testing.T, allowLan bool) (*Server, int) {
 	t.Helper()
-	t.Setenv("ZEN_GATE_HOME", t.TempDir())
+	t.Setenv("LOIMO_HOME", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)
@@ -99,7 +99,7 @@ func TestLanServedWhenAllowed(t *testing.T) {
 	}
 }
 
-// The agent adapters identify zen-gate's own entries by the literal
+// The agent adapters identify loimo's own entries by the literal
 // 127.0.0.1 in the advertised base URL, so it must never become 0.0.0.0.
 func TestBaseURLStaysLoopbackWhenLanAllowed(t *testing.T) {
 	s, port := lanTestServer(t, true)

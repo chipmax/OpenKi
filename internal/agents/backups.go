@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // backupFile stores a pre-injection copy of an agent config under
-// <zen-gate home>/backups/<agent>/.
+// <loimo home>/backups/<agent>/.
 func backupFile(agentID, path string, data []byte) (string, error) {
 	dir := filepath.Join(store.Home(), "backups", agentID)
 	if err := os.MkdirAll(dir, 0o700); err != nil {

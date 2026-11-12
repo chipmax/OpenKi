@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"zen-gate/internal/qoderhub/remote"
-	"zen-gate/internal/qoderhub/service"
-	"zen-gate/internal/qoderhub/tooltypes"
+	"github.com/chipmax/loimo/internal/qoderhub/remote"
+	"github.com/chipmax/loimo/internal/qoderhub/service"
+	"github.com/chipmax/loimo/internal/qoderhub/tooltypes"
 )
 
 // Server-side tool injection: the proxy advertises gateway-only tools and runs

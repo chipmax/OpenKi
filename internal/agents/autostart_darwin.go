@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // Autostart on macOS is a per-user launchd job: a plist in
@@ -19,7 +19,10 @@ import (
 // in, without asking for admin rights.
 
 // launchdLabel is the reverse-DNS job label; it doubles as the plist name.
-const launchdLabel = "com.lagcomcom.zen-gate"
+const launchdLabel = "io.github.chipmax.loimo"
+
+// legacyLaunchdLabel is the label written before the project rename.
+const legacyLaunchdLabel = "com.lagcomcom.zen-gate"
 
 func launchdPlistPath() string {
 	home, err := os.UserHomeDir()
@@ -29,20 +32,37 @@ func launchdPlistPath() string {
 	return filepath.Join(home, "Library", "LaunchAgents", launchdLabel+".plist")
 }
 
+func legacyLaunchdPlistPath() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, "Library", "LaunchAgents", legacyLaunchdLabel+".plist")
+}
+
 // launchdDomain is the per-user launchd domain (`launchctl bootstrap`'s
 // domain-target) and launchdServiceTarget the same job addressed by label
 // (`launchctl print`/`bootout` take a service-target instead).
-func launchdDomain() string        { return "gui/" + strconv.Itoa(os.Getuid()) }
-func launchdServiceTarget() string { return launchdDomain() + "/" + launchdLabel }
+func launchdDomain() string { return "gui/" + strconv.Itoa(os.Getuid()) }
+func launchdServiceTarget() string {
+	return launchdServiceTargetFor(launchdLabel)
+}
+func launchdServiceTargetFor(label string) string {
+	return launchdDomain() + "/" + label
+}
 
-// AutostartEnabled reports whether the launchd job is installed.
+// AutostartEnabled reports whether either the current or pre-rename launchd
+// job is installed.
 func AutostartEnabled() bool {
-	p := launchdPlistPath()
-	if p == "" {
-		return false
+	for _, p := range []string{launchdPlistPath(), legacyLaunchdPlistPath()} {
+		if p == "" {
+			continue
+		}
+		if _, err := os.Stat(p); err == nil {
+			return true
+		}
 	}
-	_, err := os.Stat(p)
-	return err == nil
+	return false
 }
 
 // AutostartSet installs or removes the launchd job.
@@ -55,11 +75,19 @@ func AutostartSet(enable bool) error {
 		// bootout is a no-op when the job is not loaded; ignore the error so a
 		// stale plist can still be cleaned up.
 		_ = exec.Command("launchctl", "bootout", launchdServiceTarget()).Run()
-		if err := os.Remove(plist); err != nil && !os.IsNotExist(err) {
-			return err
+		_ = exec.Command("launchctl", "bootout", launchdServiceTargetFor(legacyLaunchdLabel)).Run()
+		for _, p := range []string{plist, legacyLaunchdPlistPath()} {
+			if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
+				return err
+			}
 		}
 		return nil
 	}
+
+	// A pre-rename job would otherwise keep launching the old binary after
+	// login alongside the new one.
+	_ = exec.Command("launchctl", "bootout", launchdServiceTargetFor(legacyLaunchdLabel)).Run()
+	_ = os.Remove(legacyLaunchdPlistPath())
 
 	exe, err := os.Executable()
 	if err != nil {
@@ -92,7 +120,7 @@ func AutostartSet(enable bool) error {
     <string>%s</string>
 </dict>
 </plist>
-`, launchdLabel, plistXMLEscape(exe), logPath("zen-gate-launchd.out"), logPath("zen-gate-launchd.err"))
+`, launchdLabel, plistXMLEscape(exe), logPath("loimo-launchd.out"), logPath("loimo-launchd.err"))
 	tmp := plist + ".tmp"
 	if err := os.WriteFile(tmp, []byte(body), 0o644); err != nil {
 		return err
@@ -117,6 +145,6 @@ func plistXMLEscape(s string) string {
 	return r.Replace(s)
 }
 
-// logPath points launchd's stdout/stderr at the zen-gate data dir so a
+// logPath points launchd's stdout/stderr at the loimo data dir so a
 // launch-at-login instance is debuggable without a terminal.
 func logPath(name string) string { return filepath.Join(store.Home(), name) }

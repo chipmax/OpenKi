@@ -21,8 +21,8 @@ func TestEmbeddedDecision(t *testing.T) {
 	}{
 		{"runtime installed", "139.0.3405.119", nil, false, true, ""},
 		{"runtime missing", "", nil, false, false, "WebView2 Runtime 未安装"},
-		{"forced off", "139.0.3405.119", nil, true, false, "ZEN_GATE_NO_WEBVIEW2=1（手动跳过内嵌窗口）"},
-		{"forced off wins over installed", "", nil, true, false, "ZEN_GATE_NO_WEBVIEW2=1（手动跳过内嵌窗口）"},
+		{"forced off", "139.0.3405.119", nil, true, false, "LOIMO_NO_WEBVIEW2=1（手动跳过内嵌窗口）"},
+		{"forced off wins over installed", "", nil, true, false, "LOIMO_NO_WEBVIEW2=1（手动跳过内嵌窗口）"},
 		{"preflight error stays open", "", errors.New("HRESULT 0x80004005"), false, true, ""},
 	}
 	for _, tt := range tests {

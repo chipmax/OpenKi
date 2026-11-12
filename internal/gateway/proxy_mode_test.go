@@ -4,7 +4,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // rotate is a real mode — lane.SetProxy tunnels through the subscription pool

@@ -3,8 +3,8 @@ package gateway
 import (
 	"testing"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // Issue #32: the settings handler snapshots the config at request start and
@@ -15,7 +15,7 @@ import (
 // with a deliberately stale snapshot, which is exactly what a racing request
 // holds.
 func TestCommitSettingsPublishesOnlyDirtyFields(t *testing.T) {
-	t.Setenv("ZEN_GATE_HOME", t.TempDir())
+	t.Setenv("LOIMO_HOME", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)

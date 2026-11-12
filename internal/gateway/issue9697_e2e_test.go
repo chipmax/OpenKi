@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // parallelToolReply drives a chat-wire upstream that streams two parallel tool

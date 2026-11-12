@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"zen-gate/internal/qoderhub/service"
-	"zen-gate/internal/qoderhub/tooltypes"
+	"github.com/chipmax/loimo/internal/qoderhub/service"
+	"github.com/chipmax/loimo/internal/qoderhub/tooltypes"
 )
 
 // OpenAI-side server-tool injection. Mirrors the Anthropic path (media_tools.go)

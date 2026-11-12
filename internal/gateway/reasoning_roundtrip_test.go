@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // Issue #99: a thinking-mode upstream refuses a replayed assistant turn whose

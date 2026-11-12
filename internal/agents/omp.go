@@ -13,7 +13,7 @@ import (
 
 // omp (the omp coding agent) reads ~/.omp/agent/models.yml: a providers map
 // keyed by provider id, each carrying baseUrl/api/apiKey and a model list.
-// zen-gate injects one provider named "zen-gate" and leaves every other
+// loimo injects one provider named "loimo" and leaves every other
 // provider untouched.
 //
 // Two installs can coexist: the gateway may run inside WSL while omp is also
@@ -22,7 +22,12 @@ import (
 // separate, explicitly toggleable entry rather than being silently mixed with
 // the Linux one.
 
-const ompProviderID = "zen-gate"
+const ompProviderID = "loimo"
+
+// legacyOMPProviderID is the provider key written by releases before the
+// project was renamed. Enable replaces it; Disable also removes it so a
+// migration cannot leave a second, stale provider in the picker.
+const legacyOMPProviderID = "zen-gate"
 
 type omp struct {
 	root string
@@ -64,7 +69,7 @@ func isWSL() bool {
 func fileExists(p string) bool { _, err := os.Stat(p); return err == nil }
 
 func (o *omp) Meta() (string, string, string) {
-	return o.id, o.name, "models.yml: tiêm nhà cung cấp zen-gate (OpenAI-compatible)"
+	return o.id, o.name, "models.yml: tiêm nhà cung cấp loimo (OpenAI-compatible)"
 }
 
 func (o *omp) modelsPath() string {
@@ -90,6 +95,18 @@ func (o *omp) IsEnabled() (bool, string, error) {
 	return ompProviderPair(providers) >= 0, "", nil
 }
 
+func (o *omp) LegacyEnabled() bool {
+	doc, err := readOMPDoc(o.modelsPath())
+	if err != nil || doc == nil {
+		return false
+	}
+	providers, err := ompProviders(doc, false)
+	if err != nil || providers == nil {
+		return false
+	}
+	return ompProviderPairKey(providers, legacyOMPProviderID) >= 0
+}
+
 func (o *omp) Enable(opts Options) error {
 	path := o.modelsPath()
 	doc, err := readOMPDoc(path)
@@ -106,6 +123,9 @@ func (o *omp) Enable(opts Options) error {
 	value, err := ompProviderValue(opts)
 	if err != nil {
 		return err
+	}
+	if pair := ompProviderPairKey(providers, legacyOMPProviderID); pair >= 0 {
+		providers.Content = append(providers.Content[:pair], providers.Content[pair+2:]...)
 	}
 	key := &yaml.Node{Kind: yaml.ScalarNode, Value: ompProviderID}
 	if pair := ompProviderPair(providers); pair >= 0 {
@@ -135,11 +155,16 @@ func (o *omp) Disable() error {
 	if err != nil || providers == nil {
 		return nil
 	}
-	pair := ompProviderPair(providers)
-	if pair < 0 {
+	removed := false
+	for _, id := range []string{ompProviderID, legacyOMPProviderID} {
+		if pair := ompProviderPairKey(providers, id); pair >= 0 {
+			providers.Content = append(providers.Content[:pair], providers.Content[pair+2:]...)
+			removed = true
+		}
+	}
+	if !removed {
 		return nil
 	}
-	providers.Content = append(providers.Content[:pair], providers.Content[pair+2:]...)
 	data, err := encodeOMPDoc(doc)
 	if err != nil {
 		return err
@@ -252,8 +277,12 @@ func ompProviders(doc *yaml.Node, create bool) (*yaml.Node, error) {
 }
 
 func ompProviderPair(providers *yaml.Node) int {
+	return ompProviderPairKey(providers, ompProviderID)
+}
+
+func ompProviderPairKey(providers *yaml.Node, id string) int {
 	for i := 0; i+1 < len(providers.Content); i += 2 {
-		if providers.Content[i].Value == ompProviderID {
+		if providers.Content[i].Value == id {
 			return i
 		}
 	}

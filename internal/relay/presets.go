@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // Preset is a curated free (or free-tier) upstream the dashboard offers as a

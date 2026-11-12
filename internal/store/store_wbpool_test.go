@@ -3,7 +3,7 @@ package store
 import (
 	"testing"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // An install that predates the pool must come back with its one account in the

@@ -1,6 +1,6 @@
-// Package store persists zen-gate configuration and usage statistics as
-// atomic JSON files under the OS app-data dir (%APPDATA%\zen-gate on Windows,
-// ~/Library/Application Support/zen-gate on macOS), or $ZEN_GATE_HOME.
+// Package store persists loimo configuration and usage statistics as
+// atomic JSON files under the OS app-data dir (%APPDATA%\loimo on Windows,
+// ~/Library/Application Support/loimo on macOS), or $LOIMO_HOME.
 package store
 
 import (
@@ -16,7 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // Home returns the data directory.
@@ -129,7 +129,7 @@ type Subscription struct {
 
 // RelayPeer is one self-hosted or serverless relay endpoint for the new
 // egress peer layer. URL is the relay's base (https://relay.example.com);
-// Token is the shared X-Zen-Relay-Token secret and is masked on export.
+// Token is the shared X-LoiMo-Relay-Token secret and is masked on export.
 type RelayPeer struct {
 	ID      string `json:"id"`
 	URL     string `json:"url"`
@@ -555,7 +555,7 @@ func Open() (*Store, error) {
 		feed := strings.TrimSpace(cfg.AnnouncementFeed)
 		if feed == "" ||
 			strings.Contains(feed, "raw.githubusercontent.com") &&
-				strings.Contains(feed, "zen-gate") && strings.HasSuffix(feed, "announcements.json") {
+				strings.Contains(feed, "loimo") && strings.HasSuffix(feed, "announcements.json") {
 			cfg.AnnouncementFeed = "https://api.github.com/repos/LAGcomcom/zen-gate/contents/announcements.json?ref=master"
 		}
 	}
@@ -612,7 +612,7 @@ func Open() (*Store, error) {
 		cfg.RoutingStrategy = "catalog"
 	}
 	// v13: the fork owns its release and announcement feeds. Point both at
-	// chipmax/zen-gate-vi when they still carry the upstream default; a feed
+	// chipmax/loimo when they still carry the upstream default; a feed
 	// the user customized to another repo stays untouched. This is also the
 	// schema bump that marks installs understanding egressModes/relayPool and
 	// agentScope (no backfill: empty means the legacy single-egress path).
@@ -621,7 +621,7 @@ func Open() (*Store, error) {
 	// machine running more than one gateway sets an explicit scope.
 	if cfg.SchemaVersion < 13 {
 		cfg.SchemaVersion = 13
-		const fork = "chipmax/zen-gate-vi"
+		const fork = "chipmax/loimo"
 		const upstream = "LAGcomcom/zen-gate"
 		feed := strings.TrimSpace(cfg.UpdateFeed)
 		if feed == "" || strings.Contains(feed, upstream) {
@@ -633,6 +633,25 @@ func Open() (*Store, error) {
 		}
 		if strings.TrimSpace(cfg.AgentScope) == "" {
 			cfg.AgentScope = "all"
+		}
+	}
+	// v14: this fork changed its repository from zen-gate-vi to loimo. v13
+	// already moved installs off the upstream feeds, so those installs carry
+	// the old fork URL with a schema version that would otherwise never
+	// revisit it. Rewrite only the two feed defaults; a feed the user pointed
+	// at another repository still wins.
+	if cfg.SchemaVersion < 14 {
+		cfg.SchemaVersion = 14
+		const fork = "chipmax/loimo"
+		const legacyFork = "chipmax/zen-gate-vi"
+		const upstream = "LAGcomcom/zen-gate"
+		feed := strings.TrimSpace(cfg.UpdateFeed)
+		if feed == "" || strings.Contains(feed, legacyFork) || strings.Contains(feed, upstream) {
+			cfg.UpdateFeed = "https://api.github.com/repos/" + fork + "/releases/latest"
+		}
+		ann := strings.TrimSpace(cfg.AnnouncementFeed)
+		if ann == "" || strings.Contains(ann, legacyFork) || strings.Contains(ann, upstream) {
+			cfg.AnnouncementFeed = "https://api.github.com/repos/" + fork + "/contents/announcements.json?ref=master"
 		}
 	}
 	if cfg.SchemaVersion == 0 {
@@ -780,7 +799,7 @@ func defaultConfig() Config {
 	}
 }
 
-// GenerateKey mints "ofm-…" (zen-gate keeps the same prefix shape).
+// GenerateKey mints "ofm-…" (loimo keeps the same prefix shape).
 func GenerateKey(prefix string) string {
 	b := make([]byte, 24)
 	_, _ = rand.Read(b)

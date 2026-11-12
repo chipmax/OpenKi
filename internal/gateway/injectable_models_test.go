@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // TestInjectableModelsMergesCustomProviders: the adapter-facing model set must

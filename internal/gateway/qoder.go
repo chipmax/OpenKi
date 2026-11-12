@@ -12,14 +12,14 @@ import (
 	"sync"
 	"time"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/logx"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/logx"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // The Qoder 账号渠道: a managed provider backed by a local qodercn-gateway
 // sidecar (github.com/Morpheus799/qodercn-gateway) that harvests the QoderCN
-// IDE's cached login and speaks OpenAI against gateway.qoder.com.cn. zen-gate
+// IDE's cached login and speaks OpenAI against gateway.qoder.com.cn. loimo
 // never logs in itself — the Qoder IDE owns the credential and refreshes it —
 // so the channel's state is observed, not driven:
 //
@@ -414,7 +414,7 @@ func (s *Server) ensureQoderProvider(st qoderStatus) bool {
 			ID: qoderProviderID, Name: "Kênh tài khoản Qoder",
 			BaseURL: qoderGatewayURL + "/v1", Protocol: store.ProtocolOpenAI,
 			Enabled: true, Models: st.ModelIDs,
-			Note: "Sidecar qodercn-gateway do zen-gate quản lý tự động điều hành, trạng thái đăng nhập theo Qoder IDE",
+			Note: "Sidecar qodercn-gateway do loimo quản lý tự động điều hành, trạng thái đăng nhập theo Qoder IDE",
 		}
 		mergeCatalog(&p, st.Catalog)
 		s.Store.Mutate(func(c *store.Config) {

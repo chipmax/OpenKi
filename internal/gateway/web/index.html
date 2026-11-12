@@ -2,10 +2,10 @@
 <html lang="vi" data-theme="dark">
 <head>
 <meta charset="utf-8">
-<title>Zen Gate — Bảng điều khiển</title>
+<title>Lối Mở — Bảng điều khiển</title>
 <link rel="icon" href="/favicon.png">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script>document.documentElement.dataset.theme = localStorage.getItem("zengate.theme") || "dark";</script>
+<script>document.documentElement.dataset.theme = localStorage.getItem("loimo.theme") || "dark";</script>
 <style>
   /* ===== Ngôn ngữ thiết kế ZCode: xám trung tính + xanh da trời, căn theo Tailwind v4 ===== */
   :root { --card-shadow:none; --r-lg:12px; --r-md:8px; --r-sm:6px; --ease:cubic-bezier(.2,.8,.2,1); }
@@ -999,7 +999,7 @@
 <script>
 const $ = s => document.querySelector(s);
 const PAGES = [["dash","Tổng quan","dash"],["agents","Tương thích Agent","agents"],["models","Mô hình","models"],["providers","Kênh","providers"],["usage","Mức sử dụng","usage"],["logs","Nhật ký","logs"],["network","Mạng","cloud"],["update","Cập nhật","rotateCw"],["settings","Cài đặt","settings"]];
-let cur = localStorage.getItem("zengate.page") || "dash";
+let cur = localStorage.getItem("loimo.page") || "dash";
 if (!PAGES.some(p=>p[0]===cur)) cur = "dash";
 let STATE = null;
 /* Hàng thông báo đã mở rộng: sau khi polling 10 giây vẽ lại vẫn giữ mở rộng, không thu lại chữ người dùng đang đọc dở. */
@@ -1147,18 +1147,18 @@ function nav(){
       `<button data-p="${id}" title="${label}" aria-label="${label}" aria-current="${id===cur?"page":"false"}" class="${id===cur?"on":""}">${icon(ic)}<span class="lbl">${label}</span></button>`).join("");
   }
   $("#nav").innerHTML = html;
-  $("#nav").querySelectorAll("button").forEach(b=>b.onclick=()=>{ cur=b.dataset.p; localStorage.setItem("zengate.page",cur); nav(); render(); logTimer = syncLogTimer(logTimer); });
+  $("#nav").querySelectorAll("button").forEach(b=>b.onclick=()=>{ cur=b.dataset.p; localStorage.setItem("loimo.page",cur); nav(); render(); logTimer = syncLogTimer(logTimer); });
 
   // Co giãn thanh bên (ghi nhớ trạng thái)
   const side = document.getElementById("side");
   const applySide = () => {
-    const collapsed = localStorage.getItem("zengate.side") === "collapsed";
+    const collapsed = localStorage.getItem("loimo.side") === "collapsed";
     side.classList.toggle("collapsed", collapsed);
     document.getElementById("side-toggle").innerHTML =
       (collapsed ? icon("chevRight") : icon("chevLeft")) + '<span class="lbl">Thu gọn thanh bên</span>';
   };
   document.getElementById("side-toggle").onclick = () => {
-    localStorage.setItem("zengate.side",
+    localStorage.setItem("loimo.side",
       side.classList.contains("collapsed") ? "open" : "collapsed");
     applySide();
   };
@@ -1353,7 +1353,7 @@ function renderDash(s){
   // Bốn bước nhập môn chỉ có nghĩa khi còn bước dở. Khi đã xong cả bốn, thẻ
   // này chỉ chiếm chỗ: bỏ hẳn thay vì treo một danh sách bốn dấu tích.
   const onboardDone = s.agents.some(a=>a.enabled) && !!s.settings.defaultModel &&
-    localStorage.getItem("zengate.onboard-copy")==="1" &&
+    localStorage.getItem("loimo.onboard-copy")==="1" &&
     Object.values(s.stats.days||{}).some(d=>(d.requests||0)>0);
   const onboardCard = onboardDone ? "" : `<div class="card">
           <h3>Bước tiếp theo <span class="muted" style="font-size:11.5px; font-weight:400">Hoàn thành theo thứ tự, gateway coi như đã nắm vững hoàn toàn</span></h3>
@@ -1411,9 +1411,9 @@ function renderDash(s){
   // Bàn làm việc nhiệm vụ bước tiếp theo: trạng thái suy ra từ dữ liệu thực, làm xong sẽ tự động đánh dấu tích.
   const agentsOn = s.agents.filter(a=>a.enabled).length;
   const anyReq = Object.values(s.stats.days||{}).some(d=>(d.requests||0)>0);
-  const copied = localStorage.getItem("zengate.onboard-copy")==="1";
+  const copied = localStorage.getItem("loimo.onboard-copy")==="1";
   const defSet = !!s.settings.defaultModel;
-  const go = (page)=>()=>{ cur=page; localStorage.setItem("zengate.page",page); nav(); render(); };
+  const go = (page)=>()=>{ cur=page; localStorage.setItem("loimo.page",page); nav(); render(); };
   const tasks = [
     {ok: agentsOn>0, name:"Bật một Agent", desc: agentsOn>0?`Đã bật ${agentsOn} cái`:"Đến 「Tuỳ biến Agent」 bật công tắc, khởi động lại Agent tương ứng", btn:"Đi bật", act: agentsOn>0?null:go("agents")},
     {ok: defSet, name:"Chọn mô hình chính", desc: defSet?`Mô hình chính:${s.settings.defaultModel}`:"Ở trang Mô hình nhấn 「Đặt làm chính」, hoàn thành trong một bước", btn:"Đi chọn", act: defSet?null:go("models")},
@@ -1434,7 +1434,7 @@ function renderDash(s){
         if(t.copy){
           const text = JSON.stringify({baseURL: s.baseURL, apiKey: s.mainKey, models: s.models.map(m=>m.id)}, null, 2);
           navigator.clipboard.writeText(text).then(()=>{
-            localStorage.setItem("zengate.onboard-copy","1");
+            localStorage.setItem("loimo.onboard-copy","1");
             toast("Đã sao chép cấu hình kết nối đầy đủ, bước này hoàn thành"); refresh();
           }).catch(()=>toast("Sao chép thất bại"));
           return;
@@ -1447,7 +1447,7 @@ function renderDash(s){
   const copyFull = () => {
     const text = JSON.stringify({baseURL: s.baseURL, apiKey: s.mainKey, models: s.models.map(m=>m.id)}, null, 2);
     navigator.clipboard.writeText(text).then(()=>{
-      localStorage.setItem("zengate.onboard-copy","1");
+      localStorage.setItem("loimo.onboard-copy","1");
       toast("Đã sao chép cấu hình kết nối đầy đủ");
     }).catch(()=>toast("Sao chép thất bại"));
   };
@@ -1457,7 +1457,7 @@ function renderDash(s){
     const b = document.getElementById("dash-reprobe");
     await withButtonBusy(b, "Đang dò kiểm tra…", async()=>{ toast("Đang dò kiểm tra, làm mới sau…"); await api("/reprobe", {}); setTimeout(refresh, 1200); });
   };
-  document.getElementById("dash-gologs").onclick = ()=>{ cur="logs"; localStorage.setItem("zengate.page","logs"); nav(); render(); };
+  document.getElementById("dash-gologs").onclick = ()=>{ cur="logs"; localStorage.setItem("loimo.page","logs"); nav(); render(); };
   document.querySelectorAll(".ann-read").forEach(b=>{
     b.onclick = async ()=>{
       const j = await api("/announcements/read", { id: b.dataset.id });
@@ -1754,9 +1754,9 @@ let mf = { q: "", chan: "", state: "" };
 // Thẻ mô tả đã mở rộng (key = tiền tố id mô hình+blurb）：việc render lại khi polling 10s không thu gọn lại.
 const openBlurbs = new Set();
 // Chế độ xem: grid | list, ghi nhớ trong localStorage.
-let mview = localStorage.getItem("zengate.mview") || "grid";
+let mview = localStorage.getItem("loimo.mview") || "grid";
 // Mục kênh đã thu gọn: toàn bộ nhóm có số khả dụng bằng 0 dưới đầu ra CN mặc định thu gọn, mở rộng thủ công sẽ được ghi nhớ.
-const foldedChans = new Set(JSON.parse(localStorage.getItem("zengate.mfold") || "[]"));
+const foldedChans = new Set(JSON.parse(localStorage.getItem("loimo.mfold") || "[]"));
 
 /* Tên tiếng Trung của kênh và mô tả một câu, dùng cho tiêu đề nhóm ở trang 「Mô hình」.
    Tường kênh không dùng bảng này: tên và mô tả của thẻ do backend /channel/wall cấp xuống (bản đó mới là
@@ -2135,13 +2135,13 @@ function renderModels(s){
   const clearEl = el.querySelector("#m-clear");
   if(clearEl) clearEl.onclick = ()=>{ mf = { q:"", chan:"", state:"" }; renderModels(s); };
   el.querySelectorAll(".vtoggle button").forEach(b=>{
-    b.onclick = ()=>{ mview = b.dataset.view; localStorage.setItem("zengate.mview", mview); renderModels(s); };
+    b.onclick = ()=>{ mview = b.dataset.view; localStorage.setItem("loimo.mview", mview); renderModels(s); };
   });
   el.querySelectorAll("[data-fold]").forEach(b=>{
     b.onclick = ()=>{
       const ch = b.dataset.fold;
       if(foldedChans.has(ch)) foldedChans.delete(ch); else foldedChans.add(ch);
-      localStorage.setItem("zengate.mfold", JSON.stringify([...foldedChans]));
+      localStorage.setItem("loimo.mfold", JSON.stringify([...foldedChans]));
       renderModels(s);
     };
   });
@@ -2250,7 +2250,7 @@ async function renderQoderCard(){
   if(!st || !st.running){
     stateEl.textContent = "Chưa chạy";
     body.innerHTML = 'Gateway Qoder tích hợp chưa khởi động——thường là do cổng 8095 bị một phiên bản qodercn-gateway khác chiếm dụng' +
-      '（chỉ cần tắt phiên bản đó và khởi động lại zen-gate）.' +
+      '（chỉ cần tắt phiên bản đó và khởi động lại loimo）.' +
       'Sau đó mở <a href="'+repo+'" target="_blank">Qoder IDE</a> Đăng nhập một lần, mô hình sẽ tự động xuất hiện.';
     return;
   }
@@ -4441,7 +4441,7 @@ function renderUpdate(s){
             <div class="muted" style="font-size:12px;margin-bottom:8px">Bản Linux không tự thay binary đang chạy. Chạy các lệnh dưới trong WSL, sau đó làm mới trang này.</div>
             <pre id="upd-cmd" style="background:var(--panel-2);border:1px solid var(--hairline);border-radius:8px;padding:10px 12px;overflow:auto;font-family:var(--mono);font-size:12px;line-height:1.55;margin:0 0 8px"></pre>
             <div class="row"><button class="ghost" id="upd-copy">Sao chép lệnh</button><span class="muted" id="upd-copy-note" style="font-size:11.5px"></span></div>
-            <div class="muted" style="font-size:11.5px;margin-top:8px">Service mặc định là <code class="k">zengate</code>; đổi tên trong lệnh nếu bạn đặt khác. Nếu chưa có checkout, lệnh clone sẽ được hiển thị thay thế.</div>
+            <div class="muted" style="font-size:11.5px;margin-top:8px">Service mặc định là <code class="k">loimo</code>; đổi tên trong lệnh nếu bạn đặt khác. Nếu chưa có checkout, lệnh clone sẽ được hiển thị thay thế.</div>
           </div>
         </div>
         <div>
@@ -4449,7 +4449,7 @@ function renderUpdate(s){
             <ol class="muted" style="font-size:12px;line-height:1.65;margin:0;padding-left:18px">
               <li>So sánh commit đang chạy với <code class="k">master</code> trên GitHub.</li>
               <li><code class="k">git pull --ff-only</code> trong checkout nguồn.</li>
-              <li>Build headless tĩnh và cài vào <code class="k">/usr/local/bin/zen-gate</code>.</li>
+              <li>Build headless tĩnh và cài vào <code class="k">/usr/local/bin/loimo</code>.</li>
               <li>Restart service, rồi kiểm tra lại trang này.</li>
             </ol>
           </div>
@@ -4500,7 +4500,7 @@ function paintUpdate(s){
     if(!u){
       box.innerHTML = `<div class="muted">Đang kiểm tra GitHub…</div>`;
     } else {
-      const repo = u.repo || "chipmax/zen-gate-vi";
+      const repo = u.repo || "chipmax/loimo";
       const repoURL = "https://github.com/" + repo;
       let status, detail = "";
       if(u.error){
@@ -4532,15 +4532,15 @@ function paintUpdate(s){
           <div class="kv"><span class="k">Checkout nguồn</span><span class="v mono" style="word-break:break-all">${esc(u.sourceDir || "không tìm thấy")}</span></div>
           <div class="kv"><span class="k">Lần kiểm tra</span><span class="v">${u.checkedAt ? new Date(u.checkedAt).toLocaleString("vi-VN") : "—"}</span></div>
         </div>
-        ${u.sourceFound ? "" : `<div class="muted" style="font-size:12px;margin-top:8px">Chưa thấy checkout có <code class="k">.git</code>. Clone một lần bằng lệnh bên dưới; đặt <code class="k">ZEN_GATE_SOURCE</code> nếu muốn dùng thư mục khác.</div>`}`;
+        ${u.sourceFound ? "" : `<div class="muted" style="font-size:12px;margin-top:8px">Chưa thấy checkout có <code class="k">.git</code>. Clone một lần bằng lệnh bên dưới; đặt <code class="k">LOIMO_SOURCE</code> nếu muốn dùng thư mục khác.</div>`}`;
       const chk = box.querySelector("#upd-check");
       if(chk) chk.onclick = ()=>loadSourceUpdate(true);
     }
   }
-  const dir = u && u.sourceFound && u.sourceDir ? u.sourceDir : "/home/admin/src/zen-gate-vi";
+  const dir = u && u.sourceFound && u.sourceDir ? u.sourceDir : "/home/admin/src/loimo";
   const cmds = (u && u.sourceFound)
-    ? `cd ${shQuote(dir)}\ngit pull --ff-only\nCGO_ENABLED=0 go build -trimpath -tags headless \\\n  -ldflags "-X zen-gate/internal/gateway.Version=${shQuote(ver)} -X zen-gate/internal/update.Current=${shQuote(ver)}" \\\n  -o /tmp/zen-gate.new ./cmd/zen-gate\nsudo install -m 0755 /tmp/zen-gate.new /usr/local/bin/zen-gate\nsudo systemctl restart zengate`
-    : `git clone https://github.com/${(u && u.repo) || "chipmax/zen-gate-vi"}.git ${shQuote(dir)}\ncd ${shQuote(dir)}\nCGO_ENABLED=0 go build -trimpath -tags headless \\\n  -ldflags "-X zen-gate/internal/gateway.Version=${shQuote(ver)} -X zen-gate/internal/update.Current=${shQuote(ver)}" \\\n  -o /tmp/zen-gate.new ./cmd/zen-gate\nsudo install -m 0755 /tmp/zen-gate.new /usr/local/bin/zen-gate\nsudo systemctl restart zengate`;
+    ? `cd ${shQuote(dir)}\ngit pull --ff-only\nCGO_ENABLED=0 go build -trimpath -tags headless \\\n  -ldflags "-X github.com/chipmax/loimo/internal/gateway.Version=${shQuote(ver)} -X github.com/chipmax/loimo/internal/update.Current=${shQuote(ver)}" \\\n  -o /tmp/loimo.new ./cmd/loimo\nsudo install -m 0755 /tmp/loimo.new /usr/local/bin/loimo\nsudo systemctl restart loimo`
+    : `git clone https://github.com/${(u && u.repo) || "chipmax/loimo"}.git ${shQuote(dir)}\ncd ${shQuote(dir)}\nCGO_ENABLED=0 go build -trimpath -tags headless \\\n  -ldflags "-X github.com/chipmax/loimo/internal/gateway.Version=${shQuote(ver)} -X github.com/chipmax/loimo/internal/update.Current=${shQuote(ver)}" \\\n  -o /tmp/loimo.new ./cmd/loimo\nsudo install -m 0755 /tmp/loimo.new /usr/local/bin/loimo\nsudo systemctl restart loimo`;
   const pre = $("#upd-cmd");
   if(pre) pre.textContent = cmds;
   const copy = $("#upd-copy");
@@ -4573,7 +4573,7 @@ function renderSettings(s){
 
       <div class="card" id="set-switch">
         <h3>Chuyển đổi mô hình</h3>
-        <div class="switch"><div><span class="nm">Tự động chuyển khi bị giới hạn tốc độ</span><div class="ds">Khi mô hình được yêu cầu bị giới hạn tốc độ hoặc bị từ chối, tự động chuyển sang mô hình khả dụng tiếp theo để xử lý yêu cầu này (thử thêm tối đa <span id="fo-max-label">2</span>  lần); mô hình thực tế phục vụ được ghi trong header phản hồi x-zen-gate-served-by và usage chunk cuối cùng</div></div>
+        <div class="switch"><div><span class="nm">Tự động chuyển khi bị giới hạn tốc độ</span><div class="ds">Khi mô hình được yêu cầu bị giới hạn tốc độ hoặc bị từ chối, tự động chuyển sang mô hình khả dụng tiếp theo để xử lý yêu cầu này (thử thêm tối đa <span id="fo-max-label">2</span>  lần); mô hình thực tế phục vụ được ghi trong header phản hồi x-loimo-served-by và usage chunk cuối cùng</div></div>
           <button class="act off" id="tg-failover">Đóng</button></div>
       </div>
 
@@ -4793,7 +4793,7 @@ document.addEventListener("click", e=>{
   const open = e.target.closest("#upd-open");
   if(open){
     e.preventDefault();
-    cur = "update"; localStorage.setItem("zengate.page", cur); nav(); render();
+    cur = "update"; localStorage.setItem("loimo.page", cur); nav(); render();
     return;
   }
   const b = e.target.closest("#upd-apply");
@@ -4960,16 +4960,16 @@ makeDropdown.seq = 1;
 /* ---- theme ---- */
 function setTheme(t){
   document.documentElement.dataset.theme = t;
-  localStorage.setItem("zengate.theme", t);
+  localStorage.setItem("loimo.theme", t);
   const seg = document.getElementById("theme-seg");
   if (seg) seg.querySelectorAll("button").forEach(b=>b.classList.toggle("on", b.dataset.t===t));
 }
 
 /* ---- window controls ---- */
 const wbtn = id => document.getElementById(id);
-wbtn("w-min").onclick = e => { e.stopPropagation(); window.zengateMinimize && zengateMinimize(); };
-wbtn("w-max").onclick = e => { e.stopPropagation(); window.zengateToggleMax && zengateToggleMax(); };
-wbtn("w-close").onclick = e => { e.stopPropagation(); window.zengateClose && zengateClose(); };
+wbtn("w-min").onclick = e => { e.stopPropagation(); window.loimoMinimize && loimoMinimize(); };
+wbtn("w-max").onclick = e => { e.stopPropagation(); window.loimoToggleMax && loimoToggleMax(); };
+wbtn("w-close").onclick = e => { e.stopPropagation(); window.loimoClose && loimoClose(); };
 const tb = document.getElementById("titlebar");
 let dragArmed = false, dragX = 0, dragY = 0;
 tb.addEventListener("mousedown", e => {
@@ -4981,13 +4981,13 @@ window.addEventListener("mousemove", e => {
   if (!(e.buttons & 1)) { dragArmed = false; return; }
   if (Math.abs(e.screenX - dragX) + Math.abs(e.screenY - dragY) > 4) {
     dragArmed = false;
-    window.zengateDrag && zengateDrag();
+    window.loimoDrag && loimoDrag();
   }
 });
 window.addEventListener("mouseup", () => { dragArmed = false; });
 tb.addEventListener("dblclick", e => {
   if (e.target.closest("button")) return;
-  window.zengateToggleMax && zengateToggleMax();
+  window.loimoToggleMax && loimoToggleMax();
 });
 
 nav(); render(); refresh(); setInterval(refresh, 10000);

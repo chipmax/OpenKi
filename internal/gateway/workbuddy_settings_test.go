@@ -4,8 +4,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // The dashboard's WorkBuddy switch reported {"changed":true} but the field had

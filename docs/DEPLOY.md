@@ -1,4 +1,4 @@
-# Triển khai zen-gate
+# Triển khai loimo
 
 Tài liệu này mô tả ma trận triển khai chuẩn cho ba môi trường: **Windows (GUI +
 tray)**, **WSL (headless + systemd)** và **VPS (headless + Caddy)**. Mọi ví dụ
@@ -25,7 +25,7 @@ Windows 10/11 (GUI + tray)                 WSL2 (headless, systemd)
         │                                          │
         ▼                                          ▼
   127.0.0.1:8787                            127.0.0.1:8788
-  zen-gate GUI/tray                         zen-gate (ZEN_GATE_HEADLESS=1)
+  loimo GUI/tray                         loimo (LOIMO_HEADLESS=1)
         │                                          │
         └──────────────┬───────────────────────────┘
                        │  egressModes (đồng cấp)
@@ -36,7 +36,7 @@ Windows 10/11 (GUI + tray)                 WSL2 (headless, systemd)
   VPS (dự phòng)   tự cài          WireGuard
 
 VPS (headless, systemd)
-  Internet ── 443/TLS ── Caddy ── 127.0.0.1:8787 zen-gate
+  Internet ── 443/TLS ── Caddy ── 127.0.0.1:8787 loimo
                           │
                           ├── /v1/*      → proxy (stream flush)
                           ├── /healthz   → proxy
@@ -52,9 +52,9 @@ VPS (headless, systemd)
 | Chế độ | GUI + tray | Headless | Headless |
 | Cổng | `8787` | `8788` | `127.0.0.1:8787` (Caddy `443`) |
 | Khởi động | Tray/autostart hoặc Task Scheduler lúc đăng nhập | `systemd` | `systemd` |
-| Chạy dưới | Phiên đăng nhập của user | User `admin` (hoặc user WSL) | User `zengate` |
-| `ZEN_GATE_HEADLESS` | Không đặt (GUI) | `1` | `1` |
-| `ZEN_GATE_HOME` | `%APPDATA%\zen-gate` (mặc định) | `/home/admin/.config/zen-gate` | `/var/lib/zen-gate` |
+| Chạy dưới | Phiên đăng nhập của user | User `admin` (hoặc user WSL) | User `loimo` |
+| `LOIMO_HEADLESS` | Không đặt (GUI) | `1` | `1` |
+| `LOIMO_HOME` | `%APPDATA%\loimo` (mặc định) | `/home/admin/.config/loimo` | `/var/lib/loimo` |
 | Tiêm cấu hình Agent | `agentScope: windows` (hoặc `host`) | `agentScope: wsl` | `--no-inject` |
 | Lộ ra Internet | Không | Không | Chỉ `/v1/*`, `/healthz` qua Caddy |
 | Quản trị | `http://127.0.0.1:8787` | `http://127.0.0.1:8788` | SSH tunnel + loopback |
@@ -96,15 +96,15 @@ Cờ CLI hỗ trợ kiểm soát theo từng lần chạy:
 Ví dụ WSL chỉ owner phía WSL:
 
 ```bash
-ZEN_GATE_HEADLESS=1 ZEN_GATE_HOME=/home/admin/.config/zen-gate \
-  zen-gate --inject-scope=wsl
+LOIMO_HEADLESS=1 LOIMO_HOME=/home/admin/.config/loimo \
+  loimo --inject-scope=wsl
 ```
 
 Ví dụ VPS không tiêm:
 
 ```bash
-ZEN_GATE_HEADLESS=1 ZEN_GATE_HOME=/var/lib/zen-gate \
-  zen-gate --no-inject
+LOIMO_HEADLESS=1 LOIMO_HOME=/var/lib/loimo \
+  loimo --no-inject
 ```
 
 ## Egress: `egressModes`
@@ -139,8 +139,8 @@ ZEN_GATE_HEADLESS=1 ZEN_GATE_HOME=/var/lib/zen-gate \
 ```
 
 Mỗi mục gồm `id`, `url`, `token`, `enabled`. `url` phải là HTTPS. `token`
-truyền qua header `X-Zen-Relay-Token`; đích upstream khai báo bằng
-`X-Zen-Relay-Upstream` và bị giới hạn bởi allowlist phía relay. Không đưa token
+truyền qua header `X-LoiMo-Relay-Token`; đích upstream khai báo bằng
+`X-LoiMo-Relay-Upstream` và bị giới hạn bởi allowlist phía relay. Không đưa token
 vào file mẫu, log hay ảnh chụp màn hình.
 
 ### Vị trí relay
@@ -156,7 +156,7 @@ thức và các bước triển khai: [RELAY.md](RELAY.md).
 
 ## Triển khai Windows
 
-1. Tải/cài bản GUI, chạy một lần để tạo `%APPDATA%\zen-gate\config.json`.
+1. Tải/cài bản GUI, chạy một lần để tạo `%APPDATA%\loimo\config.json`.
 2. Mở `http://127.0.0.1:8787`, đặt `mainKey`, chọn Agent cần tiêm.
 3. Giữ `agentScope: "windows"`; không bật `allowLan`.
 4. Khởi động cùng phiên đăng nhập bằng tray/autostart có sẵn, hoặc Task
@@ -184,19 +184,19 @@ systemd=true
 Cài binary headless và unit mẫu:
 
 ```bash
-CGO_ENABLED=0 go build -tags headless -trimpath -o zen-gate ./cmd/zen-gate
-sudo install -o root -g root -m 0755 zen-gate /usr/local/bin/zen-gate
-sudo install -m 0644 deploy/wsl/zengate.service /etc/systemd/system/zengate.service
+CGO_ENABLED=0 go build -tags headless -trimpath -o loimo ./cmd/loimo
+sudo install -o root -g root -m 0755 loimo /usr/local/bin/loimo
+sudo install -m 0644 deploy/wsl/loimo.service /etc/systemd/system/loimo.service
 sudo systemctl daemon-reload
-sudo systemctl enable --now zengate
-systemctl status zengate --no-pager
-journalctl -u zengate -f
+sudo systemctl enable --now loimo
+systemctl status loimo --no-pager
+journalctl -u loimo -f
 ```
 
-Unit mẫu dùng `User=admin`, `ZEN_GATE_HEADLESS=1`,
-`ZEN_GATE_HOME=/home/admin/.config/zen-gate`, `--inject-scope=wsl`,
+Unit mẫu dùng `User=admin`, `LOIMO_HEADLESS=1`,
+`LOIMO_HOME=/home/admin/.config/loimo`, `--inject-scope=wsl`,
 `Restart=always`. Nếu user WSL khác `admin`, sửa `User=`, `Group=`, `HOME`,
-`ZEN_GATE_HOME`, `ReadWritePaths` cho khớp. Đặt `port: 8788` trong
+`LOIMO_HOME`, `ReadWritePaths` cho khớp. Đặt `port: 8788` trong
 `config.json` của WSL.
 
 ## Triển khai VPS
@@ -206,22 +206,22 @@ Giả định: Debian/Ubuntu, domain `gw.example.com` trỏ A/AAAA về VPS, m�
 
 ```bash
 # 1. User riêng, không đăng nhập
-sudo useradd --system --home /var/lib/zen-gate --shell /usr/sbin/nologin zengate
-sudo install -d -o zengate -g zengate -m 0750 /var/lib/zen-gate
-sudo install -d -o root -g root -m 0755 /opt/zen-gate
+sudo useradd --system --home /var/lib/loimo --shell /usr/sbin/nologin loimo
+sudo install -d -o loimo -g loimo -m 0750 /var/lib/loimo
+sudo install -d -o root -g root -m 0755 /opt/loimo
 
 # 2. Binary headless
-CGO_ENABLED=0 go build -tags headless -trimpath -o zen-gate ./cmd/zen-gate
-sudo install -o root -g root -m 0755 zen-gate /opt/zen-gate/zen-gate
+CGO_ENABLED=0 go build -tags headless -trimpath -o loimo ./cmd/loimo
+sudo install -o root -g root -m 0755 loimo /opt/loimo/loimo
 
 # 3. Cấu hình (tạo từ deploy/config.example.json, sửa quyền sở hữu)
-sudo install -o zengate -g zengate -m 0600 deploy/config.example.json /var/lib/zen-gate/config.json
-sudo -u zengate nano /var/lib/zen-gate/config.json
+sudo install -o loimo -g loimo -m 0600 deploy/config.example.json /var/lib/loimo/config.json
+sudo -u loimo nano /var/lib/loimo/config.json
 
 # 4. systemd
-sudo install -m 0644 deploy/vps/zengate.service /etc/systemd/system/zengate.service
+sudo install -m 0644 deploy/vps/loimo.service /etc/systemd/system/loimo.service
 sudo systemctl daemon-reload
-sudo systemctl enable --now zengate
+sudo systemctl enable --now loimo
 
 # 5. Caddy
 sudo install -m 0644 deploy/vps/Caddyfile /etc/caddy/Caddyfile
@@ -230,8 +230,8 @@ sudo caddy validate --config /etc/caddy/Caddyfile
 sudo systemctl reload caddy
 ```
 
-Unit VPS chạy `User=zengate`, `ZEN_GATE_HEADLESS=1`,
-`ZEN_GATE_HOME=/var/lib/zen-gate`, `ExecStart=/opt/zen-gate/zen-gate --no-inject`,
+Unit VPS chạy `User=loimo`, `LOIMO_HEADLESS=1`,
+`LOIMO_HOME=/var/lib/loimo`, `ExecStart=/opt/loimo/loimo --no-inject`,
 `Restart=always`, có hardening cơ bản. Caddyfile chỉ reverse proxy `/v1/*` và
 `/healthz` tới `127.0.0.1:8787`, chặn `/admin*`, và tắt buffer để stream chảy
 ngay (`flush_interval -1`).
@@ -302,8 +302,8 @@ curl -fS  -H "Authorization: Bearer $MAIN_KEY" https://gw.example.com/v1/models
 Kiểm tra supervisor và bind:
 
 ```bash
-systemctl is-active zengate caddy
-journalctl -u zengate -n 50 --no-pager
+systemctl is-active loimo caddy
+journalctl -u loimo -n 50 --no-pager
 ss -ltnp | grep -E '8787|8788'   # phải thấy 127.0.0.1, không phải 0.0.0.0
 ```
 
@@ -321,7 +321,7 @@ Tiêu chí đạt:
 - Stream trả chunk ngay, không đợi hết phản hồi.
 - `https://<domain>/admin*` trả `404`/`403`, không trả dashboard.
 - `ss`/`Get-NetTCPConnection` xác nhận cổng gateway chỉ bind loopback.
-- `systemctl is-active zengate` trả `active` trên WSL và VPS.
+- `systemctl is-active loimo` trả `active` trên WSL và VPS.
 
 ## Sự cố thường gặp
 
@@ -339,8 +339,8 @@ Tiêu chí đạt:
 
 - [RELAY.md](RELAY.md) — giao thức relay, header, allowlist, xoay token.
 - [deploy/config.example.json](../deploy/config.example.json) — mẫu không chứa secret.
-- [deploy/wsl/zengate.service](../deploy/wsl/zengate.service)
-- [deploy/vps/zengate.service](../deploy/vps/zengate.service)
+- [deploy/wsl/loimo.service](../deploy/wsl/loimo.service)
+- [deploy/vps/loimo.service](../deploy/vps/loimo.service)
 - [deploy/vps/Caddyfile](../deploy/vps/Caddyfile)
 - [deploy/windows/README.md](../deploy/windows/README.md)
 - [../THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)

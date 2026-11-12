@@ -17,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 func main() {

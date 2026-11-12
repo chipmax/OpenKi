@@ -26,8 +26,8 @@ import (
 	"sort"
 	"time"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // ModelsDevBase is the catalog root; overridable for tests.

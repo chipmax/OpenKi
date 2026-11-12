@@ -4,7 +4,7 @@ Cổng client của OpenCode là một **body shape**, không phải header: nó
 định nghĩa `read`/`shell` (mô tả + schema) và User-Agent. Vì vậy cách duy nhất
 để biết cổng còn bắt buộc hay không là gửi hai lượt giống hệt nhau, một lượt có
 tiêm fingerprint và một lượt không, rồi so kết quả. `gateprobe` làm đúng việc
-đó; `zen-gate -gate-check` dùng cùng một hàm.
+đó; `loimo -gate-check` dùng cùng một hàm.
 
 Tài liệu này ghi lại cách đo và kết quả đo trên máy này. Chính sách egress,
 cooldown và governor token nằm ở [EGRESS-POLICY.md](EGRESS-POLICY.md).
@@ -76,13 +76,13 @@ y hệt, tức fingerprint không phải nguyên nhân của đợt 429 hiện t
 
 ```bash
 curl -sD - -o /dev/null http://127.0.0.1:8787/v1/chat/completions \
-  -H "Authorization: Bearer $ZEN_GATE_KEY" -H 'content-type: application/json' \
+  -H "Authorization: Bearer $LOIMO_KEY" -H 'content-type: application/json' \
   -d '{"model":"glm-5.3-flash-free","messages":[{"role":"user","content":"ping"}],"max_tokens":8}'
 ```
 
-- `x-zen-gate-exit` là exit lane đã phục vụ (node id; với subscription, header
+- `x-loimo-exit` là exit lane đã phục vụ (node id; với subscription, header
   này ổn định theo IP).
-- `X-Zen-Gate-Egress` là peer transport (`relay`, `warp`, `singbox`) nếu có.
+- `X-LoiMo-Egress` là peer transport (`relay`, `warp`, `singbox`) nếu có.
 - `Retry-After` xuất hiện khi 429; `EXIT_GOVERNOR` chỉ xuất hiện khi governor
   nội bộ từ chối, không phải upstream.
 

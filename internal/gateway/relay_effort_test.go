@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // rungUpstream answers a chat stream and reports the reasoning_effort it got.

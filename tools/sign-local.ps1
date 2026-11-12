@@ -12,10 +12,10 @@
 #
 # Usage:
 #   powershell -File tools\sign-local.ps1
-#   powershell -File tools\sign-local.ps1 -Path dist\zen-gate.exe, dist\zenstats.exe
+#   powershell -File tools\sign-local.ps1 -Path dist\loimo.exe, dist\loimostats.exe
 param(
-    [string[]]$Path = @("dist\zen-gate.exe"),
-    [string]$Subject = "Zen Gate Local Dev",
+    [string[]]$Path = @("dist\loimo.exe"),
+    [string]$Subject = "Lối Mở Local Dev",
     [string]$TimestampServer = "http://timestamp.digicert.com"
 )
 
@@ -30,7 +30,7 @@ if (-not $cert) {
     Write-Host "creating self-signed code signing cert '$Subject'"
     $cert = New-SelfSignedCertificate `
         -Type CodeSigningCert `
-        -Subject "CN=$Subject, O=Zen Gate, C=CN" `
+        -Subject "CN=$Subject, O=Lối Mở, C=CN" `
         -KeyUsage DigitalSignature `
         -KeyAlgorithm RSA `
         -KeyLength 3072 `
@@ -40,7 +40,7 @@ if (-not $cert) {
             '2.5.29.37={text}1.3.6.1.5.5.7.3.3',   # EKU: code signing
             '2.5.29.19={text}'                      # basic constraints: end entity
         )
-    $cerPath = Join-Path $env:TEMP "zen-gate-signer.cer"
+    $cerPath = Join-Path $env:TEMP "loimo-signer.cer"
     Export-Certificate -Cert $cert -FilePath $cerPath -Force | Out-Null
     # Trust it locally so the chain validates; otherwise Authenticode reports
     # "a certificate chain processed, but terminated in a root certificate which

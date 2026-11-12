@@ -12,10 +12,10 @@ export function startServer(): void {
   const hostname = process.env.HOST?.trim() || "0.0.0.0";
 
   if (!config.token) {
-    console.warn("[relay] ZEN_GATE_RELAY_TOKEN is empty: every proxy request will be rejected (fail closed)");
+    console.warn("[relay] LOIMO_RELAY_TOKEN is empty: every proxy request will be rejected (fail closed)");
   }
   if (config.allowedHosts.size === 0) {
-    console.warn("[relay] ZEN_GATE_RELAY_HOSTS is empty: every upstream host will be rejected (fail closed)");
+    console.warn("[relay] LOIMO_RELAY_HOSTS is empty: every upstream host will be rejected (fail closed)");
   }
 
   const server = Bun.serve({

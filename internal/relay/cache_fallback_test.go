@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // Every custom provider request now carries a prompt-cache hint, and both

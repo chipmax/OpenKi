@@ -22,7 +22,7 @@ func repoFile(t *testing.T, rel string) string {
 }
 
 // 火绒 deletes a freshly written Go exe that has had its symbol table stripped,
-// within about a minute of it appearing — so the shipped zen-gate.exe must not
+// within about a minute of it appearing — so the shipped loimo.exe must not
 // be built with -s -w, and the README must not tell users to build it that way.
 func TestReleaseKeepsGoSymbolsInWindowsBinaries(t *testing.T) {
 	for _, f := range []struct{ name, text string }{

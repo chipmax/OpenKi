@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // The 模型 page's progress band is driven by server-side task state, because

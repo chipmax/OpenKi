@@ -1,24 +1,24 @@
 [Unit]
-Description=Zen Gate gateway (headless, VPS)
+Description=Lối Mở gateway (headless, VPS)
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=zengate
-Group=zengate
-Environment=HOME=/var/lib/zen-gate
-Environment=ZEN_GATE_HEADLESS=1
-Environment=ZEN_GATE_HOME=/var/lib/zen-gate
-WorkingDirectory=/var/lib/zen-gate
-ExecStart=/opt/zen-gate/zen-gate --no-inject
+User=loimo
+Group=loimo
+Environment=HOME=/var/lib/loimo
+Environment=LOIMO_HEADLESS=1
+Environment=LOIMO_HOME=/var/lib/loimo
+WorkingDirectory=/var/lib/loimo
+ExecStart=/opt/loimo/loimo --no-inject
 Restart=always
 RestartSec=3
 TimeoutStopSec=10
 KillSignal=SIGTERM
 UMask=0077
 
-StateDirectory=zen-gate
+StateDirectory=loimo
 StateDirectoryMode=0750
 
 # Hardening cơ bản: filesystem chỉ đọc trừ thư mục dữ liệu.
@@ -27,7 +27,7 @@ PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/zen-gate
+ReadWritePaths=/var/lib/loimo
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true

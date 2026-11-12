@@ -1,4 +1,4 @@
-# Tích hợp WARP pool (opencode2api) vào fork zen-gate
+# Tích hợp WARP pool (opencode2api) vào fork loimo
 
 ## Thiết kế
 
@@ -31,7 +31,7 @@
 
 ## Cách bật
 
-Trong `config.json` của zen-gate (thư mục `ZEN_GATE_HOME`), một trong hai:
+Trong `config.json` của loimo (thư mục `LOIMO_HOME`), một trong hai:
 
 ```json
 { "warpEnabled": true, "warpPoolSize": 2 }
@@ -89,7 +89,7 @@ Build headless với `warpEnabled=true, warpPoolSize=2`, cổng 8797:
 
 ## Lưu ý license
 
-zen-gate (bản gốc) theo GPL-3.0; opencode2api là **GPL-3.0**; package warp
-nguyên thủy trong ai-route là MIT. Toàn bộ fork zen-gate-vi phát hành theo
+loimo (bản gốc) theo GPL-3.0; opencode2api là **GPL-3.0**; package warp
+nguyên thủy trong ai-route là MIT. Toàn bộ fork loimo phát hành theo
 **GPL-3.0-only** — xem `LICENSE` và `COPYING`. Không phát hành bản fork dưới
 danh nghĩa MIT. Xem `internal/warp/NOTICE` và `THIRD_PARTY_NOTICES.md`.

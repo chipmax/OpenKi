@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // The preset 渠道 cards: six upstreams that all speak OpenAI's chat shape and

@@ -8,33 +8,33 @@ import (
 
 // AppDataDir returns the per-user application data directory of the host OS:
 //
-//	Windows %APPDATA%\zen-gate
-//	macOS   ~/Library/Application Support/zen-gate
-//	other   $XDG_CONFIG_HOME (or ~/.config)/zen-gate
+//	Windows %APPDATA%\loimo
+//	macOS   ~/Library/Application Support/loimo
+//	other   $XDG_CONFIG_HOME (or ~/.config)/loimo
 //
-// ZEN_GATE_HOME overrides everything.
+// LOIMO_HOME overrides everything.
 func AppDataDir() string {
-	if h := os.Getenv("ZEN_GATE_HOME"); h != "" {
+	if h := os.Getenv("LOIMO_HOME"); h != "" {
 		return h
 	}
 	switch runtime.GOOS {
 	case "windows":
 		if appdata := os.Getenv("APPDATA"); appdata != "" {
-			return filepath.Join(appdata, "zen-gate")
+			return filepath.Join(appdata, "loimo")
 		}
 		home, _ := os.UserHomeDir()
-		return filepath.Join(home, "AppData", "Roaming", "zen-gate")
+		return filepath.Join(home, "AppData", "Roaming", "loimo")
 	case "darwin":
 		home, err := os.UserHomeDir()
 		if err != nil {
-			return filepath.Join(os.TempDir(), "zen-gate")
+			return filepath.Join(os.TempDir(), "loimo")
 		}
-		return filepath.Join(home, "Library", "Application Support", "zen-gate")
+		return filepath.Join(home, "Library", "Application Support", "loimo")
 	default:
 		if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
-			return filepath.Join(xdg, "zen-gate")
+			return filepath.Join(xdg, "loimo")
 		}
 		home, _ := os.UserHomeDir()
-		return filepath.Join(home, ".config", "zen-gate")
+		return filepath.Join(home, ".config", "loimo")
 	}
 }

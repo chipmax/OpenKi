@@ -1,6 +1,6 @@
 package store
 
-import "zen-gate/internal/lane"
+import "github.com/chipmax/loimo/internal/lane"
 
 // RelayEndpoints converts the stored relay pool into the lane's egress type.
 // Disabled entries are dropped here: a relay the user turned off must not be

@@ -4,14 +4,14 @@
 #   tools/build-macos.sh                 # version from git describe / gateway.Version
 #   tools/build-macos.sh 1.3.0           # explicit version
 #
-# Output: dist/Zen Gate.app (plus a zip for distribution) and dist/zen-gate-darwin,
+# Output: dist/Lối Mở.app (plus a zip for distribution) and dist/loimo-darwin,
 # the bare binary the auto-updater expects as the release asset name.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-BUNDLE_ID="com.lagcomcom.zen-gate"
-APP="Zen Gate"
+BUNDLE_ID="io.github.chipmax.loimo"
+APP="Lối Mở"
 VERSION="${1:-}"
 if [[ -z "$VERSION" ]]; then
   VERSION="$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || true)"
@@ -32,7 +32,7 @@ mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 # both.
 #
 # -H=windowsgui has no macOS counterpart; the bundle has no console window at
-# all, and -no-tray still logs to stdout for `zen-gate -no-tray` debugging.
+# all, and -no-tray still logs to stdout for `loimo -no-tray` debugging.
 build_universal() { # build_universal <out> <pkg> <ldflags>
   local out="$1" pkg="$2" ldflags="$3"
   local slices=()
@@ -46,15 +46,15 @@ build_universal() { # build_universal <out> <pkg> <ldflags>
   lipo -info "$out"
 }
 
-build_universal "$APP_DIR/Contents/MacOS/zen-gate" ./cmd/zen-gate \
-  "-s -w -X zen-gate/internal/gateway.Version=$VERSION -X zen-gate/internal/update.Current=$VERSION"
-build_universal "$DIST/zenstats" ./cmd/zenstats "-s -w"
+build_universal "$APP_DIR/Contents/MacOS/loimo" ./cmd/loimo \
+  "-s -w -X github.com/chipmax/loimo/internal/gateway.Version=$VERSION -X github.com/chipmax/loimo/internal/update.Current=$VERSION"
+build_universal "$DIST/loimostats" ./cmd/loimostats "-s -w"
 
 # ---- icon -------------------------------------------------------------------
 # iconutil wants the ten sizes in an .iconset; the repo has 16…256 px PNGs, so
 # the 512 px pair is upscaled from icon-src.png (1024 px).
 echo "==> building icon"
-ICONSET="$(mktemp -d)/zen-gate.iconset"
+ICONSET="$(mktemp -d)/loimo.iconset"
 mkdir -p "$ICONSET"
 resize() { sips -z "$2" "$2" "$1" --out "$ICONSET/$3" >/dev/null; }
 resize assets/icon-16.png  16  icon_16x16.png
@@ -67,7 +67,7 @@ resize assets/icon-256.png 256 icon_256x256.png
 resize assets/icon-src.png 512 icon_256x256@2x.png
 resize assets/icon-src.png 512 icon_512x512.png
 resize assets/icon-src.png 1024 icon_512x512@2x.png
-iconutil -c icns "$ICONSET" -o "$APP_DIR/Contents/Resources/zen-gate.icns"
+iconutil -c icns "$ICONSET" -o "$APP_DIR/Contents/Resources/loimo.icns"
 
 # ---- Info.plist -------------------------------------------------------------
 # CFBundleVersion and CFBundleShortVersionString must be 1–3 dot-separated
@@ -88,8 +88,8 @@ cat > "$APP_DIR/Contents/Info.plist" <<PLIST
     <key>CFBundleIdentifier</key><string>$BUNDLE_ID</string>
     <key>CFBundleVersion</key><string>$BUNDLE_VERSION</string>
     <key>CFBundleShortVersionString</key><string>$BUNDLE_VERSION</string>
-    <key>CFBundleExecutable</key><string>zen-gate</string>
-    <key>CFBundleIconFile</key><string>zen-gate</string>
+    <key>CFBundleExecutable</key><string>loimo</string>
+    <key>CFBundleIconFile</key><string>loimo</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>NSHighResolutionCapable</key><true/>
@@ -107,14 +107,14 @@ codesign --force --sign - --timestamp=none "$APP_DIR" >/dev/null 2>&1 || \
 # ---- dist -------------------------------------------------------------------
 # The bare binary the auto-updater expects as the release asset name, copied out
 # of the signed bundle so it carries the same signature.
-cp -f "$APP_DIR/Contents/MacOS/zen-gate" "$DIST/zen-gate-darwin"
+cp -f "$APP_DIR/Contents/MacOS/loimo" "$DIST/loimo-darwin"
 
-ditto -c -k --keepParent "$APP_DIR" "$DIST/zen-gate-$VERSION-darwin.zip"
+ditto -c -k --keepParent "$APP_DIR" "$DIST/loimo-$VERSION-darwin.zip"
 
 echo "==> built:"
 echo "    $APP_DIR"
-echo "    $DIST/zen-gate-$VERSION-darwin.zip"
-echo "    $DIST/zen-gate-darwin"
+echo "    $DIST/loimo-$VERSION-darwin.zip"
+echo "    $DIST/loimo-darwin"
 echo
 echo "run it with:  open \"$APP_DIR\""
 echo "or install:   cp -R \"$APP_DIR\" /Applications/"

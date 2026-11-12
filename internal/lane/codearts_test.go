@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"zen-gate/internal/codearts/upstream"
+	"github.com/chipmax/loimo/internal/codearts/upstream"
 )
 
 // caStub serves every CodeArts host (snap / manager / STS / benefit) from one

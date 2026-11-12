@@ -11,7 +11,7 @@ import (
 	"syscall"
 )
 
-// Toast shows a Windows toast with app name "Zen Gate".
+// Toast shows a Windows toast with app name "Lối Mở".
 // Best-effort: PowerShell delivery failures are silently ignored.
 func Toast(title, body string) {
 	title, body, ok := want(title, body)
@@ -50,5 +50,5 @@ $xml = @"
 $doc = New-Object Windows.Data.Xml.Dom.XmlDocument;
 $doc.LoadXml($xml);
 $t = [Windows.UI.Notifications.ToastNotification]::new($doc);
-[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Zen Gate").Show($t);`
+[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Lối Mở").Show($t);`
 }

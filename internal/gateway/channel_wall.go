@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // The 渠道 wall's one data source.

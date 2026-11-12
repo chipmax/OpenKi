@@ -10,16 +10,16 @@ Set-Location (Split-Path $PSScriptRoot -Parent)
 
 $tag = "v$Version"
 # No -s -w: Huorong deletes a stripped Go exe within about a minute of it
-# appearing on this machine, which is what the freshly built zen-gate.exe is.
-go build -trimpath -ldflags "-H=windowsgui -X zen-gate/internal/gateway.Version=$Version -X zen-gate/internal/update.Current=$Version" -o dist/zen-gate.exe ./cmd/zen-gate
+# appearing on this machine, which is what the freshly built loimo.exe is.
+go build -trimpath -ldflags "-H=windowsgui -X github.com/chipmax/loimo/internal/gateway.Version=$Version -X github.com/chipmax/loimo/internal/update.Current=$Version" -o dist/loimo.exe ./cmd/loimo
 if ($LASTEXITCODE -ne 0) { throw "build failed" }
-go build -trimpath -o dist/zenstats.exe ./cmd/zenstats
+go build -trimpath -o dist/loimostats.exe ./cmd/loimostats
 if ($LASTEXITCODE -ne 0) { throw "build failed" }
 
 Copy-Item README.md dist/ -Force
-Compress-Archive -Path dist/zen-gate.exe, dist/README.md -DestinationPath "dist/zen-gate-$Version.zip" -Force
+Compress-Archive -Path dist/loimo.exe, dist/README.md -DestinationPath "dist/loimo-$Version.zip" -Force
 
-$assets = @("dist/zen-gate.exe", "dist/zenstats.exe", "dist/zen-gate-$Version.zip")
+$assets = @("dist/loimo.exe", "dist/loimostats.exe", "dist/loimo-$Version.zip")
 # Re-running a version that already went out used to die in gh release create;
 # upload over the existing assets instead.
 if (gh release view $tag 2>$null) {

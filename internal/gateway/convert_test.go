@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 func TestPartsOfContentAudioAndFile(t *testing.T) {

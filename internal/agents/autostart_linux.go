@@ -16,6 +16,15 @@ func autostartFile() string {
 	if err != nil {
 		return ""
 	}
+	return filepath.Join(home, autostartDir, "loimo.desktop")
+}
+
+// legacyAutostartFile is the entry written before the project rename.
+func legacyAutostartFile() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
 	return filepath.Join(home, autostartDir, "zen-gate.desktop")
 }
 
@@ -33,9 +42,15 @@ func execPath() string {
 	return exe
 }
 
-// AutostartEnabled reports whether the XDG autostart entry exists.
+// AutostartEnabled reports whether either the current or pre-rename XDG
+// autostart entry exists.
 func AutostartEnabled() bool {
-	return autostartFile() != "" && autostartFileExists(autostartFile())
+	for _, p := range []string{autostartFile(), legacyAutostartFile()} {
+		if p != "" && autostartFileExists(p) {
+			return true
+		}
+	}
+	return false
 }
 
 // AutostartSet installs or removes the XDG autostart desktop entry.
@@ -45,10 +60,17 @@ func AutostartSet(enable bool) error {
 		return fmt.Errorf("no autostart dir available")
 	}
 	if !enable {
-		if !autostartFileExists(f) {
-			return nil
+		for _, p := range []string{f, legacyAutostartFile()} {
+			if p != "" && autostartFileExists(p) {
+				if err := os.Remove(p); err != nil {
+					return err
+				}
+			}
 		}
-		return os.Remove(f)
+		return nil
+	}
+	if old := legacyAutostartFile(); old != "" {
+		_ = os.Remove(old)
 	}
 	exe := execPath()
 	if exe == "" {
@@ -56,10 +78,10 @@ func AutostartSet(enable bool) error {
 	}
 	content := "[Desktop Entry]\n" +
 		"Type=Application\n" +
-		"Name=Zen Gate\n" +
+		"Name=Lối Mở\n" +
 		"Comment=Cổng mô hình miễn phí cục bộ\n" +
 		"Exec=\"" + exe + "\"\n" +
-		"Icon=zen-gate\n" +
+		"Icon=loimo\n" +
 		"Terminal=false\n" +
 		"X-GNOME-Autostart-enabled=true\n"
 	if err := os.MkdirAll(filepath.Dir(f), 0o755); err != nil {

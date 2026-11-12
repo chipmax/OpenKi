@@ -20,7 +20,7 @@ import (
 // variables so a fork can point the dashboard at its own repository without
 // editing the rendering code.
 var (
-	SourceRepo   = "chipmax/zen-gate-vi"
+	SourceRepo   = "chipmax/loimo"
 	SourceBranch = "master"
 )
 
@@ -86,15 +86,15 @@ type SourceStatus struct {
 // runs with the install user's HOME, so the usual ~/src path resolves.
 func SourceDir() string {
 	candidates := []string{}
-	if v := strings.TrimSpace(os.Getenv("ZEN_GATE_SOURCE")); v != "" {
+	if v := strings.TrimSpace(os.Getenv("LOIMO_SOURCE")); v != "" {
 		candidates = append(candidates, v)
 	}
 	if home, err := os.UserHomeDir(); err == nil && home != "" {
 		candidates = append(candidates,
-			filepath.Join(home, "src", "zen-gate-vi"),
-			filepath.Join(home, "zen-gate-vi"),
-			filepath.Join(home, "src", "zen-gate-vi-source"),
-			filepath.Join(home, "zen-gate-vi-source"),
+			filepath.Join(home, "src", "loimo"),
+			filepath.Join(home, "loimo"),
+			filepath.Join(home, "src", "loimo-source"),
+			filepath.Join(home, "loimo-source"),
 		)
 	}
 	if wd, err := os.Getwd(); err == nil {

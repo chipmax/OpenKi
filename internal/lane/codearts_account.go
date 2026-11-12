@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"zen-gate/internal/codearts/upstream"
+	"github.com/chipmax/loimo/internal/codearts/upstream"
 )
 
 // The account side of the CodeArts 账号渠道: the Huawei Cloud OAuth login,
@@ -189,7 +189,7 @@ func serveCodeArtsCallback(ln net.Listener, redirectPath string, sess *caPending
 			_, _ = w.Write([]byte("<p>Callback đăng nhập thiếu code, hãy chuyển sang thăm dò hoặc thử lại.</p>"))
 			return
 		}
-		_, _ = w.Write([]byte("<p>Đăng nhập hoàn tất, bạn có thể đóng trang này để quay lại zen-gate.</p>"))
+		_, _ = w.Write([]byte("<p>Đăng nhập hoàn tất, bạn có thể đóng trang này để quay lại loimo.</p>"))
 		select {
 		case sess.codeCh <- code:
 		default:

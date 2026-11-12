@@ -2,7 +2,7 @@
 
 package window
 
-import "zen-gate/internal/notify"
+import "github.com/chipmax/loimo/internal/notify"
 
 // FatalAlert is the cross-platform last-resort channel for a startup failure
 // the user must see: on a -H=windowsgui build there is no console, so a log

@@ -15,7 +15,7 @@ import (
 func TestAutostartRoundTrip(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	t.Setenv("ZEN_GATE_HOME", filepath.Join(home, "data"))
+	t.Setenv("LOIMO_HOME", filepath.Join(home, "data"))
 
 	if AutostartEnabled() {
 		t.Fatal("autostart reported enabled on a fresh home")

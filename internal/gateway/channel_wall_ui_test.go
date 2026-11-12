@@ -32,8 +32,10 @@ func TestChannelWallHasPaneForEveryCard(t *testing.T) {
 // list is derived from lane.Channels() minus the preset kinds (they share
 // "ext"), so this helper keeps the expectation written down in one place.
 func channelsNotInWall() []string {
+	// WorkBuddy is deliberately filtered out of the wall until its account
+	// pool is wired into a dedicated pane.
 	return []string{
-		"zen", "kilo", "workbuddy", "codearts", "qoder", "zcode", "trae",
+		"zen", "kilo", "codearts", "qoder", "zcode", "trae",
 	}
 }
 
@@ -88,7 +90,7 @@ func TestChannelIconsAreDataURIs(t *testing.T) {
 		t.Fatalf("CHAN_ICONS carries no data URI at all:\n%s", src)
 	}
 	for _, id := range []string{
-		"zen", "kilo", "workbuddy", "codearts", "qoder", "zcode", "trae",
+		"zen", "kilo", "codearts", "qoder", "zcode", "trae",
 		"cline", "loomy", "raccoon", "lobsterai", "astudio", "modelscope",
 	} {
 		if !strings.Contains(src, id+":") {

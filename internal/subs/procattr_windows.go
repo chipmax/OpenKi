@@ -23,7 +23,7 @@ func singBoxProcAttr() *syscall.SysProcAttr {
 var procQueryFullProcessImageName = windows.NewLazySystemDLL("kernel32.dll").NewProc("QueryFullProcessImageNameW")
 
 // killJob holds every sidecar this process launched. The last handle to a job
-// with KILL_ON_JOB_CLOSE belongs to zen-gate, so the OS terminates the child
+// with KILL_ON_JOB_CLOSE belongs to loimo, so the OS terminates the child
 // when this process dies — killed, crashed, or closed by the window manager.
 // Without it an orphan keeps the inbound ports, every later start fails to
 // bind, and the supervisor restarts a process that can never come up.

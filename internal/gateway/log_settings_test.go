@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"zen-gate/internal/logx"
+	"github.com/chipmax/loimo/internal/logx"
 )
 
 // patchSettings sends a settings change the way the dashboard does.

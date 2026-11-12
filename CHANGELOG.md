@@ -1,9 +1,22 @@
 # Changelog
 
-Các thay đổi của fork `chipmax/zen-gate-vi` so với upstream. Ngày theo giờ máy
+Các thay đổi của fork `chipmax/loimo` so với upstream. Ngày theo giờ máy
 phát triển (UTC+7).
 
 ## 2026-11-12
+
+### Thương hiệu
+
+- Đổi tên fork `zen-gate-vi` thành **Lối Mở** (`loimo`): module Go, binary
+  `loimo`/`loimostats`, biến môi trường `LOIMO_*`, provider `loimo` trong
+  agent, thư mục dữ liệu `~/.config/loimo`, service systemd và toàn bộ
+  README/tài liệu. Các marker và provider `zen-gate` cũ vẫn được nhận diện
+  để migrate cấu hình đang chạy, nhưng không còn được ghi mới.
+- Repo phát hành chuyển sang `chipmax/loimo`; feed cập nhật và thông báo cũ
+  được migrate tự động, feed người dùng tự trỏ nơi khác được giữ nguyên.
+- Logo mới (vòng cung mở + tia sáng) thay cho icon zen-gate ở cửa sổ, tray,
+  favicon, dashboard và bộ cài; sinh lại toàn bộ kích thước từ một nguồn SVG.
+- Phát hành `v2.0.0` cho Windows x64 và Linux x64/arm64 (headless).
 
 ### Giao diện
 

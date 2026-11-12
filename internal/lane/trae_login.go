@@ -183,7 +183,7 @@ func (p *traePendingLogin) handleCallback(w http.ResponseWriter, r *http.Request
 		w.Header().Set("content-type", "text/html; charset=utf-8")
 		_, _ = w.Write([]byte("<!doctype html><meta charset=utf-8><title>Đăng nhập hoàn tất</title>" +
 			"<body style=\"font:15px system-ui;padding:40px;text-align:center\">" + msg +
-			"<p style=\"color:#888;font-size:13px\">Bạn có thể đóng trang này để quay lại zen-gate.</p></body>"))
+			"<p style=\"color:#888;font-size:13px\">Bạn có thể đóng trang này để quay lại loimo.</p></body>"))
 		p.mu.Lock()
 		p.result = "ok"
 		p.mu.Unlock()

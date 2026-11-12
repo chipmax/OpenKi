@@ -6,14 +6,14 @@ import (
 	"strings"
 	"testing"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // The backups directory is the only undo for an injection into a config
-// zen-gate does not own. Two writes in the same clock second used to collide on
+// loimo does not own. Two writes in the same clock second used to collide on
 // one filename, so the second one overwrote the first restore point.
 func TestBackupFileKeepsEveryCopyFromTheSameSecond(t *testing.T) {
-	t.Setenv("ZEN_GATE_HOME", t.TempDir())
+	t.Setenv("LOIMO_HOME", t.TempDir())
 	first, err := backupFile("probe", filepath.Join("cfg", "agent.json"), []byte(`{"v":1}`))
 	if err != nil {
 		t.Fatal(err)
@@ -34,7 +34,7 @@ func TestBackupFileKeepsEveryCopyFromTheSameSecond(t *testing.T) {
 }
 
 func TestLatestBackupPicksTheNewestCopy(t *testing.T) {
-	t.Setenv("ZEN_GATE_HOME", t.TempDir())
+	t.Setenv("LOIMO_HOME", t.TempDir())
 	if _, err := backupFile("probe", filepath.Join("cfg", "agent.json"), []byte(`{"v":1}`)); err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +49,7 @@ func TestLatestBackupPicksTheNewestCopy(t *testing.T) {
 
 // OpenCode's adapter rewrites a whole foreign document (providers, other
 // vendors' entries), so a copy has to exist before the write — a schema
-// zen-gate does not recognise should be recoverable.
+// loimo does not recognise should be recoverable.
 func TestOpenCodeEnableBacksUpBeforeRewriting(t *testing.T) {
 	dir := openCodeHome(t)
 	path := filepath.Join(dir, "opencode.json")
@@ -71,7 +71,7 @@ func TestOpenCodeEnableBacksUpBeforeRewriting(t *testing.T) {
 
 func hasBackupContaining(t *testing.T, agentID, substr string) bool {
 	t.Helper()
-	dir := filepath.Join(os.Getenv("ZEN_GATE_HOME"), "backups", agentID)
+	dir := filepath.Join(os.Getenv("LOIMO_HOME"), "backups", agentID)
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return false

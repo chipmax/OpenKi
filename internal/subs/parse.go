@@ -3,7 +3,7 @@
 //
 // One subscription body is a (usually base64-encoded) list of node URIs —
 // vless://, vmess://, ss://, trojan://, hy2://, tuic://, socks://. Each parsed
-// node becomes one sing-box outbound behind one local inbound, so zen-gate can
+// node becomes one sing-box outbound behind one local inbound, so loimo can
 // pick a different exit IP per request without talking any of those protocols
 // itself (the sing-box binary stays a separate, unmodified program).
 package subs

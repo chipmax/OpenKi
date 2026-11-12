@@ -1,4 +1,4 @@
-# Thông báo bên thứ ba — zen-gate-vi
+# Thông báo bên thứ ba — loimo
 
 Dự án này phát hành theo **GNU GPL-3.0-only** (xem [LICENSE](LICENSE) và
 [COPYING](COPYING)). Các thành phần dưới đây được giữ nguyên giấy phép gốc;
@@ -27,13 +27,13 @@ theo MIT. Chi tiết thay đổi và phạm vi tích hợp: `internal/warp/NOTIC
 
 Nghĩa vụ khi phân phối lại: bản phân phối có chứa `internal/warp` phải tuân
 theo GPL-3.0 (mã nguồn tương ứng, thông báo bản quyền, không bổ sung hạn chế
-ngoài GPL). Vì toàn bộ zen-gate-vi đã phát hành theo GPL-3.0, nghĩa vụ này được
+ngoài GPL). Vì toàn bộ loimo đã phát hành theo GPL-3.0, nghĩa vụ này được
 đáp ứng ở cấp dự án.
 
 ### sing-box sidecar
 
-zen-gate **không** nhúng hoặc phát hành lại sing-box. Khi người dùng cấu hình
-`singbox` trong `egressModes` (hoặc đặt `singBoxPath`), zen-gate chỉ gọi một
+loimo **không** nhúng hoặc phát hành lại sing-box. Khi người dùng cấu hình
+`singbox` trong `egressModes` (hoặc đặt `singBoxPath`), loimo chỉ gọi một
 binary sing-box do người dùng tự tải và cài. Binary đó chịu GPL-3.0 của
 SagerNet/sing-box; việc tải, nâng cấp và tuân thủ giấy phép binary là trách
 nhiệm của người vận hành.
@@ -79,7 +79,7 @@ SOFTWARE.
 
 Mẫu relay server trong repo (khi có) phát hành theo MIT; xem `relay-server/`
 và tài liệu triển khai tại [docs/RELAY.md](docs/RELAY.md). Việc triển khai
-relay trên Vercel/VPS không làm thay đổi giấy phép của zen-gate.
+relay trên Vercel/VPS không làm thay đổi giấy phép của loimo.
 
 ## Giấy phép của mã phụ thuộc Go
 

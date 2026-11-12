@@ -4,7 +4,7 @@ import "testing"
 
 func openPerfStore(t *testing.T) *Store {
 	t.Helper()
-	t.Setenv("ZEN_GATE_HOME", t.TempDir())
+	t.Setenv("LOIMO_HOME", t.TempDir())
 	st, err := Open()
 	if err != nil {
 		t.Fatal(err)

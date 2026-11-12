@@ -38,8 +38,8 @@ jobs:
         shell: pwsh
         run: |
           $ver = "${{ github.ref_name }}" -replace '^v','' -replace '/','-'
-          go build -trimpath -ldflags "-H=windowsgui -X zen-gate/internal/gateway.Version=$ver -X zen-gate/internal/update.Current=$ver" -o dist/zen-gate.exe ./cmd/zen-gate
-          go build -trimpath -o dist/zenstats.exe ./cmd/zenstats
+          go build -trimpath -ldflags "-H=windowsgui -X github.com/chipmax/loimo/internal/gateway.Version=$ver -X github.com/chipmax/loimo/internal/update.Current=$ver" -o dist/loimo.exe ./cmd/loimo
+          go build -trimpath -o dist/loimostats.exe ./cmd/loimostats
 
       - name: Package
         shell: pwsh
@@ -47,8 +47,8 @@ jobs:
           $ver = "${{ github.ref_name }}" -replace '^v','' -replace '/','-'
           Copy-Item README.md dist/README.md
           Copy-Item LICENSE dist/LICENSE
-          if (-not (Test-Path dist/zen-gate.exe)) { throw "zen-gate.exe missing" }
-          tar -a -c -f "dist/zen-gate-$ver.zip" -C dist zen-gate.exe README.md LICENSE
+          if (-not (Test-Path dist/loimo.exe)) { throw "loimo.exe missing" }
+          tar -a -c -f "dist/loimo-$ver.zip" -C dist loimo.exe README.md LICENSE
           Get-ChildItem dist
 
       - name: Release
@@ -59,7 +59,7 @@ jobs:
         run: |
           $tag = "${{ github.ref_name }}"
           $ver = $tag -replace '^v','' -replace '/','-'
-          $assets = @("dist/zen-gate.exe", "dist/zenstats.exe", "dist/zen-gate-$ver.zip")
+          $assets = @("dist/loimo.exe", "dist/loimostats.exe", "dist/loimo-$ver.zip")
           # A tag published once and re-run (a failed later step, a
           # workflow_dispatch) already owns the release; gh release create exits
           # non-zero there, so the binaries never got uploaded on the retry.
@@ -136,15 +136,15 @@ jobs:
 
       - name: Verify
         run: |
-          lipo -info "dist/Zen Gate.app/Contents/MacOS/zen-gate"
-          codesign --verify --deep --strict "dist/Zen Gate.app"
-          plutil -lint "dist/Zen Gate.app/Contents/Info.plist"
+          lipo -info "dist/Lối Mở.app/Contents/MacOS/loimo"
+          codesign --verify --deep --strict "dist/Lối Mở.app"
+          plutil -lint "dist/Lối Mở.app/Contents/Info.plist"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: zen-gate-macos
+          name: loimo-macos
           path: |
-            dist/Zen Gate.app
-            dist/zen-gate-darwin
-            dist/zen-gate-*-darwin.zip
+            dist/Lối Mở.app
+            dist/loimo-darwin
+            dist/loimo-*-darwin.zip
           if-no-files-found: error

@@ -37,7 +37,7 @@ func corsAPI(w http.ResponseWriter, r *http.Request) bool {
 	// after a throttle switch, the exit header names the egress a turn left
 	// through, and the request id ties a reply to the access log. Without this
 	// list a browser reads all three as absent.
-	w.Header().Set("Access-Control-Expose-Headers", "x-zen-gate-served-by, x-zen-gate-exit, x-zen-gate-request-id, content-type")
+	w.Header().Set("Access-Control-Expose-Headers", "x-loimo-served-by, x-loimo-exit, x-loimo-request-id, content-type")
 	if r.Method != http.MethodOptions {
 		return false
 	}

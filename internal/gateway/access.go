@@ -11,8 +11,8 @@ import (
 	"time"
 	"unicode"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/logx"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/logx"
 )
 
 // Per-request logging. One logical client request gets one `access` line,

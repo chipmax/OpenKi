@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/logx"
-	"zen-gate/internal/relay"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/logx"
+	"github.com/chipmax/loimo/internal/relay"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // Cross-lane routing: merged capability resolution plus the one-way fallback

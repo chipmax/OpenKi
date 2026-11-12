@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // stopAndWait terminates the tracked sidecar and does not return until its
@@ -36,7 +36,7 @@ func waitForPorts(addrs []string, timeout time.Duration) error {
 	return fmt.Errorf("Cổng vẫn bị chiếm: %s", strings.Join(busyPorts(addrs), ", "))
 }
 
-// reapOrphan terminates a sidecar left behind by an earlier zen-gate — one this
+// reapOrphan terminates a sidecar left behind by an earlier loimo — one this
 // process has no handle to, because its parent died. Only a pid the manager
 // recorded itself, still running the recorded binary, is touched; anything else
 // holding the port belongs to the user and is left alone.

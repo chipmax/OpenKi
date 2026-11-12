@@ -3,7 +3,7 @@ package gateway
 import (
 	"testing"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // Issue #97: clients that spell the deepest rung "max" (MyAgent profiles do)

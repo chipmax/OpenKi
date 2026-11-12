@@ -1,11 +1,11 @@
-# Ghi chú Việt hoá mã nguồn Go — zen-gate-vi
+# Ghi chú Việt hoá mã nguồn Go — loimo
 
 Ngày thực hiện: 2026-11-11 · Phạm vi: các file `.go` (không gồm `web/index.html` — phần đó thuộc đợt dịch giao diện web riêng).
 
 ## Tổng kết
 
 - Khảo sát ban đầu: **662 chuỗi ký tự chứa chữ Hán** trong 75 file `.go` (không tính test, không tính comment).
-- Đã dịch: **~630 chuỗi** hiển thị cho người dùng cuối (thông báo lỗi admin/client API, thông báo hệ thống/khay, nhãn trạng thái, mô tả mô hình & preset nhà cung cấp, trang HTML của `zenstats`, trang callback đăng nhập...). Tổng cộng 660 dòng `.go` thay đổi (gồm cả cập nhật test).
+- Đã dịch: **~630 chuỗi** hiển thị cho người dùng cuối (thông báo lỗi admin/client API, thông báo hệ thống/khay, nhãn trạng thái, mô tả mô hình & preset nhà cung cấp, trang HTML của `loimostats`, trang callback đăng nhập...). Tổng cộng 660 dòng `.go` thay đổi (gồm cả cập nhật test).
 - Còn lại 31 chuỗi thuộc danh sách **cố ý không dịch** ở mục 3.
 - Kiểm chứng: `CGO_ENABLED=0 go build -tags headless ./...` ✅ pass. `go test -tags headless ./...`: mọi package pass, trừ 5 test LAN trong `internal/gateway` đã fail sẵn ở baseline trước khi dịch (môi trường VM chặn kết nối tới IP LAN) — xem mục 4.
 
@@ -13,8 +13,8 @@ Ngày thực hiện: 2026-11-11 · Phạm vi: các file `.go` (không gồm `web
 
 | Khu vực | File | Dòng |
 |---|---|---|
-| Điểm vào | `cmd/zen-gate/main.go` | 46 |
-| | `cmd/zenstats/main.go` (HTML tổng quan + nhãn JS) | 19 |
+| Điểm vào | `cmd/loimo/main.go` | 46 |
+| | `cmd/loimostats/main.go` (HTML tổng quan + nhãn JS) | 19 |
 | Agent | `internal/agents/tier2.go` | 22 |
 | | `internal/agents/codex.go` | 10 |
 | | `internal/agents/dsh.go` | 10 |
@@ -95,7 +95,7 @@ Ngoài ra, theo quy tắc chung: **toàn bộ comment trong code giữ nguyên t
 
 ## 4. Test
 
-**Baseline (trước khi dịch)** — `CGO_ENABLED=0 go test -tags headless ./...`: mọi package pass trừ 5 test trong `internal/gateway`: `TestLanServedWhenAllowed`, `TestAdminFenceHoldsOverLan`, `TestRebindAppliesLanToggle`, `TestSettingsAllowLanRebinds`, `TestSettingsAllowLanRepliesOverLiveListener`. Nguyên nhân môi trường: các test này gọi tới IP LAN của VM (198.19.0.2) và bị lớp proxy của runtime chặn (lỗi "malformed HTTP status code Other"), không liên quan mã nguồn. (Chạy `go test ./...` không có thẻ `headless` trên VM Linux này còn fail build sẵn ở `cmd/zen-gate`, `internal/tray`, `internal/window`, `internal/gateway` do thiếu thư viện hệ thống ayatana-appindicator cho systray — cũng là vấn đề môi trường có từ trước.)
+**Baseline (trước khi dịch)** — `CGO_ENABLED=0 go test -tags headless ./...`: mọi package pass trừ 5 test trong `internal/gateway`: `TestLanServedWhenAllowed`, `TestAdminFenceHoldsOverLan`, `TestRebindAppliesLanToggle`, `TestSettingsAllowLanRebinds`, `TestSettingsAllowLanRepliesOverLiveListener`. Nguyên nhân môi trường: các test này gọi tới IP LAN của VM (198.19.0.2) và bị lớp proxy của runtime chặn (lỗi "malformed HTTP status code Other"), không liên quan mã nguồn. (Chạy `go test ./...` không có thẻ `headless` trên VM Linux này còn fail build sẵn ở `cmd/loimo`, `internal/tray`, `internal/window`, `internal/gateway` do thiếu thư viện hệ thống ayatana-appindicator cho systray — cũng là vấn đề môi trường có từ trước.)
 
 **Sau khi dịch**: 12 test fail vì assert đúng chuỗi hiển thị tiếng Trung cũ — tất cả đã được cập nhật sang chuỗi tiếng Việt mới:
 

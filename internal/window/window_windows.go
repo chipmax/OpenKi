@@ -9,8 +9,8 @@ import (
 	"github.com/jchv/go-webview2"
 	"github.com/jchv/go-webview2/webviewloader"
 
-	"zen-gate/internal/notify"
-	"zen-gate/internal/tray"
+	"github.com/chipmax/loimo/internal/notify"
+	"github.com/chipmax/loimo/internal/tray"
 )
 
 // Run creates the window, navigates to the URL and blocks until the window is
@@ -31,7 +31,7 @@ func Run(o Options) {
 	// -H=windowsgui discards. An empty version with nil error is the loader's
 	// "runtime not installed" answer (ERROR_FILE_NOT_FOUND maps to empty).
 	version, verr := webviewloader.GetInstalledVersion()
-	forced := os.Getenv("ZEN_GATE_NO_WEBVIEW2") != ""
+	forced := os.Getenv("LOIMO_NO_WEBVIEW2") != ""
 	if ok, reason := embeddedDecision(version, verr, forced); !ok {
 		runFallback(o, reason, false)
 		return
@@ -155,7 +155,7 @@ func createWebview(dataPath string, o Options) (v webview2.WebView, reason strin
 // WebView2 environment needs both.
 func usableDataPath(dir string) (string, bool) {
 	if dir == "" {
-		dir = filepath.Join(os.TempDir(), "zen-gate-webview")
+		dir = filepath.Join(os.TempDir(), "loimo-webview")
 	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return dir, false
@@ -173,19 +173,19 @@ func usableDataPath(dir string) (string, bool) {
 // bindWindowControls exposes the custom title bar's actions to JS. The HTML
 // title bar calls these: drag on mousedown, buttons for min/max/close.
 func bindWindowControls(w webview2.WebView, hwnd uintptr, onCloseButton func() bool) {
-	_ = w.Bind("zengateDrag", func() error {
+	_ = w.Bind("loimoDrag", func() error {
 		startDrag(hwnd)
 		return nil
 	})
-	_ = w.Bind("zengateMinimize", func() error {
+	_ = w.Bind("loimoMinimize", func() error {
 		minimizeWindow(hwnd)
 		return nil
 	})
-	_ = w.Bind("zengateToggleMax", func() error {
+	_ = w.Bind("loimoToggleMax", func() error {
 		toggleMaximize(hwnd)
 		return nil
 	})
-	_ = w.Bind("zengateClose", func() error {
+	_ = w.Bind("loimoClose", func() error {
 		if onCloseButton != nil && !onCloseButton() {
 			return nil // close-to-tray: the window stays, just hidden by caller
 		}
@@ -199,7 +199,7 @@ func bindWindowControls(w webview2.WebView, hwnd uintptr, onCloseButton func() b
 // make things worse than degrading on a bogus pre-flight.
 func embeddedDecision(version string, verr error, forced bool) (bool, string) {
 	if forced {
-		return false, "ZEN_GATE_NO_WEBVIEW2=1 (bỏ qua cửa sổ nhúng theo cách thủ công)"
+		return false, "LOIMO_NO_WEBVIEW2=1 (bỏ qua cửa sổ nhúng theo cách thủ công)"
 	}
 	if verr != nil {
 		return true, ""

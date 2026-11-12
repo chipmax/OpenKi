@@ -11,7 +11,7 @@ import (
 
 func ompFixture(t *testing.T, content string) (root, path string) {
 	t.Helper()
-	t.Setenv("ZEN_GATE_HOME", t.TempDir())
+	t.Setenv("LOIMO_HOME", t.TempDir())
 	root = t.TempDir()
 	dir := filepath.Join(root, "agent")
 	if err := os.MkdirAll(dir, 0o700); err != nil {
@@ -62,9 +62,9 @@ func TestOMPEnableAddsProviderAndPreservesOthers(t *testing.T) {
 	if _, ok := providers["other"].(map[string]any); !ok {
 		t.Fatalf("the pre-existing provider was dropped: %v", providers)
 	}
-	zg, _ := providers["zen-gate"].(map[string]any)
+	zg, _ := providers["loimo"].(map[string]any)
 	if zg == nil {
-		t.Fatalf("providers.zen-gate missing: %v", providers)
+		t.Fatalf("providers.loimo missing: %v", providers)
 	}
 	if got, _ := zg["baseUrl"].(string); got != "http://127.0.0.1:8787/v1" {
 		t.Errorf("baseUrl = %q", got)
@@ -100,7 +100,7 @@ func TestOMPDisableRemovesOnlyItsProvider(t *testing.T) {
 }
 
 // models.yml is the user's file; an unknown shape must be refused, not
-// flattened into a zen-gate-only document.
+// flattened into a loimo-only document.
 func TestOMPEnableRefusesAnUnparseableFile(t *testing.T) {
 	broken := "providers: [unclosed\n"
 	root, path := ompFixture(t, broken)
@@ -135,5 +135,42 @@ func TestOMPMetaNamesThePlatformSide(t *testing.T) {
 	id, name, detail := windows.Meta()
 	if id != "omp-windows" || name != "omp (Windows)" || !strings.Contains(detail, "models.yml") {
 		t.Errorf("Meta = %q, %q, %q", id, name, detail)
+	}
+}
+
+func TestOMPEnableMigratesLegacyProvider(t *testing.T) {
+	root, path := ompFixture(t, `providers:
+  zen-gate:
+    baseUrl: http://127.0.0.1:8787/v1
+    api: openai-completions
+    apiKey: old-key
+    models:
+      - id: old-model
+        name: old-model
+  other:
+    baseUrl: http://example.invalid/v1
+    api: openai-completions
+    apiKey: other-key
+    models:
+      - id: keep-me
+        name: keep-me
+`)
+	o := newOMP(root, "omp", "omp")
+	if !o.LegacyEnabled() {
+		t.Fatal("LegacyEnabled missed the pre-rename provider")
+	}
+	if err := o.Enable(testOptions()); err != nil {
+		t.Fatal(err)
+	}
+	doc := readYAMLMap(t, path)
+	providers, _ := doc["providers"].(map[string]any)
+	if _, ok := providers["zen-gate"]; ok {
+		t.Fatalf("legacy provider survived migration: %v", providers)
+	}
+	if _, ok := providers["loimo"]; !ok {
+		t.Fatalf("current provider missing after migration: %v", providers)
+	}
+	if _, ok := providers["other"]; !ok {
+		t.Fatalf("unrelated provider lost: %v", providers)
 	}
 }

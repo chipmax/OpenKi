@@ -1,6 +1,6 @@
 package httpapi
 
-import "zen-gate/internal/qoderhub/tooltypes"
+import "github.com/chipmax/loimo/internal/qoderhub/tooltypes"
 
 // Model-facing tool descriptions taken verbatim from the QoderCN CLI so the
 // proxy's advertised "server tools" behave the way that CLI's do.

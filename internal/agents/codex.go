@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// codex injects a [model_providers.zen_gate] block plus a model catalog into
+// codex injects a [model_providers.loimo] block plus a model catalog into
 // ~/.codex/config.toml. The provider block is appended textually so the rest
 // of the user's TOML is untouched; marker comments make enable/disable
 // idempotent. The catalog is written as a sidecar JSON file referenced by the
@@ -35,10 +35,16 @@ type codex struct {
 	name string
 }
 
-const codexMarkerBegin = "# >>> zen-gate managed block (do not edit)"
-const codexMarkerEnd = "# <<< zen-gate managed block"
-const codexCatalogKeyBegin = "# >>> zen-gate catalog key (do not edit)"
-const codexCatalogKeyEnd = "# <<< zen-gate catalog key"
+const codexMarkerBegin = "# >>> loimo managed block (do not edit)"
+const codexMarkerEnd = "# <<< loimo managed block"
+const codexCatalogKeyBegin = "# >>> loimo catalog key (do not edit)"
+const codexCatalogKeyEnd = "# <<< loimo catalog key"
+
+// The pre-rename release wrote a different marker pair and provider id. Both
+// are stripped on enable/disable so a migration cannot leave a stale
+// [model_providers.zen_gate] table or a second catalog key behind.
+const legacyCodexMarkerBegin = "# >>> zen-gate managed block (do not edit)"
+const legacyCodexMarkerEnd = "# <<< zen-gate managed block"
 
 type codexLevel struct {
 	Effort      string `json:"effort"`
@@ -93,6 +99,10 @@ func (c *codex) Meta() (string, string, string) {
 
 func (c *codex) configPath() string { return c.p(".codex", "config.toml") }
 func (c *codex) catalogPath() string {
+	return c.p(".codex", "loimo-catalog.json")
+}
+
+func (c *codex) legacyCatalogPath() string {
 	return c.p(".codex", "zen-gate-catalog.json")
 }
 
@@ -114,6 +124,14 @@ func (c *codex) IsEnabled() (bool, string, error) {
 	return strings.Contains(string(data), codexMarkerBegin), "", nil
 }
 
+func (c *codex) LegacyEnabled() bool {
+	data, err := os.ReadFile(c.configPath())
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(data), legacyCodexMarkerBegin)
+}
+
 func (c *codex) block(o Options) string {
 	// requires_openai_auth mirrors the shape of working custom providers on
 	// desktop Codex: without it the app treats the provider as unauthenticated
@@ -122,8 +140,8 @@ func (c *codex) block(o Options) string {
 	// model_catalog_url lets the picker refresh the list live from the gateway;
 	// model_catalog_json (top of file) is the verified offline path.
 	return fmt.Sprintf(`%s
-[model_providers.zen_gate]
-name = "Zen Gate – Mô hình miễn phí"
+[model_providers.loimo]
+name = "Lối Mở – Mô hình miễn phí"
 base_url = "%s"
 wire_api = "responses"
 requires_openai_auth = true
@@ -159,7 +177,7 @@ func catalogJSON(o Options, def string) ([]byte, error) {
 		if m.RegionSensitive {
 			pri = 10
 		}
-		desc := "Mô hình làn miễn phí Zen Gate"
+		desc := "Mô hình làn miễn phí Lối Mở"
 		if m.Blurb != "" {
 			desc = m.Blurb
 		}
@@ -168,7 +186,7 @@ func catalogJSON(o Options, def string) ([]byte, error) {
 			DisplayName: m.Name,
 			Description: desc,
 			BaseInstructions: fmt.Sprintf(
-				"You are %s (model id: %s), a coding agent serving the user's Codex app through the Zen Gate local gateway. Work toward the user's goal with the available tools and verify your changes. Always reply in the same language as the user's latest message — when the user writes Chinese, reply in Simplified Chinese. Be concise.",
+				"You are %s (model id: %s), a coding agent serving the user's Codex app through the Lối Mở local gateway. Work toward the user's goal with the available tools and verify your changes. Always reply in the same language as the user's latest message — when the user writes Chinese, reply in Simplified Chinese. Be concise.",
 				m.Name, m.ID,
 			),
 			DefaultReasoning:  "medium",
@@ -181,7 +199,7 @@ func catalogJSON(o Options, def string) ([]byte, error) {
 			Visibility:        "list",
 			SupportedInAPI:    true,
 			Priority:          pri,
-			ProviderID:        "zen_gate",
+			ProviderID:        "loimo",
 			ContextWindow:     m.ContextWindow,
 			MaxOutputTokens:   m.MaxOutput,
 		})
@@ -232,12 +250,51 @@ func stripMarkers(src string, begin, end string) string {
 	return strings.TrimRight(strings.Join(out, "\n"), "\n")
 }
 
+// stripCodexManaged removes the current managed block/catalog key and the
+// pre-rename equivalents. Both passes are needed during migration: the old
+// provider table is what the old marker pair encloses.
+func stripCodexManaged(src string) string {
+	for _, pair := range [][2]string{
+		{codexMarkerBegin, codexMarkerEnd},
+		{codexCatalogKeyBegin, codexCatalogKeyEnd},
+		{legacyCodexMarkerBegin, legacyCodexMarkerEnd},
+	} {
+		src = stripMarkers(src, pair[0], pair[1])
+	}
+	return src
+}
+
 // codexStatePath stores the pre-existing top-level model_provider/model lines
 // this adapter replaces — and any top-level lines it removes outright (a
 // pre-existing model_catalog_json) — so Disable can put them all back
 // verbatim.
 func (c *codex) codexStatePath() string {
+	return c.p(".codex", "loimo-state.json")
+}
+
+func (c *codex) legacyCodexStatePath() string {
 	return c.p(".codex", "zen-gate-state.json")
+}
+
+// readCodexStash loads the pre-enable originals, preferring the current state
+// file and falling back to the pre-rename one so an upgraded install can
+// still restore what the old release saved.
+func (c *codex) readCodexStash() map[string]string {
+	stash := map[string]string{}
+	for _, path := range []string{c.codexStatePath(), c.legacyCodexStatePath()} {
+		b, err := os.ReadFile(path)
+		if err != nil {
+			continue
+		}
+		var prev map[string]string
+		if json.Unmarshal(b, &prev) == nil {
+			for k, v := range prev {
+				stash[k] = v
+			}
+		}
+		break
+	}
+	return stash
 }
 
 // replaceTopLevelKeys rewrites key=value lines in the top-level region (before
@@ -332,19 +389,13 @@ func (c *codex) Enable(o Options) error {
 	if err := atomicWrite(c.catalogPath(), cat); err != nil {
 		return err
 	}
+	_ = os.Remove(c.legacyCatalogPath())
 
 	// Seed the stash from a previous enable: on re-enable the config carries
-	// zen-gate's own rewritten lines, and recording them as "originals" would
-	// clobber the user's real ones.
-	stash := map[string]string{}
-	if b, err := os.ReadFile(c.codexStatePath()); err == nil {
-		var prev map[string]string
-		if json.Unmarshal(b, &prev) == nil {
-			for k, v := range prev {
-				stash[k] = v
-			}
-		}
-	}
+	// loimo's own rewritten lines, and recording them as "originals" would
+	// clobber the user's real ones. The pre-rename state file is the fallback
+	// for an install upgrading across the rename.
+	stash := c.readCodexStash()
 
 	out := c.applyEnable(src, o, def, c.catalogPath(), stash)
 	if len(stash) > 0 {
@@ -352,6 +403,7 @@ func (c *codex) Enable(o Options) error {
 			_ = atomicWrite(c.codexStatePath(), b)
 		}
 	}
+	_ = os.Remove(c.legacyCodexStatePath())
 	return atomicWrite(path, []byte(out))
 }
 
@@ -361,14 +413,16 @@ func (c *codex) Enable(o Options) error {
 func (c *codex) applyEnable(src string, o Options, def, catalogPath string, stash map[string]string) string {
 	// Strip previous managed blocks first: on re-enable the managed
 	// model_catalog_json line must not reach the stashing passes below, or
-	// zen-gate's own line would be recorded as the user's "original".
-	base := stripMarkers(stripMarkers(src, codexMarkerBegin, codexMarkerEnd), codexCatalogKeyBegin, codexCatalogKeyEnd)
+	// loimo's own line would be recorded as the user's "original". The
+	// pre-rename block is stripped in the same pass so its provider table
+	// cannot survive the migration.
+	base := stripCodexManaged(src)
 	// The desktop picker changes the model name but keeps routing through the
-	// config's active provider, so zen_gate must become the active provider
+	// config's active provider, so loimo must become the active provider
 	// for picker selections to work at all. The user's original top-level
 	// model_provider/model lines are stashed and restored on Disable.
 	base = replaceTopLevelKeys(base, map[string]string{
-		"model_provider": `"zen_gate"`,
+		"model_provider": `"loimo"`,
 		"model":          fmt.Sprintf("%q", def),
 	}, stash)
 	// A config that already carries a top-level model_catalog_json — the
@@ -389,11 +443,14 @@ func (c *codex) Disable() error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		_ = os.Remove(c.codexStatePath())
+		_ = os.Remove(c.legacyCodexStatePath())
 		return nil
 	}
 	// Managed blocks go first: the stash undo below must not mistake
-	// zen-gate's own managed model_catalog_json line for the user's.
-	clean := stripMarkers(stripMarkers(string(data), codexMarkerBegin, codexMarkerEnd), codexCatalogKeyBegin, codexCatalogKeyEnd)
+	// loimo's own managed model_catalog_json line for the user's. The
+	// pre-rename marker pair is included, so disabling an upgraded install
+	// removes its old provider table too.
+	clean := stripCodexManaged(string(data))
 	// Restore the user's original top-level lines: rewritten ones in place,
 	// lines that Enable removed entirely (e.g. a pre-existing
 	// model_catalog_json) re-inserted before the first [table] header.
@@ -403,7 +460,14 @@ func (c *codex) Disable() error {
 			clean = applyDisable(clean, stash)
 		}
 		_ = os.Remove(c.codexStatePath())
+	} else if b, err := os.ReadFile(c.legacyCodexStatePath()); err == nil {
+		var stash map[string]string
+		if json.Unmarshal(b, &stash) == nil && len(stash) > 0 {
+			clean = applyDisable(clean, stash)
+		}
 	}
+	_ = os.Remove(c.legacyCodexStatePath())
+	_ = os.Remove(c.legacyCatalogPath())
 	return atomicWrite(path, []byte(clean+"\n"))
 }
 

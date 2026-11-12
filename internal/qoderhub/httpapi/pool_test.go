@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"zen-gate/internal/qoderhub/remote"
-	"zen-gate/internal/qoderhub/service"
+	"github.com/chipmax/loimo/internal/qoderhub/remote"
+	"github.com/chipmax/loimo/internal/qoderhub/service"
 )
 
 // newPoolServer builds a server whose service owns a real, empty account pool.

@@ -1,6 +1,6 @@
-# zen-gate-vi — Fork tiếng Việt của Zen Gate
+# loimo — Fork tiếng Việt của Lối Mở
 
-> **Fork tiếng Việt — zen-gate-vi**
+> **Fork tiếng Việt — loimo**
 >
 > Đây là bản fork đã Việt hoá từ [LAGcomcom/zen-gate](https://github.com/LAGcomcom/zen-gate) (bản gốc tiếng Trung được giữ nguyên ở [README.zh-CN.md](README.zh-CN.md)):
 >
@@ -9,17 +9,17 @@
 
 <div align="center">
 
-<img src="assets/icon-256.png" width="88" alt="Zen Gate">
+<img src="assets/icon-256.png" width="88" alt="Lối Mở">
 
-# ZEN—GATE
+# LỐI—MỞ
 
 **Đưa các mô hình miễn phí của OpenCode Zen vào mọi AI Agent của bạn.**
 
 Một chương trình khay hệ thống trên máy tính (Windows 10/11, macOS 13+, Linux): mở một cổng (gateway) cục bộ tương thích OpenAI / Anthropic và tự động kết nối với các AI Agent đã cài trên máy — các mô hình miễn phí xuất hiện ngay trong bộ chọn mô hình của Agent.
 
-[![release](https://img.shields.io/github/v/release/chipmax/zen-gate-vi?style=flat-square&label=phiên%20bản)](https://github.com/chipmax/zen-gate-vi/releases/latest)
+[![release](https://img.shields.io/github/v/release/chipmax/loimo?style=flat-square&label=phiên%20bản)](https://github.com/chipmax/loimo/releases/latest)
 [![go](https://img.shields.io/badge/Go-1.26-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
-[![platform](https://img.shields.io/badge/Windows-10%2F11%20%7C%20macOS%2013%2B%20%7C%20Linux-0078D6?style=flat-square)](https://github.com/chipmax/zen-gate-vi/releases)
+[![platform](https://img.shields.io/badge/Windows-10%2F11%20%7C%20macOS%2013%2B%20%7C%20Linux-0078D6?style=flat-square)](https://github.com/chipmax/loimo/releases)
 [![license](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)](LICENSE)
 
 </div>
@@ -28,7 +28,7 @@ Một chương trình khay hệ thống trên máy tính (Windows 10/11, macOS 1
 
 ## Đây là gì
 
-OpenCode Zen cung cấp một loạt mô hình miễn phí **không cần đăng nhập, không tính phí**, nhưng chúng không có cơ chế API Key tiêu chuẩn nên các client thông thường không kết nối được. Zen Gate đóng gói "làn" này trên máy của bạn thành **giao diện tương thích OpenAI / Anthropic tiêu chuẩn**, và tự động hoàn tất việc tiêm cấu hình cho mọi Agent.
+OpenCode Zen cung cấp một loạt mô hình miễn phí **không cần đăng nhập, không tính phí**, nhưng chúng không có cơ chế API Key tiêu chuẩn nên các client thông thường không kết nối được. Lối Mở đóng gói "làn" này trên máy của bạn thành **giao diện tương thích OpenAI / Anthropic tiêu chuẩn**, và tự động hoàn tất việc tiêm cấu hình cho mọi Agent.
 
 - **Tự động thích ứng toàn diện**: phát hiện OpenCode / Codex / Claude Code / DeepSeek Harness / omp (bản Windows và bản WSL là hai mục riêng) là tiêm cấu hình ngay (sao lưu trước, tắt là khôi phục). Khởi động lại Agent tương ứng là thấy mô hình miễn phí trong bộ chọn mô hình.
 - **Thêm API tuỳ chỉnh**: ngoài làn miễn phí, có thể thêm bất kỳ upstream tương thích OpenAI / Anthropic nào — tích hợp sẵn 14 preset nhà cung cấp miễn phí (NVIDIA NIM, Google Gemini, GitHub Models, Groq, Cerebras, Mistral, OpenRouter, HuggingFace, SiliconFlow, ModelScope, BigModel...) để điền sẵn, bạn chỉ cần dán Key của mình; mô hình xuất hiện trong mọi Agent dưới dạng `nhà cung cấp/mô hình`.
@@ -44,7 +44,7 @@ OpenCode Zen cung cấp một loạt mô hình miễn phí **không cần đăng
 | 🎯 **Chiến lược định tuyến** | Công tắc định tuyến thông minh bật/tắt bất cứ lúc nào; chuỗi ứng viên dự phòng sắp xếp theo "thứ tự danh mục / độ trễ ký tự đầu"; khi làn miễn phí cạn hoàn toàn có thể lùi một chiều về API tuỳ chỉnh của bạn (mặc định tắt, vì sẽ tốn Key của bạn) |
 | 🔄 **Tự động chuyển đổi khi bị giới hạn** | Mô hình bị giới hạn tốc độ sẽ tự chuyển sang mô hình khả dụng tiếp theo, header phản hồi ghi rõ mô hình thực tế đã trả lời |
 | 🧯 **Giới hạn theo exit, không theo mô hình** | Chuỗi 429 bắt đầu 90 giây, gấp đôi đến trần 15 phút; chỉ park dài khi ba lần 429 cách xa **và** một lần thăm dò độc lập xác nhận. Governor `exitTokensPerMinute` (mặc định 300k/phút mỗi exit, `0` = tắt) giữ nhịp token, thử exit khác khi cạn và chỉ chờ tối đa 20 giây trước khi trả 429 kèm `Retry-After` — chi tiết ở [docs/EGRESS-POLICY.md](docs/EGRESS-POLICY.md) |
-| 🫆 **Cổng fingerprint có công tắc và A/B** | `fingerprintMode` (`auto`/`off`/`force`) và `gateprobe` (`-n`, `-via direct\|pool\|warp`) kiểm tra upstream còn bắt buộc định nghĩa `read`/`shell` hay không; mỗi lần chạy in hash của profile, header `x-zen-gate-exit` cho biết đúng exit đã phục vụ — xem [docs/GATE-AB.md](docs/GATE-AB.md) |
+| 🫆 **Cổng fingerprint có công tắc và A/B** | `fingerprintMode` (`auto`/`off`/`force`) và `gateprobe` (`-n`, `-via direct\|pool\|warp`) kiểm tra upstream còn bắt buộc định nghĩa `read`/`shell` hay không; mỗi lần chạy in hash của profile, header `x-loimo-exit` cho biết đúng exit đã phục vụ — xem [docs/GATE-AB.md](docs/GATE-AB.md) |
 | 📢 **Hệ thống thông báo** | Sửa `announcements.json` ở thư mục gốc là phát thông báo tới mọi người dùng (phân cấp info/warn/critical, khung giờ hiệu lực, theo dõi đã đọc); trang tổng quan đồng bộ mỗi 6 giờ |
 | 🔌 **API tuỳ chỉnh** | 14 preset nhà cung cấp miễn phí điền sẵn một chạm + tự truy vấn danh sách mô hình; Key của bạn do bạn điền, mức dùng vẫn ghi sổ đầy đủ |
 | 📖 **Siêu dữ liệu năng lực trong giao diện chuẩn** | `GET /v1/models` kèm theo mỗi mô hình các trường `context_window`, `max_output_tokens`, `input_modalities`, `reasoning`, `supported_reasoning_levels`, `capability_source` — kết luận đo thực tế đọc được từ Agent/SDK/script bất kỳ mà không cần mở bảng quản lý |
@@ -58,32 +58,32 @@ OpenCode Zen cung cấp một loạt mô hình miễn phí **không cần đăng
 
 ## Bắt đầu nhanh
 
-**Windows** — Tải `zen-gate.exe` từ trang [Releases của bản fork](https://github.com/chipmax/zen-gate-vi/releases/latest) và chạy trực tiếp (biểu tượng xuất hiện ở khay). Nếu máy chưa có WebView2 Runtime, chương trình tự chuyển sang mở trang quản lý bằng trình duyệt mặc định, chức năng cổng không bị ảnh hưởng. Biến môi trường `ZEN_GATE_NO_WEBVIEW2=1` ép dùng chế độ trình duyệt (để chẩn đoán lỗi).
+**Windows** — Tải `loimo.exe` từ trang [Releases của bản fork](https://github.com/chipmax/loimo/releases/latest) và chạy trực tiếp (biểu tượng xuất hiện ở khay). Nếu máy chưa có WebView2 Runtime, chương trình tự chuyển sang mở trang quản lý bằng trình duyệt mặc định, chức năng cổng không bị ảnh hưởng. Biến môi trường `LOIMO_NO_WEBVIEW2=1` ép dùng chế độ trình duyệt (để chẩn đoán lỗi).
 
-**macOS** — `tools/build-macos.sh` tạo ra `dist/Zen Gate.app`:
+**macOS** — `tools/build-macos.sh` tạo ra `dist/Lối Mở.app`:
 
 ```bash
 tools/build-macos.sh
-cp -R "dist/Zen Gate.app" /Applications/
-open "/Applications/Zen Gate.app"
+cp -R "dist/Lối Mở.app" /Applications/
+open "/Applications/Lối Mở.app"
 ```
 
-**Linux** — `tools/build-linux.sh` tạo AppImage tự chứa `dist/Zen_Gate-x86_64.AppImage` (GTK3 + appindicator đóng gói sẵn, không cần cài phụ thuộc):
+**Linux** — `tools/build-linux.sh` tạo AppImage tự chứa `dist/Loi_Mo-x86_64.AppImage` (GTK3 + appindicator đóng gói sẵn, không cần cài phụ thuộc):
 
 ```bash
 tools/build-linux.sh 1.2.1
-chmod +x dist/Zen_Gate-x86_64.AppImage
-./dist/Zen_Gate-x86_64.AppImage
+chmod +x dist/Loi_Mo-x86_64.AppImage
+./dist/Loi_Mo-x86_64.AppImage
 ```
 
 Bản Linux không có cửa sổ nhúng: trang quản lý mở trong trình duyệt mặc định, chương trình thường trú ở khay.
 
-**Debian / Ubuntu / Deepin** — `tools/build-deb.sh` tạo gói `dist/zen-gate_*.deb` (phụ thuộc `libgtk-3-0` và `libayatana-appindicator3-1` của hệ thống, dung lượng nhỏ hơn):
+**Debian / Ubuntu / Deepin** — `tools/build-deb.sh` tạo gói `dist/loimo_*.deb` (phụ thuộc `libgtk-3-0` và `libayatana-appindicator3-1` của hệ thống, dung lượng nhỏ hơn):
 
 ```bash
 tools/build-deb.sh 1.2.1
-sudo apt install ./dist/zen-gate_1.2.1-linux_amd64.deb
-zen-gate
+sudo apt install ./dist/loimo_1.2.1-linux_amd64.deb
+loimo
 ```
 
 Ở mọi nền tảng, cách dùng đều như nhau: vào trang "Thích ứng Agent", bật công tắc của Agent bạn đã cài → khởi động lại Agent đó → mô hình miễn phí xuất hiện trong bộ chọn mô hình.
@@ -93,7 +93,7 @@ zen-gate
 | | Windows | WSL |
 |---|---|---|
 | Giao diện | GUI + khay hệ thống | headless, mở bằng trình duyệt |
-| Dữ liệu | `%APPDATA%\zen-gate` | `$XDG_CONFIG_HOME/zen-gate` (mặc định `~/.config/zen-gate`) |
+| Dữ liệu | `%APPDATA%\loimo` | `$XDG_CONFIG_HOME/loimo` (mặc định `~/.config/loimo`) |
 | Agent | cấu hình nằm trong Windows | cấu hình nằm trong Linux; thêm mục **omp (Windows)** khi tìm thấy `C:\Users\<tên>\.omp\agent\models.yml` qua `/mnt/c` |
 | Cổng | 127.0.0.1:8787 | 127.0.0.1:8787 |
 
@@ -102,22 +102,22 @@ Chạy một bản tại một thời điểm trên cùng một cổng; hai bả
 #### Cài trong WSL (Debian/Ubuntu, systemd)
 
 ```bash
-git clone https://github.com/chipmax/zen-gate-vi.git
-cd zen-gate-vi
-CGO_ENABLED=0 go build -tags headless -trimpath -o zen-gate ./cmd/zen-gate
-sudo install -m755 zen-gate /usr/local/bin/zen-gate
+git clone https://github.com/chipmax/loimo.git
+cd loimo
+CGO_ENABLED=0 go build -tags headless -trimpath -o loimo ./cmd/loimo
+sudo install -m755 loimo /usr/local/bin/loimo
 
-sudo tee /etc/systemd/system/zen-gate.service >/dev/null <<'EOF'
+sudo tee /etc/systemd/system/loimo.service >/dev/null <<'EOF'
 [Unit]
-Description=Zen Gate (headless)
+Description=Lối Mở (headless)
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 User=YOUR_USER
-Environment=ZEN_GATE_HEADLESS=1
-ExecStart=/usr/local/bin/zen-gate
+Environment=LOIMO_HEADLESS=1
+ExecStart=/usr/local/bin/loimo
 Restart=on-failure
 RestartSec=3
 
@@ -125,19 +125,19 @@ RestartSec=3
 WantedBy=multi-user.target
 EOF
 
-sudo sed -i "s/YOUR_USER/$USER/" /etc/systemd/system/zen-gate.service
+sudo sed -i "s/YOUR_USER/$USER/" /etc/systemd/system/loimo.service
 sudo systemctl daemon-reload
-sudo systemctl enable --now zen-gate
+sudo systemctl enable --now loimo
 ```
 
-Mở `http://127.0.0.1:8787` từ trình duyệt trên Windows (WSL2 chuyển tiếp localhost). Log: `journalctl -u zen-gate -f`.
+Mở `http://127.0.0.1:8787` từ trình duyệt trên Windows (WSL2 chuyển tiếp localhost). Log: `journalctl -u loimo -f`.
 
 ## Build từ mã nguồn
 
 Windows:
 
 ```bash
-go build -trimpath -ldflags "-H=windowsgui -X zen-gate/internal/gateway.Version=1.2.1 -X zen-gate/internal/update.Current=1.2.1" -o dist/zen-gate.exe ./cmd/zen-gate
+go build -trimpath -ldflags "-H=windowsgui -X github.com/chipmax/loimo/internal/gateway.Version=1.2.1 -X github.com/chipmax/loimo/internal/update.Current=1.2.1" -o dist/loimo.exe ./cmd/loimo
 ```
 
 macOS (cần cgo và công cụ dòng lệnh Xcode):
@@ -157,17 +157,17 @@ tools/build-linux.sh 1.2.1
 Mã nguồn có thẻ build `headless`: cửa sổ và khay hệ thống được biên dịch loại bỏ hoàn toàn, binary không còn liên kết GTK / WebView2 / appindicator, nên `CGO_ENABLED=0` cũng biên dịch chéo được và chạy thẳng trong container / NAS:
 
 ```bash
-docker compose up -d        # hoặc docker build -t zen-gate .
+docker compose up -d        # hoặc docker build -t loimo .
 ```
 
-- Cổng `8787`, dữ liệu nằm ở volume `/data` (`ZEN_GATE_HOME`); `ZEN_GATE_HEADLESS=1` tương đương cờ `-no-tray`
+- Cổng `8787`, dữ liệu nằm ở volume `/data` (`LOIMO_HOME`); `LOIMO_HEADLESS=1` tương đương cờ `-no-tray`
 - Image có sẵn `HEALTHCHECK` gọi `/healthz`
 - Trang quản lý vẫn **chỉ** nghe ở loopback: trong container hãy dùng tunnel SSH hoặc reverse proxy cùng máy để truy cập; cổng được map ra ngoài là tầng endpoint OpenAI / Anthropic `/v1`, không phải trang quản trị
 
 Không dùng Docker, chỉ cần một binary không giao diện:
 
 ```bash
-CGO_ENABLED=0 go build -tags headless -trimpath -o zen-gate ./cmd/zen-gate
+CGO_ENABLED=0 go build -tags headless -trimpath -o loimo ./cmd/loimo
 ```
 
 Ma trận triển khai Windows (GUI/tray), WSL (systemd, cổng 8788) và VPS (Caddy
@@ -179,7 +179,7 @@ fingerprint và transport: [docs/GATE-AB.md](docs/GATE-AB.md).
 
 ## Cập nhật một chạm
 
-Ứng dụng kiểm tra Releases của kho fork (`chipmax/zen-gate-vi`) mỗi 6 giờ. Khi có phiên bản mới, trang tổng quan hiện nút "Cập nhật một chạm" — tự tải, thay thế và khởi động lại trong khoảng 10 giây. Tính năng này chỉ bật trên Windows (nơi bản phát hành là một file `.exe` đổi tên được khi đang chạy).
+Ứng dụng kiểm tra Releases của kho fork (`chipmax/loimo`) mỗi 6 giờ. Khi có phiên bản mới, trang tổng quan hiện nút "Cập nhật một chạm" — tự tải, thay thế và khởi động lại trong khoảng 10 giây. Tính năng này chỉ bật trên Windows (nơi bản phát hành là một file `.exe` đổi tên được khi đang chạy).
 
 Lịch sử thay đổi của fork: [CHANGELOG.md](CHANGELOG.md).
 

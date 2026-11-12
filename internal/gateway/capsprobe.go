@@ -16,10 +16,10 @@ import (
 	"strings"
 	"time"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/logx"
-	"zen-gate/internal/relay"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/logx"
+	"github.com/chipmax/loimo/internal/relay"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // probePNG is a 1×1 transparent PNG — the smallest legal image.

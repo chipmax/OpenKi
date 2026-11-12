@@ -68,7 +68,7 @@ func (c *claude) read() (map[string]any, error) {
 	}
 	doc := map[string]any{}
 	if err := json.Unmarshal(data, &doc); err != nil {
-		return nil, fmt.Errorf("Không phân tích được settings.json (%w); zen-gate từ chối ghi", err)
+		return nil, fmt.Errorf("Không phân tích được settings.json (%w); loimo từ chối ghi", err)
 	}
 	return doc, nil
 }

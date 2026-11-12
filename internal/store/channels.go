@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // One channel, one file.

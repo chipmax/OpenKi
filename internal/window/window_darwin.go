@@ -5,15 +5,15 @@ package window
 /*
 #cgo CFLAGS: -x objective-c -fobjc-arc
 #cgo LDFLAGS: -framework Cocoa -framework WebKit
-#include "cocoa/zgwindow.h"
+#include "cocoa/lmwindow.h"
 */
 import "C"
 
 import (
 	"unsafe"
 
-	"zen-gate/internal/tray"
-	_ "zen-gate/internal/window/cocoa"
+	"github.com/chipmax/loimo/internal/tray"
+	_ "github.com/chipmax/loimo/internal/window/cocoa"
 )
 
 // macOS has no HWND. Callers only ever compare the handle against zero to ask
@@ -26,10 +26,10 @@ var onCloseButton func() bool
 // pending is the Run call's options, waiting for the main thread to pick up.
 var pending Options
 
-// zgGoCreate is invoked by zg_dispatch_create, on the main thread.
+// lmGoCreate is invoked by lm_dispatch_create, on the main thread.
 //
-//export zgGoCreate
-func zgGoCreate() { create(pending) }
+//export lmGoCreate
+func lmGoCreate() { create(pending) }
 
 // zgGoClose is invoked by AppKit for both the dashboard's × and ⌘W. It runs on
 // the main thread, which is why the getters below can be read synchronously
@@ -38,12 +38,12 @@ func zgGoCreate() { create(pending) }
 //export zgGoClose
 func zgGoClose() {
 	if onCloseButton == nil || onCloseButton() {
-		C.zg_do_terminate()
+		C.lm_do_terminate()
 		return
 	}
 	// Close-to-tray: the callback has already hidden the window; hide again so
 	// a future callback that forgets to cannot strand a visible window.
-	C.zg_do_hide()
+	C.lm_do_hide()
 }
 
 // SetProcessDPIAwareness is a no-op: macOS picks the backing scale per display
@@ -52,7 +52,7 @@ func SetProcessDPIAwareness() {}
 
 // SetAppUserModelID is the Windows taskbar-identity call; on macOS the Dock
 // icon and app name come from the bundle's Info.plist instead.
-func SetAppUserModelID(id string) { C.zg_noop_string(nil) }
+func SetAppUserModelID(id string) { C.lm_noop_string(nil) }
 
 // Run builds the window on the main thread and blocks until the app quits.
 //
@@ -64,7 +64,7 @@ func Run(o Options) {
 	onCloseButton = o.OnCloseButton
 	pending = o
 
-	opts := tray.Options{OnReady: func() { C.zg_dispatch_create() }}
+	opts := tray.Options{OnReady: func() { C.lm_dispatch_create() }}
 	if o.Tray != nil {
 		opts.DashboardURL = o.Tray.DashboardURL
 		opts.OnQuit = o.Tray.OnQuit
@@ -79,9 +79,9 @@ func Run(o Options) {
 func create(o Options) {
 	title := C.CString(o.Title)
 	url := C.CString(o.URL)
-	defer C.zg_free(unsafe.Pointer(title))
-	defer C.zg_free(unsafe.Pointer(url))
-	C.zg_run(title, C.int(o.Width), C.int(o.Height), url)
+	defer C.lm_free(unsafe.Pointer(title))
+	defer C.lm_free(unsafe.Pointer(url))
+	C.lm_run(title, C.int(o.Width), C.int(o.Height), url)
 
 	if o.Bounds != nil && o.Bounds.W > 0 {
 		w, h := o.Bounds.W, o.Bounds.H
@@ -98,7 +98,7 @@ func create(o Options) {
 	}
 	// Show only after the restored rectangle is in place, so the window never
 	// flashes at the default size on its way to the saved spot.
-	C.zg_do_show()
+	C.lm_do_show()
 
 	if o.OnReady != nil {
 		o.OnReady(hwndToken)
@@ -106,31 +106,31 @@ func create(o Options) {
 }
 
 // MaximizeWindow animates the window to its maximized state.
-func MaximizeWindow(hwnd uintptr) { C.zg_do_toggle_max() }
+func MaximizeWindow(hwnd uintptr) { C.lm_do_toggle_max() }
 
-func minimizeWindow(hwnd uintptr) { C.zg_do_minimize() }
+func minimizeWindow(hwnd uintptr) { C.lm_do_minimize() }
 
 // IsVisible reports whether the main window is currently shown.
-func IsVisible(hwnd uintptr) bool { return C.zg_do_is_visible() != 0 }
+func IsVisible(hwnd uintptr) bool { return C.lm_do_is_visible() != 0 }
 
 // ShowWindowWin shows/restores the main window (used by close-to-tray).
-func ShowWindowWin(hwnd uintptr) { C.zg_do_show() }
+func ShowWindowWin(hwnd uintptr) { C.lm_do_show() }
 
 // HideWindow hides to tray.
-func HideWindow(hwnd uintptr) { C.zg_do_hide() }
+func HideWindow(hwnd uintptr) { C.lm_do_hide() }
 
 // IsMaximized reports the zoomed state.
-func IsMaximized(hwnd uintptr) bool { return C.zg_do_is_maximized() != 0 }
+func IsMaximized(hwnd uintptr) bool { return C.lm_do_is_maximized() != 0 }
 
 // IsMinimized reports whether the window is in the Dock. A miniaturized
 // window's frame is not meaningful, so its rectangle must never be persisted.
-func IsMinimized(hwnd uintptr) bool { return C.zg_do_is_minimized() != 0 }
+func IsMinimized(hwnd uintptr) bool { return C.lm_do_is_minimized() != 0 }
 
 // GetBounds returns the window rect as left, top, right, bottom — the same
 // shape the Windows build reports, so callers can share their arithmetic.
 func GetBounds(hwnd uintptr) (int, int, int, int) {
-	C.zg_do_get_bounds()
-	b := unsafe.Slice(C.zg_bounds(), 4)
+	C.lm_do_get_bounds()
+	b := unsafe.Slice(C.lm_bounds(), 4)
 	x, y, w, h := int(b[0]), int(b[1]), int(b[2]), int(b[3])
 	return x, y, x + w, y + h
 }
@@ -139,8 +139,8 @@ func GetBounds(hwnd uintptr) (int, int, int, int) {
 // fully off-screen — saved while minimized, or on a display that has since
 // gone away — is re-centered instead of opening invisibly.
 func ApplyBounds(hwnd uintptr, x, y, w, h int) {
-	C.zg_do_get_screen_frame()
-	s := unsafe.Slice(C.zg_screen(), 4)
+	C.lm_do_get_screen_frame()
+	s := unsafe.Slice(C.lm_screen(), 4)
 	sx, sy, sw, sh := int(s[0]), int(s[1]), int(s[2]), int(s[3])
 	if sw <= 0 || sh <= 0 {
 		sx, sy, sw, sh = 0, 0, 1440, 900
@@ -161,7 +161,7 @@ func ApplyBounds(hwnd uintptr, x, y, w, h int) {
 			y = sy
 		}
 	}
-	C.zg_do_set_bounds(C.int(x), C.int(y), C.int(w), C.int(h))
+	C.lm_do_set_bounds(C.int(x), C.int(y), C.int(w), C.int(h))
 }
 
 func minInt(a, b int) int {

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // Issue #31: the streaming delta must carry the thinking under BOTH

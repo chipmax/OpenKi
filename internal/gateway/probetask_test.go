@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // The task registry is what makes the 测试 / 能力实测 buttons observable: the

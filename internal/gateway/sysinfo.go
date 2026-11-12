@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"time"
 
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // SystemReport is the host/process information shown on the dashboard. It is

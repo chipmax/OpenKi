@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // Two keys rotate: consecutive picks walk the list instead of hammering one

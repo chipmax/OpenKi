@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // fakeSubs is the dashboard-facing sidecar surface with a stub rotator: the

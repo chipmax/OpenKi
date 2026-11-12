@@ -21,8 +21,8 @@ prompt, không cache nội dung, không thay đổi định dạng đường dâ
 |---|---|
 | Method/path | Giữ nguyên đường dẫn API, ví dụ `POST /v1/chat/completions`, `POST /v1/responses`, `POST /v1/messages`, `GET /v1/models` |
 | `Authorization` | Giữ nguyên key của gateway/upstream nếu gateway gửi kèm |
-| `X-Zen-Relay-Token` | Token của relay; **bắt buộc**, so sánh constant-time |
-| `X-Zen-Relay-Upstream` | `scheme://host` của upstream (thường `https://host`), **bắt buộc**; relay kiểm tra **host** theo allowlist |
+| `X-LoiMo-Relay-Token` | Token của relay; **bắt buộc**, so sánh constant-time |
+| `X-LoiMo-Relay-Upstream` | `scheme://host` của upstream (thường `https://host`), **bắt buộc**; relay kiểm tra **host** theo allowlist |
 | Body | Giữ nguyên JSON; relay không parse/sửa nội dung |
 
 Relay trả về đúng status/header/body của upstream. Với phản hồi streaming, relay
@@ -40,11 +40,11 @@ VPS, Caddy/uptime monitor.
 
 | Status | Khi nào |
 |---|---|
-| `401` | Thiếu/sai `X-Zen-Relay-Token` |
-| `403` | `X-Zen-Relay-Upstream` không nằm trong allowlist, hoặc dùng `http://` khi chưa cho phép |
+| `401` | Thiếu/sai `X-LoiMo-Relay-Token` |
+| `403` | `X-LoiMo-Relay-Upstream` không nằm trong allowlist, hoặc dùng `http://` khi chưa cho phép |
 | `400` | Thiếu header bắt buộc hoặc đích không hợp lệ |
-| `413` | Body vượt `ZEN_GATE_RELAY_MAX_BODY_BYTES` |
-| `503` | Relay chưa cấu hình `ZEN_GATE_RELAY_TOKEN` (fail closed) |
+| `413` | Body vượt `LOIMO_RELAY_MAX_BODY_BYTES` |
+| `503` | Relay chưa cấu hình `LOIMO_RELAY_TOKEN` (fail closed) |
 | `502`/`504` | Không kết nối được upstream hoặc upstream timeout |
 
 Không trả chi tiết nội bộ (stack, danh sách allowlist, token) trong body lỗi.
@@ -61,7 +61,7 @@ Không trả chi tiết nội bộ (stack, danh sách allowlist, token) trong bo
 - **Giới hạn tài nguyên.** Đặt timeout kết nối/đọc hợp lý, giới hạn kích thước
   body và rate limit theo token nếu công khai.
 - **Không log nội dung.** Chỉ log method, path, status, thời lượng; không log
-  prompt, completion, `Authorization`, host đầy đủ hay `X-Zen-Relay-Token`.
+  prompt, completion, `Authorization`, host đầy đủ hay `X-LoiMo-Relay-Token`.
 
 ## Vị trí triển khai
 
@@ -83,13 +83,13 @@ Sinh token đủ dài (ví dụ 32 byte ngẫu nhiên, mã hóa base64url). Chu�
 sách host upstream được phép, chỉ gồm host thật sự cần:
 
 ```text
-ZEN_GATE_RELAY_TOKEN=<random-token>
-ZEN_GATE_RELAY_HOSTS=api.example-upstream.com,api.example-2.com
-ZEN_GATE_RELAY_REGION=sin1
-# tuỳ chọn: ZEN_GATE_RELAY_MAX_BODY_BYTES, ZEN_GATE_RELAY_TIMEOUT_MS
+LOIMO_RELAY_TOKEN=<random-token>
+LOIMO_RELAY_HOSTS=api.example-upstream.com,api.example-2.com
+LOIMO_RELAY_REGION=sin1
+# tuỳ chọn: LOIMO_RELAY_MAX_BODY_BYTES, LOIMO_RELAY_TIMEOUT_MS
 ```
 
-Không đặt `ZEN_GATE_RELAY_ALLOW_HTTP=1` trên môi trường thật; biến này chỉ dành
+Không đặt `LOIMO_RELAY_ALLOW_HTTP=1` trên môi trường thật; biến này chỉ dành
 cho kiểm thử local với upstream `http://`. Không commit các giá trị trên. Trên
 Vercel dùng Environment Variables (Production/Preview tách biệt); trên VPS dùng
 file `EnvironmentFile=` quyền `0600` hoặc secret manager.
@@ -97,10 +97,10 @@ file `EnvironmentFile=` quyền `0600` hoặc secret manager.
 ### 2. Triển khai Vercel (chính, hai region)
 
 1. Tạo project từ thư mục `relay-server/` theo hướng dẫn trong đó.
-2. Đặt `ZEN_GATE_RELAY_TOKEN`, `ZEN_GATE_RELAY_HOSTS` trong Project Settings →
+2. Đặt `LOIMO_RELAY_TOKEN`, `LOIMO_RELAY_HOSTS` trong Project Settings →
    Environment Variables.
 3. Cấu hình hai region gần upstream (ví dụ Singapore + Frankfurt, hoặc theo
-   vị trí upstream thực tế); đặt `ZEN_GATE_RELAY_REGION` khác nhau nếu muốn
+   vị trí upstream thực tế); đặt `LOIMO_RELAY_REGION` khác nhau nếu muốn
    phân biệt trong log/header.
 4. Deploy, sau đó kiểm tra `GET https://<vercel-domain>/healthz`.
 5. Ghi lại URL HTTPS của từng region để đưa vào `relayPool`.
@@ -111,8 +111,8 @@ file `EnvironmentFile=` quyền `0600` hoặc secret manager.
 2. Chỉ bind loopback nếu Caddy cùng máy đứng trước; hoặc bind sau firewall nếu
    dùng TLS trực tiếp. Không mở cổng relay trần ra Internet. Cổng nội bộ mặc
    định là `8789` (`PORT` có thể override).
-3. Đặt `ZEN_GATE_RELAY_TOKEN`, `ZEN_GATE_RELAY_HOSTS` (và tuỳ chọn
-   `ZEN_GATE_RELAY_REGION`) qua `EnvironmentFile` quyền `0600`.
+3. Đặt `LOIMO_RELAY_TOKEN`, `LOIMO_RELAY_HOSTS` (và tuỳ chọn
+   `LOIMO_RELAY_REGION`) qua `EnvironmentFile` quyền `0600`.
 4. Caddy/nginx đứng trước phải stream không buffer và chỉ proxy các đường dẫn
    cần thiết; không proxy trang quản trị của relay nếu có.
 5. Kiểm tra `GET https://<vps-domain>/healthz`.
@@ -143,19 +143,19 @@ curl -fsS https://relay-sin.example.com/healthz
 
 # Thiếu token phải bị từ chối
 curl -sS -o /dev/null -w '%{http_code}\n' \
-  -H 'X-Zen-Relay-Upstream: https://api.example-upstream.com' \
+  -H 'X-LoiMo-Relay-Upstream: https://api.example-upstream.com' \
   https://relay-sin.example.com/v1/models          # 401
 
 # Sai đích phải bị từ chối
 curl -sS -o /dev/null -w '%{http_code}\n' \
-  -H "X-Zen-Relay-Token: $ZEN_GATE_RELAY_TOKEN" \
-  -H 'X-Zen-Relay-Upstream: https://169.254.169.254' \
+  -H "X-LoiMo-Relay-Token: $LOIMO_RELAY_TOKEN" \
+  -H 'X-LoiMo-Relay-Upstream: https://169.254.169.254' \
   https://relay-sin.example.com/v1/models          # 403
 
 # Đích hợp lệ + token đúng (status phụ thuộc upstream)
 curl -sS -o /dev/null -w '%{http_code}\n' \
-  -H "X-Zen-Relay-Token: $ZEN_GATE_RELAY_TOKEN" \
-  -H 'X-Zen-Relay-Upstream: https://api.example-upstream.com' \
+  -H "X-LoiMo-Relay-Token: $LOIMO_RELAY_TOKEN" \
+  -H 'X-LoiMo-Relay-Upstream: https://api.example-upstream.com' \
   https://relay-sin.example.com/v1/models
 ```
 
@@ -165,10 +165,10 @@ gateway phải vẫn chạy với egress còn lại (nếu có) và trả lỗi 
 
 ## Xoay token
 
-Mẫu relay hiện xác thực **một** `ZEN_GATE_RELAY_TOKEN`, nên xoay token có một
+Mẫu relay hiện xác thực **một** `LOIMO_RELAY_TOKEN`, nên xoay token có một
 cửa sổ ngắn request bị `401`. Quy trình:
 
-1. Sinh token mới; cập nhật `ZEN_GATE_RELAY_TOKEN` trên **tất cả** instance
+1. Sinh token mới; cập nhật `LOIMO_RELAY_TOKEN` trên **tất cả** instance
    relay (Vercel hai region + VPS) và `relayPool[].token` trên từng máy.
 2. Cập nhật `relayPool[].token` bằng tay (không chép file), ưu tiên cùng lúc
    với deploy relay.

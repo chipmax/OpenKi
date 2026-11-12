@@ -44,9 +44,9 @@ func TestChatCompletionsStampsACorrelationID(t *testing.T) {
 	if resp.StatusCode != 200 {
 		t.Fatalf("status %d", resp.StatusCode)
 	}
-	rid := resp.Header.Get("x-zen-gate-request-id")
-	if !strings.HasPrefix(rid, "zreq-") {
-		t.Fatalf("x-zen-gate-request-id = %q, want a generated zreq- id", rid)
+	rid := resp.Header.Get("x-loimo-request-id")
+	if !strings.HasPrefix(rid, "lreq-") {
+		t.Fatalf("x-loimo-request-id = %q, want a generated lreq- id", rid)
 	}
 }
 
@@ -63,11 +63,11 @@ func TestAnthropicMessagesStampsACorrelationID(t *testing.T) {
 
 	resp := postJSON(t, ts.URL+"/v1/messages", s.Store.Config().MainKey,
 		`{"model":"mimo-v2.6-flash-free","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}`, nil)
-	rid := resp.Header.Get("x-zen-gate-request-id")
+	rid := resp.Header.Get("x-loimo-request-id")
 	if rid == "" {
 		t.Fatalf("no correlation id on /v1/messages (status %d)", resp.StatusCode)
 	}
-	if !strings.HasPrefix(rid, "zreq-") {
+	if !strings.HasPrefix(rid, "lreq-") {
 		t.Fatalf("rid = %q", rid)
 	}
 }
@@ -98,7 +98,7 @@ func TestCorrelationIDReusesTheClientHeader(t *testing.T) {
 		if want == "" {
 			want = hdr["x-client-request-id"]
 		}
-		if got := resp.Header.Get("x-zen-gate-request-id"); got != want {
+		if got := resp.Header.Get("x-loimo-request-id"); got != want {
 			t.Errorf("inbound %q → echoed %q, want the client's own id", want, got)
 		}
 	}
@@ -118,7 +118,7 @@ func TestCorrelationIDPresentOnRejectedRequest(t *testing.T) {
 	if resp.StatusCode == 200 {
 		t.Fatal("a truncated body should not succeed")
 	}
-	if rid := resp.Header.Get("x-zen-gate-request-id"); !strings.HasPrefix(rid, "zreq-") {
+	if rid := resp.Header.Get("x-loimo-request-id"); !strings.HasPrefix(rid, "lreq-") {
 		t.Errorf("status %d carried no correlation id (got %q)", resp.StatusCode, rid)
 	}
 }

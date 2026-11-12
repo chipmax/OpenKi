@@ -3,8 +3,8 @@ package gateway
 import (
 	"strings"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // Vendor-declared thinking rungs.

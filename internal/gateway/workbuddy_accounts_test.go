@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // wbPoolServer builds a test server whose lane already holds a two-account

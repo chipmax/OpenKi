@@ -3,11 +3,11 @@ package agents
 import (
 	"testing"
 
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 func TestResyncDoesNotAdoptFileOnlyProvider(t *testing.T) {
-	t.Setenv("ZEN_GATE_HOME", t.TempDir())
+	t.Setenv("LOIMO_HOME", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)
@@ -26,7 +26,7 @@ func TestResyncDoesNotAdoptFileOnlyProvider(t *testing.T) {
 }
 
 func TestScopeNoneBlocksEveryAdapter(t *testing.T) {
-	t.Setenv("ZEN_GATE_HOME", t.TempDir())
+	t.Setenv("LOIMO_HOME", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)

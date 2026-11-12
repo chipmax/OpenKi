@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // addProvider wires a fake upstream into the store config as a custom
@@ -109,7 +109,7 @@ func TestProviderRouteBareNameCollision(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer resp.Body.Close()
-		return resp.Header.Get("x-zen-gate-served-by"), resp.StatusCode
+		return resp.Header.Get("x-loimo-served-by"), resp.StatusCode
 	}
 	if served, code := post("zzz-model"); code != 200 || served != "prov/zzz-model" {
 		t.Fatalf("bare provider-only id: served=%q code=%d, want prov/zzz-model 200", served, code)
@@ -237,7 +237,7 @@ func TestProviderDisabledRejected(t *testing.T) {
 }
 
 func TestMigrateProviderSelectionsTrimsDump(t *testing.T) {
-	t.Setenv("ZEN_GATE_HOME", t.TempDir())
+	t.Setenv("LOIMO_HOME", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)

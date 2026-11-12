@@ -15,8 +15,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // singBoxReleaseAPI is SagerNet's latest-release feed; the asset we want is
@@ -341,7 +341,7 @@ func (m *Manager) startProcess(exe, configPath string, nodeCount int) error {
 		_ = stopAndWait(m.cmd.Process, addrs, restartWait)
 		m.cmd = nil
 	}
-	// A sidecar left by an earlier zen-gate owns these ports and nothing here
+	// A sidecar left by an earlier loimo owns these ports and nothing here
 	// can signal it. Starting anyway would bind-fail, exit, and restart forever.
 	if err := reapOrphan(addrs, restartWait); err != nil {
 		return err

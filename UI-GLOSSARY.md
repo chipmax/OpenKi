@@ -1,6 +1,6 @@
-# Bảng thuật ngữ Trung → Việt — Giao diện Zen Gate (bản Việt hoá)
+# Bảng thuật ngữ Trung → Việt — Giao diện Lối Mở (bản Việt hoá)
 
-Áp dụng cho `internal/gateway/web/index.html`. Mọi bản dịch giao diện về sau phải dùng đúng cột "Tiếng Việt" để giữ nhất quán. Tên riêng (Zen Gate, OpenCode, Kilo, Codex, Claude Code, WARP, sing-box, ZCode, Qoder, WorkBuddy...) và tên thương hiệu Trung Quốc (智谱, 讯飞, 商汤, 有道, 魔搭, 华为云, 字节) giữ nguyên, không dịch.
+Áp dụng cho `internal/gateway/web/index.html`. Mọi bản dịch giao diện về sau phải dùng đúng cột "Tiếng Việt" để giữ nhất quán. Tên riêng (Lối Mở, OpenCode, Kilo, Codex, Claude Code, WARP, sing-box, ZCode, Qoder, WorkBuddy...) và tên thương hiệu Trung Quốc (智谱, 讯飞, 商汤, 有道, 魔搭, 华为云, 字节) giữ nguyên, không dịch.
 
 | # | Tiếng Trung | Tiếng Việt | Ghi chú |
 |---|---|---|---|
@@ -66,6 +66,6 @@
 
 ## Quy tắc giữ nguyên (không dịch)
 
-- Tên sản phẩm/dịch vụ: Zen Gate, OpenCode, Kilo, Codex, Claude Code, ZCode, Qoder, WorkBuddy, CodeArts, TRAE, NVIDIA, Gemini, Groq, Cerebras, OpenRouter, Mistral, HuggingFace, ModelScope, WARP, sing-box, Tailwind.
+- Tên sản phẩm/dịch vụ: Lối Mở, OpenCode, Kilo, Codex, Claude Code, ZCode, Qoder, WorkBuddy, CodeArts, TRAE, NVIDIA, Gemini, Groq, Cerebras, OpenRouter, Mistral, HuggingFace, ModelScope, WARP, sing-box, Tailwind.
 - Tên thương hiệu Trung Quốc (chỉ giữ phần tên, mô tả xung quanh vẫn dịch): 智谱 (Zhipu), 讯飞 (iFlytek), 讯飞星火 (iFlytek Spark), 星火 (Spark), 商汤 (SenseTime), 有道 (Youdao), 魔搭 (ModelScope), 华为云 (Huawei Cloud), 字节 (ByteDance).
 - Mã kỹ thuật: tên biến/hàm/lớp CSS, đường dẫn, số và đơn vị (px, ms, %, 127.0.0.1...), mã locale đã đổi `zh-CN` → `vi-VN`.

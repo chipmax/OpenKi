@@ -3,7 +3,7 @@ package subs
 import (
 	"testing"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // A node whose tunnel "connects but every turn dies" cannot be caught by the

@@ -57,7 +57,7 @@ func TestConversationSessionPrefixDecodesToFreshTimestamp(t *testing.T) {
 	}
 	// A digest-shaped id (old behaviour) decodes to a nonsense stamp —
 	// exactly why the gate rejected it. This pins the contrast.
-	sum := sha256.Sum256([]byte("zen-gate\x00old-style"))
+	sum := sha256.Sum256([]byte("loimo\x00old-style"))
 	old := "ses_" + hex.EncodeToString(sum[:6]) + base62From(sum[6:20])
 	if got, ok := decodePrefixMsBits(old); ok {
 		now := uint64(time.Now().UnixMilli()) & 0xFFFFFFFFF

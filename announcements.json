@@ -7,7 +7,7 @@
       "level": "info",
       "start": "2026-11-02",
       "end": "2026-11-09",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-28-v1.9.3-release",
@@ -16,7 +16,7 @@
       "level": "info",
       "start": "2026-10-28",
       "end": "2026-11-04",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-26-v1.9.2-release",
@@ -25,7 +25,7 @@
       "level": "info",
       "start": "2026-10-26",
       "end": "2026-11-02",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-24-v1.9.1-release",
@@ -34,16 +34,16 @@
       "level": "info",
       "start": "2026-10-24",
       "end": "2026-10-31",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-24-v1.9.0-release",
       "title": "v1.9.0: làn miễn phí Zen trở lại — vân tay client khớp bản v2.1.3 đã đo thực tế, cấu hình kênh tách tệp, trang mô hình làm lại",
-      "body": "Làn miễn phí Zen bị ngừng ở v1.8.0 đã trở lại trong bản này. Việc chặn từ 14-10 phía upstream, đo thực tế, là một cửa client kiểm tra vân tay ở mức byte: mọi client không chính thức đều bị 403 FreeTierError, mọi cách nguỵ trang ở tầng yêu cầu đều vô hiệu. Lần này hình dạng yêu cầu được căn từng mục theo vân tay client v2.1.3 — body không escape HTML, thứ tự khoá cấp trên cùng giống CLI chính thức, công cụ chat luôn strict:false, max_completion_tokens mặc định 32000 — cửa client cho qua; sau khi khôi phục, thứ thực sự gặp là tường hạn mức tính theo IP đầu ra, được failover và luân chuyển đầu ra sẵn có xử lý, không cần cài thêm.\n\n✨ Tính năng mới\n1. Làn miễn phí Zen trở lại (#95 #102): danh sách mô hình miễn phí về lại trang «Mô hình» và mọi bộ chọn Agent, kéo theo DeepSeek V4.1 Flash, GLM 5.3 Flash… đã biến mất khi v1.8.0 ngừng;\n2. Kênh tách tệp: zen / kilo / workbuddy / codearts mỗi kênh một tệp cấu hình (%APPDATA%\\zen-gate\\channels\\<ID kênh>.json), ghi công tắc bật và danh sách mô hình hiện tại của kênh; tắt là có hiệu lực ngay, mô hình bị rút khỏi mọi bộ chọn Agent;\n3. Cùng id nhiều kênh tự định tuyến tới bản khoẻ, không còn đâm trước vào bản giới hạn chắc chắn 429; /v1/models và danh mục Codex sắp xếp thống nhất, hai bên không còn tự sắp riêng;\n4. Mỗi mô hình đặt riêng mức suy nghĩ mặc định (bấm trên thẻ mô hình), mô hình mặc định cũng chỉ định được.\n\n🛠 Sửa lỗi (ý tưởng từ cộng đồng #103/#104/#105, đều tự triển khai)\n1. Khối usage lặp từng khung trong phản hồi streaming bị cộng dồn từng khung, input phình 30-1400 lần, client mỗi vòng kích hoạt nén (#105) — đổi thành lấy giá trị lớn nhất từng trường;\n2. Mô hình bạn bỏ chọn không còn bị thăm dò định kỳ và chuyển đổi giới hạn gọi thật, không đốt hạn mức thăm dò; dò thấy khả dụng thì tự khôi phục vào bộ chọn (#103);\n3. Nhà cung cấp tuỳ chỉnh hỗ trợ điền nhiều API Key luân chuyển cân tải, một Key bị giới hạn tự đổi Key kế tiếp trả lời tiếp (#104);\n4. Nút đầu ra chết «kết nối được nhưng không dùng được» rời vòng sau hai lần thất bại, chỉ quay lại khi dò sống lại.\n\n🎨 Giao diện\n1. Trang mô hình làm lại: thông báo lỗi đổi sang lời người — giới hạn, cổng khu vực, không khả dụng mỗi loại một câu hướng dẫn thực hiện được, JSON gốc chuyển vào gợi ý rê chuột; bốn màu giới hạn / cổng khu vực / không khả dụng / chưa thăm dò phân biệt được ngay;\n2. Thẻ mô hình nhóm theo kênh, mỗi nhóm một công tắc chính của kênh, cùng id nhiều kênh gộp thành một thẻ; thanh trên thêm tìm kiếm và lọc kênh / trạng thái.\n\nCách nâng cấp: «cập nhật một chạm» ở trang tổng quan hoặc tải từ trang Releases. Cảm ơn @ghshhf và @wayne091106-hash vì ý tưởng và phân tích trong các vấn đề trên.",
+      "body": "Làn miễn phí Zen bị ngừng ở v1.8.0 đã trở lại trong bản này. Việc chặn từ 14-10 phía upstream, đo thực tế, là một cửa client kiểm tra vân tay ở mức byte: mọi client không chính thức đều bị 403 FreeTierError, mọi cách nguỵ trang ở tầng yêu cầu đều vô hiệu. Lần này hình dạng yêu cầu được căn từng mục theo vân tay client v2.1.3 — body không escape HTML, thứ tự khoá cấp trên cùng giống CLI chính thức, công cụ chat luôn strict:false, max_completion_tokens mặc định 32000 — cửa client cho qua; sau khi khôi phục, thứ thực sự gặp là tường hạn mức tính theo IP đầu ra, được failover và luân chuyển đầu ra sẵn có xử lý, không cần cài thêm.\n\n✨ Tính năng mới\n1. Làn miễn phí Zen trở lại (#95 #102): danh sách mô hình miễn phí về lại trang «Mô hình» và mọi bộ chọn Agent, kéo theo DeepSeek V4.1 Flash, GLM 5.3 Flash… đã biến mất khi v1.8.0 ngừng;\n2. Kênh tách tệp: zen / kilo / workbuddy / codearts mỗi kênh một tệp cấu hình (%APPDATA%\\loimo\\channels\\<ID kênh>.json), ghi công tắc bật và danh sách mô hình hiện tại của kênh; tắt là có hiệu lực ngay, mô hình bị rút khỏi mọi bộ chọn Agent;\n3. Cùng id nhiều kênh tự định tuyến tới bản khoẻ, không còn đâm trước vào bản giới hạn chắc chắn 429; /v1/models và danh mục Codex sắp xếp thống nhất, hai bên không còn tự sắp riêng;\n4. Mỗi mô hình đặt riêng mức suy nghĩ mặc định (bấm trên thẻ mô hình), mô hình mặc định cũng chỉ định được.\n\n🛠 Sửa lỗi (ý tưởng từ cộng đồng #103/#104/#105, đều tự triển khai)\n1. Khối usage lặp từng khung trong phản hồi streaming bị cộng dồn từng khung, input phình 30-1400 lần, client mỗi vòng kích hoạt nén (#105) — đổi thành lấy giá trị lớn nhất từng trường;\n2. Mô hình bạn bỏ chọn không còn bị thăm dò định kỳ và chuyển đổi giới hạn gọi thật, không đốt hạn mức thăm dò; dò thấy khả dụng thì tự khôi phục vào bộ chọn (#103);\n3. Nhà cung cấp tuỳ chỉnh hỗ trợ điền nhiều API Key luân chuyển cân tải, một Key bị giới hạn tự đổi Key kế tiếp trả lời tiếp (#104);\n4. Nút đầu ra chết «kết nối được nhưng không dùng được» rời vòng sau hai lần thất bại, chỉ quay lại khi dò sống lại.\n\n🎨 Giao diện\n1. Trang mô hình làm lại: thông báo lỗi đổi sang lời người — giới hạn, cổng khu vực, không khả dụng mỗi loại một câu hướng dẫn thực hiện được, JSON gốc chuyển vào gợi ý rê chuột; bốn màu giới hạn / cổng khu vực / không khả dụng / chưa thăm dò phân biệt được ngay;\n2. Thẻ mô hình nhóm theo kênh, mỗi nhóm một công tắc chính của kênh, cùng id nhiều kênh gộp thành một thẻ; thanh trên thêm tìm kiếm và lọc kênh / trạng thái.\n\nCách nâng cấp: «cập nhật một chạm» ở trang tổng quan hoặc tải từ trang Releases. Cảm ơn @ghshhf và @wayne091106-hash vì ý tưởng và phân tích trong các vấn đề trên.",
       "level": "info",
       "start": "2026-10-24",
       "end": "2026-10-31",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-22-v1.8.5-release",
@@ -52,7 +52,7 @@
       "level": "info",
       "start": "2026-10-22",
       "end": "2026-10-29",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-21-v1.8.4-release",
@@ -61,7 +61,7 @@
       "level": "info",
       "start": "2026-10-21",
       "end": "2026-10-28",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-21-v1.8.3-release",
@@ -70,7 +70,7 @@
       "level": "info",
       "start": "2026-10-21",
       "end": "2026-10-28",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-20-v1.8.2-release",
@@ -79,7 +79,7 @@
       "level": "info",
       "start": "2026-10-20",
       "end": "2026-10-27",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-20-v1.8.1-release",
@@ -88,7 +88,7 @@
       "level": "info",
       "start": "2026-10-20",
       "end": "2026-10-27",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-20-v1.8.0-release",
@@ -97,7 +97,7 @@
       "level": "warn",
       "start": "2026-10-20",
       "end": "2026-10-27",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-18-v1.7.19-release",
@@ -106,7 +106,7 @@
       "level": "info",
       "start": "2026-10-18",
       "end": "2026-10-25",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-17-v1.7.18-release",
@@ -115,16 +115,16 @@
       "level": "info",
       "start": "2026-10-17",
       "end": "2026-10-24",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-17-v1.7.17-release",
       "title": "v1.7.17：新增 CodeArts 渠道（内置）、WorkBuddy 国际版恢复、免费车道切换更快",
-      "body": "本次合并发布 1.7.15–1.7.17 的全部内容：\n1. 新增 CodeArts 账号渠道：把开源的 CodeArts2API（HITZY2002/codearts2api，MIT）内置进网关进程（与 Qoder 渠道同一套形态），零外部依赖、无需另装。「自定义 API」页点「授权登录」走华为云 OAuth，登录后 GLM-5.2、DeepSeek V4 Pro、Qwen3-VL 等模型以 codearts/模型名 进入所有 Agent 选择器；多账号轮转、令牌续期、每日签到积分（华为云官方：每日 1000 积分，活动截至 2026-12-31）与限时福利自动领取全部内置；账号凭据存 zen-gate 数据目录，升级不丢；未登录时渠道整体隐藏，不往选择器塞答不了问题的模型；\n2. 修复 WorkBuddy 国际版渠道：上游要求每个请求带会话信封头（缺了回 400 11128），此前表现为渠道全部不可用且错误信息误导排查方向，现已按官方客户端协议补齐——升级后重新点一次「授权登录」即恢复；\n3. 免费车道切换提速：上游关门（403 FreeTierError）与地区封锁是两类判定，现在各走各的路——封锁类换出口重试（实测同模型换个出口 6/6 正常），关门类直接落到 Kilo 池，不再白烧全部出口的重试预算；\n4. 升级方式：总览页「一键更新」或 Releases 页下载。",
+      "body": "本次合并发布 1.7.15–1.7.17 的全部内容：\n1. 新增 CodeArts 账号渠道：把开源的 CodeArts2API（HITZY2002/codearts2api，MIT）内置进网关进程（与 Qoder 渠道同一套形态），零外部依赖、无需另装。「自定义 API」页点「授权登录」走华为云 OAuth，登录后 GLM-5.2、DeepSeek V4 Pro、Qwen3-VL 等模型以 codearts/模型名 进入所有 Agent 选择器；多账号轮转、令牌续期、每日签到积分（华为云官方：每日 1000 积分，活动截至 2026-12-31）与限时福利自动领取全部内置；账号凭据存 loimo 数据目录，升级不丢；未登录时渠道整体隐藏，不往选择器塞答不了问题的模型；\n2. 修复 WorkBuddy 国际版渠道：上游要求每个请求带会话信封头（缺了回 400 11128），此前表现为渠道全部不可用且错误信息误导排查方向，现已按官方客户端协议补齐——升级后重新点一次「授权登录」即恢复；\n3. 免费车道切换提速：上游关门（403 FreeTierError）与地区封锁是两类判定，现在各走各的路——封锁类换出口重试（实测同模型换个出口 6/6 正常），关门类直接落到 Kilo 池，不再白烧全部出口的重试预算；\n4. 升级方式：总览页「一键更新」或 Releases 页下载。",
       "level": "info",
       "start": "2026-10-17",
       "end": "2026-10-24",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-16-v1.7.14-release",
@@ -133,7 +133,7 @@
       "level": "warn",
       "start": "2026-10-16",
       "end": "2026-10-19",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-16-v1.7.13-release",
@@ -142,7 +142,7 @@
       "level": "info",
       "start": "2026-10-16",
       "end": "2026-10-23",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-15-v1.7.12-release",
@@ -151,7 +151,7 @@
       "level": "info",
       "start": "2026-10-15",
       "end": "2026-10-22",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-15-v1.7.11-release",
@@ -160,7 +160,7 @@
       "level": "info",
       "start": "2026-10-15",
       "end": "2026-10-22",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-15-v1.7.10-release",
@@ -169,7 +169,7 @@
       "level": "info",
       "start": "2026-10-15",
       "end": "2026-10-22",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-15-v1.7.9-release",
@@ -178,7 +178,7 @@
       "level": "critical",
       "start": "2026-10-15",
       "end": "2026-10-19",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-14-v1.7.8-release",
@@ -187,7 +187,7 @@
       "level": "info",
       "start": "2026-10-14",
       "end": "2026-10-21",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-13-v1.7.7-release",
@@ -196,16 +196,16 @@
       "level": "info",
       "start": "2026-10-13",
       "end": "2026-10-20",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-13-v1.7.6-release",
       "title": "v1.7.6 修正：ZCode 模型被清空（#45）、启动失败不再静默退出（#44）",
-      "body": "本次是问题修正版：\n1. 修复（issue #45）：开启 ZCode 适配后模型选择器整体变空。ZCode 把 provider_config.json 当一份严格文档校验——任何一处不合法就整份作废、以空配置启动，用户自己的供应商也一起消失。本条堵住三条能写出不合法文件的路径：冷启动清单未就绪时不再用空清单覆写现有配置（v1.7.5 公告里「短名单被重新注入 ZCode」正是这条，当时只修了补拉，没拦注入端）；模型 id 为空或重复的条目在写入前被丢弃；上下文窗口缺失的模型写入保守默认值而不是 0；\n2. 修复（issue #44）：端口被占用（含自行做过端口转发的机器）或数据目录损坏时，GUI 版没有控制台，表现为「双击没反应、进程没有」且无法自救。现在启动失败会弹出原生错误对话框，写明失败端口和换端口方法（zen-gate.exe --port 18787）后再退出；\n3. 升级方式：总览页「一键更新」或 Releases 页下载。已开启 ZCode 适配的用户升级后无需重开开关，下一轮探测清单就绪时会自动重新注入完整模型清单；若升级前模型已变空，重启一次 ZCode 即可恢复。",
+      "body": "本次是问题修正版：\n1. 修复（issue #45）：开启 ZCode 适配后模型选择器整体变空。ZCode 把 provider_config.json 当一份严格文档校验——任何一处不合法就整份作废、以空配置启动，用户自己的供应商也一起消失。本条堵住三条能写出不合法文件的路径：冷启动清单未就绪时不再用空清单覆写现有配置（v1.7.5 公告里「短名单被重新注入 ZCode」正是这条，当时只修了补拉，没拦注入端）；模型 id 为空或重复的条目在写入前被丢弃；上下文窗口缺失的模型写入保守默认值而不是 0；\n2. 修复（issue #44）：端口被占用（含自行做过端口转发的机器）或数据目录损坏时，GUI 版没有控制台，表现为「双击没反应、进程没有」且无法自救。现在启动失败会弹出原生错误对话框，写明失败端口和换端口方法（loimo.exe --port 18787）后再退出；\n3. 升级方式：总览页「一键更新」或 Releases 页下载。已开启 ZCode 适配的用户升级后无需重开开关，下一轮探测清单就绪时会自动重新注入完整模型清单；若升级前模型已变空，重启一次 ZCode 即可恢复。",
       "level": "info",
       "start": "2026-10-13",
       "end": "2026-10-20",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-11-v1.7.5-release",
@@ -214,7 +214,7 @@
       "level": "info",
       "start": "2026-10-11",
       "end": "2026-10-18",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-11-v1.7.4-release",
@@ -223,7 +223,7 @@
       "level": "info",
       "start": "2026-10-11",
       "end": "2026-10-18",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-10-v1.7.3-release",
@@ -232,7 +232,7 @@
       "level": "info",
       "start": "2026-10-10",
       "end": "2026-10-17",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-10-v1.7.2-release",
@@ -241,7 +241,7 @@
       "level": "info",
       "start": "2026-10-10",
       "end": "2026-10-17",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-10-v1.7.1-release",
@@ -250,16 +250,16 @@
       "level": "info",
       "start": "2026-10-10",
       "end": "2026-10-17",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-10-v1.7.0-release",
       "title": "v1.7.0 发布：Qoder 网关内置、轮询判死事故修复、思考过程全客户端可见",
-      "body": "本次更新带来：\n1. QoderCN 网关正式内置进 zen-gate 进程：Qoder 账号渠道不再需要单独下载运行侧车程序，登录即用，模型以本地 8095 直连；渠道状态卡三态自检（未运行 / 未登录 / 已登录），IDE 刷新凭据后无需重启即恢复；\n2. 修复轮询模式的判死事故：重启后探活抢跑在 sing-box 就绪之前，一轮必败的采样把全部节点标死（实测 0/77），而面板的「重新探测」按钮又因工程缺陷实际什么都没做。现在探活前等待侧车端口就绪、单节点失败自动复测一次、每 2 分钟只重探已死节点；订阅面板的「0 节点」启动日志也已修正；\n3. 流式接口的思考过程现在同时以 reasoning 和 reasoning_content 两种字段名下发：此前只发其一，DeepSeek/智谱系客户端收得到却认不出，界面上看不到模型在想什么；\n4. 新上架的免费模型现在会自动进入所有已开启 Agent 的配置：此前目录变化只更新内存，必须手动改一次模型可见性才能到达 Agent；注入按内容指纹去重，探测空转轮不会反复重写用户配置文件；\n5. 客户端显式设置的 max_tokens 不再被本地能力表的兜底值（32768）无声压回，思考预算终于跟随真实要求；能力表按实测证据校准三行（step-5 输出 64K、muse-spark 943K、longcat 262K）；\n6. ZCode 注入规则写全每个模型的输出上限与思考档位，消除 ZCode 用内置默认值补齐后产生的自相矛盾条目（档位显示 [disabled,enabled,max] 而非 zen-gate 注入的三档、所有模型被统一钉在 128K 上限）；\n7. 请求体上限从 8MB 提到 64MB：长对话贴几张截图即可复现的「invalid request body: request body too large」不再出现；\n8. 升级方式：总览页「一键更新」或 Releases 页下载。轮询用户升级后请点一次「重新探测」，节点池会自动恢复。",
+      "body": "本次更新带来：\n1. QoderCN 网关正式内置进 loimo 进程：Qoder 账号渠道不再需要单独下载运行侧车程序，登录即用，模型以本地 8095 直连；渠道状态卡三态自检（未运行 / 未登录 / 已登录），IDE 刷新凭据后无需重启即恢复；\n2. 修复轮询模式的判死事故：重启后探活抢跑在 sing-box 就绪之前，一轮必败的采样把全部节点标死（实测 0/77），而面板的「重新探测」按钮又因工程缺陷实际什么都没做。现在探活前等待侧车端口就绪、单节点失败自动复测一次、每 2 分钟只重探已死节点；订阅面板的「0 节点」启动日志也已修正；\n3. 流式接口的思考过程现在同时以 reasoning 和 reasoning_content 两种字段名下发：此前只发其一，DeepSeek/智谱系客户端收得到却认不出，界面上看不到模型在想什么；\n4. 新上架的免费模型现在会自动进入所有已开启 Agent 的配置：此前目录变化只更新内存，必须手动改一次模型可见性才能到达 Agent；注入按内容指纹去重，探测空转轮不会反复重写用户配置文件；\n5. 客户端显式设置的 max_tokens 不再被本地能力表的兜底值（32768）无声压回，思考预算终于跟随真实要求；能力表按实测证据校准三行（step-5 输出 64K、muse-spark 943K、longcat 262K）；\n6. ZCode 注入规则写全每个模型的输出上限与思考档位，消除 ZCode 用内置默认值补齐后产生的自相矛盾条目（档位显示 [disabled,enabled,max] 而非 loimo 注入的三档、所有模型被统一钉在 128K 上限）；\n7. 请求体上限从 8MB 提到 64MB：长对话贴几张截图即可复现的「invalid request body: request body too large」不再出现；\n8. 升级方式：总览页「一键更新」或 Releases 页下载。轮询用户升级后请点一次「重新探测」，节点池会自动恢复。",
       "level": "info",
       "start": "2026-10-10",
       "end": "2026-10-17",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-08-v1.6.1-release",
@@ -268,7 +268,7 @@
       "level": "info",
       "start": "2026-10-08",
       "end": "2026-10-15",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-08-v1.6.0-release",
@@ -277,7 +277,7 @@
       "level": "info",
       "start": "2026-10-08",
       "end": "2026-10-15",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-08-v1.5.0-release",
@@ -286,7 +286,7 @@
       "level": "info",
       "start": "2026-10-08",
       "end": "2026-10-15",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     },
     {
       "id": "2026-10-07-v1.4.0-release",
@@ -295,7 +295,7 @@
       "level": "info",
       "start": "2026-10-07",
       "end": "2026-10-14",
-      "url": "https://github.com/chipmax/zen-gate-vi/releases"
+      "url": "https://github.com/chipmax/loimo/releases"
     }
   ]
 }

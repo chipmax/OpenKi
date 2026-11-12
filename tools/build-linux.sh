@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build zen-gate for Linux and package it as a self-contained .AppImage
+# Build loimo for Linux and package it as a self-contained .AppImage
 # (GTK3 + libayatana-appindicator bundled).
 #
 # Requirements:
@@ -19,40 +19,40 @@ DIST="$ROOT/dist"
 BUILD="$ROOT/build"
 APPDIR="$BUILD/AppDir"
 TOOLS="$BUILD/tools"
-NAME="zen-gate-linux"
-APPIMAGE_OUT="$DIST/Zen_Gate-x86_64.AppImage"
+NAME="loimo-linux"
+APPIMAGE_OUT="$DIST/Loi_Mo-x86_64.AppImage"
 
 # --- 1. compile -----------------------------------------------------------
 mkdir -p "$DIST"
 echo ">> building $NAME (version $VERSION)"
 (cd "$ROOT" && go build -trimpath \
   -ldflags "-s -w \
-    -X zen-gate/internal/gateway.Version=$VERSION \
-    -X zen-gate/internal/update.Current=$VERSION" \
-  -o "$DIST/$NAME" ./cmd/zen-gate)
+    -X github.com/chipmax/loimo/internal/gateway.Version=$VERSION \
+    -X github.com/chipmax/loimo/internal/update.Current=$VERSION" \
+  -o "$DIST/$NAME" ./cmd/loimo)
 
 # --- 2. AppDir skeleton -----------------------------------------------------
 rm -rf "$APPDIR"
 mkdir -p "$APPDIR/usr/bin" \
          "$APPDIR/usr/share/applications" \
          "$APPDIR/usr/share/icons/hicolor/256x256/apps"
-cp "$DIST/$NAME" "$APPDIR/usr/bin/zen-gate"
-cp "$ROOT/assets/icon-256.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/zen-gate.png"
-cp "$ROOT/assets/icon-256.png" "$APPDIR/zen-gate.png"
+cp "$DIST/$NAME" "$APPDIR/usr/bin/loimo"
+cp "$ROOT/assets/icon-256.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/loimo.png"
+cp "$ROOT/assets/icon-256.png" "$APPDIR/loimo.png"
 
-cat > "$APPDIR/usr/share/applications/zen-gate.desktop" <<'EOF'
+cat > "$APPDIR/usr/share/applications/loimo.desktop" <<'EOF'
 [Desktop Entry]
 Type=Application
-Name=Zen Gate
+Name=Lối Mở
 Comment=本地免费模型网关
-Exec=zen-gate
-Icon=zen-gate
+Exec=loimo
+Icon=loimo
 Terminal=false
 Categories=Network;Utility;
-StartupWMClass=zen-gate
+StartupWMClass=loimo
 X-GNOME-Autostart-enabled=false
 EOF
-cp "$APPDIR/usr/share/applications/zen-gate.desktop" "$APPDIR/zen-gate.desktop"
+cp "$APPDIR/usr/share/applications/loimo.desktop" "$APPDIR/loimo.desktop"
 
 cat > "$APPDIR/AppRun" <<'EOF'
 #!/bin/sh
@@ -60,9 +60,9 @@ SELF="$0"
 HERE="$(dirname "$(readlink -f "$SELF")")"
 export GSETTINGS_SCHEMA_DIR="$HERE/usr/share/glib-2.0/schemas"
 export LD_LIBRARY_PATH="$HERE/usr/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-exec "$HERE/usr/bin/zen-gate" "$@"
+exec "$HERE/usr/bin/loimo" "$@"
 EOF
-chmod +x "$APPDIR/AppRun" "$APPDIR/usr/bin/zen-gate"
+chmod +x "$APPDIR/AppRun" "$APPDIR/usr/bin/loimo"
 
 # --- 3. bundle dynamic libs with linuxdeploy ---------------------------------
 mkdir -p "$TOOLS"
@@ -82,9 +82,9 @@ fi
 echo ">> bundling libraries with linuxdeploy"
 run_appimage "$TOOLS/linuxdeploy-x86_64.AppImage" \
   --appdir "$APPDIR" \
-  --executable "$APPDIR/usr/bin/zen-gate" \
-  --desktop-file "$APPDIR/usr/share/applications/zen-gate.desktop" \
-  --icon-file "$APPDIR/zen-gate.png"
+  --executable "$APPDIR/usr/bin/loimo" \
+  --desktop-file "$APPDIR/usr/share/applications/loimo.desktop" \
+  --icon-file "$APPDIR/loimo.png"
 
 # --- 4. GTK runtime extras (schemas + pixbuf loaders) -------------------------
 mkdir -p "$APPDIR/usr/share/glib-2.0/schemas" \

@@ -1,18 +1,18 @@
-// zgwindow.m implements the macOS window: a frameless NSWindow (full-size
+// lmwindow.m implements the macOS window: a frameless NSWindow (full-size
 // content view, hidden traffic lights) with a WKWebView filling it, driving
 // the same HTML dashboard the Windows build renders in WebView2.
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
 #include <stdlib.h>
 
-#include "zgwindow.h"
+#include "lmwindow.h"
 
 // Implemented in Go (see the //export in window_darwin.go): decides whether
 // closing hides to the tray or quits.
 extern void zgGoClose(void);
 
-// Implemented in Go: builds the window. Called from zg_dispatch_create.
-extern void zgGoCreate(void);
+// Implemented in Go: builds the window. Called from lm_dispatch_create.
+extern void lmGoCreate(void);
 
 static NSWindow *gWindow = nil;
 static WKWebView *gWebView = nil;
@@ -25,22 +25,22 @@ static int gBounds[4] = {0, 0, 0, 0};
 static int gScreen[4] = {0, 0, 0, 0};
 
 // Injected at document start so the dashboard's title bar finds the same
-// window.zengate* globals the Windows build exposes via WebView2's Bind.
+// window.loimo* globals the Windows build exposes via WebView2's Bind.
 static NSString *const kShimJS = @""
   "(function(){"
-  "  if (window.zengateShimInstalled) return;"
-  "  window.zengateShimInstalled = true;"
-  "  function send(n){ try { window.webkit.messageHandlers.zengateMsg.postMessage(n); } catch (e) {} }"
-  "  window.zengateDrag = function(){ send('drag'); };"
-  "  window.zengateMinimize = function(){ send('min'); };"
-  "  window.zengateToggleMax = function(){ send('max'); };"
-  "  window.zengateClose = function(){ send('close'); };"
+  "  if (window.loimoShimInstalled) return;"
+  "  window.loimoShimInstalled = true;"
+  "  function send(n){ try { window.webkit.messageHandlers.loimoMsg.postMessage(n); } catch (e) {} }"
+  "  window.loimoDrag = function(){ send('drag'); };"
+  "  window.loimoMinimize = function(){ send('min'); };"
+  "  window.loimoToggleMax = function(){ send('max'); };"
+  "  window.loimoClose = function(){ send('close'); };"
   "})();";
 
-@interface ZenGateDelegate : NSObject <NSWindowDelegate, WKScriptMessageHandler>
+@interface LoiMoDelegate : NSObject <NSWindowDelegate, WKScriptMessageHandler>
 @end
 
-@implementation ZenGateDelegate
+@implementation LoiMoDelegate
 
 // Both the dashboard's × and ⌘W land here; Go owns the close decision, so the
 // window never actually closes on its own.
@@ -89,7 +89,7 @@ static NSString *const kShimJS = @""
 // bounced onto the main queue. Running inline when we are already there keeps
 // the calls synchronous for the operations that are read back immediately.
 
-static void zgOnMain(void (^block)(void)) {
+static void lmOnMain(void (^block)(void)) {
   if ([NSThread isMainThread]) {
     block();
     return;
@@ -97,7 +97,7 @@ static void zgOnMain(void (^block)(void)) {
   dispatch_async(dispatch_get_main_queue(), block);
 }
 
-static void zgOnMainSync(void (^block)(void)) {
+static void lmOnMainSync(void (^block)(void)) {
   if ([NSThread isMainThread]) {
     block();
     return;
@@ -105,17 +105,17 @@ static void zgOnMainSync(void (^block)(void)) {
   dispatch_sync(dispatch_get_main_queue(), block);
 }
 
-void zg_dispatch_create(void) {
+void lm_dispatch_create(void) {
   if ([NSThread isMainThread]) {
-    zgGoCreate();
+    lmGoCreate();
     return;
   }
   dispatch_async(dispatch_get_main_queue(), ^{
-    zgGoCreate();
+    lmGoCreate();
   });
 }
 
-void zg_run(const char *title, int width, int height, const char *url) {
+void lm_run(const char *title, int width, int height, const char *url) {
   if (gWindow != nil) {
     return; // already built — systray's ready hook fires exactly once
   }
@@ -143,12 +143,12 @@ void zg_run(const char *title, int width, int height, const char *url) {
     [gWindow standardWindowButton:(NSWindowButton)[button unsignedIntValue]].hidden = YES;
   }
 
-  gDelegate = [[ZenGateDelegate alloc] init];
+  gDelegate = [[LoiMoDelegate alloc] init];
   gWindow.delegate = (id<NSWindowDelegate>)gDelegate;
   [gWindow center];
 
   WKUserContentController *content = [[WKUserContentController alloc] init];
-  [content addScriptMessageHandler:(id<WKScriptMessageHandler>)gDelegate name:@"zengateMsg"];
+  [content addScriptMessageHandler:(id<WKScriptMessageHandler>)gDelegate name:@"loimoMsg"];
   [content addUserScript:[[WKUserScript alloc]
                              initWithSource:kShimJS
                               injectionTime:WKUserScriptInjectionTimeAtDocumentStart
@@ -169,12 +169,12 @@ void zg_run(const char *title, int width, int height, const char *url) {
   }
 }
 
-void zg_do_minimize(void) { zgOnMain(^{ [gWindow miniaturize:nil]; }); }
+void lm_do_minimize(void) { lmOnMain(^{ [gWindow miniaturize:nil]; }); }
 
-void zg_do_toggle_max(void) { zgOnMain(^{ [gWindow zoom:nil]; }); }
+void lm_do_toggle_max(void) { lmOnMain(^{ [gWindow zoom:nil]; }); }
 
-void zg_do_show(void) {
-  zgOnMain(^{
+void lm_do_show(void) {
+  lmOnMain(^{
     if (!gWindow) {
       return;
     }
@@ -183,30 +183,30 @@ void zg_do_show(void) {
   });
 }
 
-void zg_do_hide(void) { zgOnMain(^{ [gWindow orderOut:nil]; }); }
+void lm_do_hide(void) { lmOnMain(^{ [gWindow orderOut:nil]; }); }
 
-void zg_do_terminate(void) { zgOnMain(^{ [NSApp terminate:nil]; }); }
+void lm_do_terminate(void) { lmOnMain(^{ [NSApp terminate:nil]; }); }
 
-int zg_do_is_visible(void) {
+int lm_do_is_visible(void) {
   __block int result = 0;
-  zgOnMainSync(^{ result = (gWindow != nil && gWindow.isVisible) ? 1 : 0; });
+  lmOnMainSync(^{ result = (gWindow != nil && gWindow.isVisible) ? 1 : 0; });
   return result;
 }
 
-int zg_do_is_minimized(void) {
+int lm_do_is_minimized(void) {
   __block int result = 0;
-  zgOnMainSync(^{ result = (gWindow != nil && gWindow.isMiniaturized) ? 1 : 0; });
+  lmOnMainSync(^{ result = (gWindow != nil && gWindow.isMiniaturized) ? 1 : 0; });
   return result;
 }
 
-int zg_do_is_maximized(void) {
+int lm_do_is_maximized(void) {
   __block int result = 0;
-  zgOnMainSync(^{ result = gMaximized ? 1 : 0; });
+  lmOnMainSync(^{ result = gMaximized ? 1 : 0; });
   return result;
 }
 
-void zg_do_set_bounds(int x, int y, int w, int h) {
-  zgOnMain(^{
+void lm_do_set_bounds(int x, int y, int w, int h) {
+  lmOnMain(^{
     if (!gWindow) {
       return;
     }
@@ -226,8 +226,8 @@ void zg_do_set_bounds(int x, int y, int w, int h) {
   });
 }
 
-void zg_do_get_bounds(void) {
-  zgOnMainSync(^{
+void lm_do_get_bounds(void) {
+  lmOnMainSync(^{
     if (!gWindow) {
       gBounds[0] = gBounds[1] = gBounds[2] = gBounds[3] = 0;
       return;
@@ -243,8 +243,8 @@ void zg_do_get_bounds(void) {
   });
 }
 
-void zg_do_get_screen_frame(void) {
-  zgOnMainSync(^{
+void lm_do_get_screen_frame(void) {
+  lmOnMainSync(^{
     NSRect sf = [NSScreen mainScreen].frame;
     gScreen[0] = (int)lround(sf.origin.x);
     gScreen[1] = (int)lround(sf.origin.y);
@@ -253,10 +253,10 @@ void zg_do_get_screen_frame(void) {
   });
 }
 
-int *zg_bounds(void) { return gBounds; }
+int *lm_bounds(void) { return gBounds; }
 
-int *zg_screen(void) { return gScreen; }
+int *lm_screen(void) { return gScreen; }
 
-void zg_noop_string(const char *unused) {}
+void lm_noop_string(const char *unused) {}
 
-void zg_free(void *p) { free(p); }
+void lm_free(void *p) { free(p); }

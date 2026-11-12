@@ -4,15 +4,15 @@ import (
 	"net/http"
 	"testing"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // qoderSeedProvider puts a logged-in-looking Qoder provider in the store, the
 // state a previous successful probe would have left behind.
 func qoderSeedProvider(t *testing.T) *Server {
 	t.Helper()
-	t.Setenv("ZEN_GATE_HOME", t.TempDir())
+	t.Setenv("LOIMO_HOME", t.TempDir())
 	st, err := store.Open()
 	if err != nil {
 		t.Fatal(err)

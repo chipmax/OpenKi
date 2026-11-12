@@ -1,4 +1,4 @@
-# Headless image for zen-gate: built with the "headless" tag so the tray and
+# Headless image for loimo: built with the "headless" tag so the tray and
 # WebView2 packages are compiled out entirely. That is the difference between
 # "runs on a server" and "was built to run on a server": no GTK, no appindicator,
 # no CGO, so this build also works as a plain static binary on a NAS.
@@ -14,20 +14,20 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
     go build -tags headless -trimpath \
-    -ldflags "-X zen-gate/internal/gateway.Version=docker" \
-    -o /out/zen-gate ./cmd/zen-gate
+    -ldflags "-X github.com/chipmax/loimo/internal/gateway.Version=docker" \
+    -o /out/loimo ./cmd/loimo
 
 FROM alpine:3.20
-RUN apk add --no-cache ca-certificates && adduser -D -H -u 1000 zengate
-COPY --from=builder /out/zen-gate /usr/local/bin/zen-gate
+RUN apk add --no-cache ca-certificates && adduser -D -H -u 1000 loimo
+COPY --from=builder /out/loimo /usr/local/bin/loimo
 # Headless is the only mode this binary has; setting it explicitly keeps the
 # compose file below meaningful even for a GUI-capable build.
-ENV ZEN_GATE_HEADLESS=1 \
-    ZEN_GATE_HOME=/data
+ENV LOIMO_HEADLESS=1 \
+    LOIMO_HOME=/data
 RUN mkdir -p /data && chown 1000:1000 /data
 VOLUME /data
 USER 1000
 EXPOSE 8787
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s \
   CMD wget -qO- http://127.0.0.1:8787/healthz || exit 1
-ENTRYPOINT ["zen-gate"]
+ENTRYPOINT ["loimo"]

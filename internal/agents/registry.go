@@ -1,5 +1,5 @@
 // Package agents auto-detects locally installed AI agents and injects (or
-// removes) a zen-gate provider entry so the agent's model picker shows the
+// removes) a loimo provider entry so the agent's model picker shows the
 // free lane. Every adapter follows the same contract: Detect → Enable (backup,
 // atomic write, rollback on failure) → Disable (restore).
 package agents
@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // View is one agent's state for the dashboard.
@@ -44,6 +44,14 @@ type Agent interface {
 	IsEnabled() (bool, string, error)
 	Enable(o Options) error
 	Disable() error
+}
+
+// legacyAgent is implemented by adapters that can still find the provider
+// written under the project's pre-rename name. ResyncEnabled uses it to
+// rewrite that entry once at boot even though IsEnabled — which only knows
+// the current provider id — reports false.
+type legacyAgent interface {
+	LegacyEnabled() bool
 }
 
 // Registry holds all adapters.
@@ -315,15 +323,21 @@ func (r *Registry) ResyncEnabled() int {
 		}
 		// Config, not a pre-existing provider entry, decides ownership. The
 		// old IsEnabled-only gate rewrote any agent whose file already carried
-		// a zen-gate provider: a second instance (Windows/WSL) could silently
+		// a loimo provider: a second instance (Windows/WSL) could silently
 		// take over an endpoint the user had explicitly disabled in its own
 		// config. The installed/enabled check stays so an uninstalled agent is
 		// not recreated by a stale enabledAgents entry.
 		if !r.st.Config().EnabledAgents[id] {
 			continue
 		}
-		if enabled, _, err := a.IsEnabled(); err != nil || !enabled {
+		enabled, _, err := a.IsEnabled()
+		if err != nil {
 			continue
+		}
+		if !enabled {
+			if legacy, ok := a.(legacyAgent); !ok || !legacy.LegacyEnabled() {
+				continue
+			}
 		}
 		attempted++
 		if err := a.Enable(opts); err == nil {
@@ -425,7 +439,7 @@ func homePath(rel ...string) string {
 
 // atomicWrite writes a file via temp+rename, mode 0600.
 func atomicWrite(path string, data []byte) error {
-	tmp := path + ".zengate.tmp"
+	tmp := path + ".loimo.tmp"
 	if err := os.WriteFile(tmp, data, 0o600); err != nil {
 		return err
 	}

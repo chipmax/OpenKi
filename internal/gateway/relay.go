@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/logx"
-	"zen-gate/internal/relay"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/logx"
+	"github.com/chipmax/loimo/internal/relay"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // Custom-provider ("自定义 API") relay paths. Model ids are namespaced as
@@ -150,7 +150,7 @@ func (s *Server) relayChatCompletions(w http.ResponseWriter, r *http.Request, re
 			s.relayError(w, false, uerr)
 			return
 		}
-		w.Header().Set("x-zen-gate-served-by", served)
+		w.Header().Set("x-loimo-served-by", served)
 		msg := map[string]any{"role": "assistant", "content": text.String()}
 		if reasoning.Len() > 0 {
 			msg["reasoning_content"] = reasoning.String()
@@ -252,7 +252,7 @@ func (s *Server) relayResponses(w http.ResponseWriter, r *http.Request, req resp
 		s.relayError(w, false, uerr)
 		return
 	}
-	w.Header().Set("x-zen-gate-served-by", served)
+	w.Header().Set("x-loimo-served-by", served)
 	if req.Stream {
 		s.writeResponsesEvents(w, served, collector, outcome)
 		return
@@ -296,7 +296,7 @@ func (s *Server) relayAnthropicMessages(w http.ResponseWriter, r *http.Request, 
 			s.relayError(w, true, uerr)
 			return
 		}
-		w.Header().Set("x-zen-gate-served-by", served)
+		w.Header().Set("x-loimo-served-by", served)
 		writeJSON(w, 200, anthropicResponse(randomID("msg_"), served, collector, outcome))
 		return
 	}

@@ -173,7 +173,7 @@ func noteFreeTierGate() {
 		"hash", FingerprintHash(), "mode", FingerprintMode())
 }
 
-// laneHTTP is the shared client for all upstream traffic; zen-gate swaps its
+// laneHTTP is the shared client for all upstream traffic; loimo swaps its
 // Transport when the proxy setting changes (hot, no restart).
 var laneHTTP = &http.Client{}
 

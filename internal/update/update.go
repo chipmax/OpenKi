@@ -1,4 +1,4 @@
-// Package update checks a configurable feed for newer zen-gate builds.
+// Package update checks a configurable feed for newer loimo builds.
 // Two feed shapes are understood:
 //   - GitHub Releases API ("https://api.github.com/repos/<o>/<r>/releases/latest")
 //     — parsed natively (tag_name/html_url/body/assets)
@@ -29,9 +29,9 @@ var SelfUpdateSupported = runtime.GOOS == "windows"
 func assetName() string {
 	switch runtime.GOOS {
 	case "windows":
-		return "zen-gate.exe"
+		return "loimo.exe"
 	case "darwin":
-		return "zen-gate-darwin"
+		return "loimo-darwin"
 	default:
 		return ""
 	}
@@ -41,10 +41,10 @@ func assetName() string {
 // build time and per-install through settings. It points at this repository's
 // own Releases API — leaving it empty made every build's update check answer
 // "already latest" without ever looking anywhere.
-var FeedURL = "https://api.github.com/repos/chipmax/zen-gate-vi/releases/latest"
+var FeedURL = "https://api.github.com/repos/chipmax/loimo/releases/latest"
 
 // Current is the running version, overridable via -ldflags.
-var Current = "1.1.0"
+var Current = "2.0.0"
 
 // FeedJSON is the expected remote shape for plain feeds.
 type FeedJSON struct {
@@ -85,7 +85,7 @@ func IsGitHubFeed(feedURL string) bool {
 	return strings.HasPrefix(u, "https://api.github.com/repos/") && strings.HasSuffix(u, "/releases/latest")
 }
 
-// githubRelease mirrors the slice of the Releases API response zen-gate needs.
+// githubRelease mirrors the slice of the Releases API response loimo needs.
 type githubRelease struct {
 	TagName string `json:"tag_name"`
 	HTMLURL string `json:"html_url"`

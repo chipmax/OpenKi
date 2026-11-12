@@ -56,7 +56,7 @@ func setWindowIcons(hwnd uintptr) {
 	cySm := winMetric(smCYSmIcon)
 	dlogf("icons: DPI sizes big=%dx%d small=%dx%d", cxIcon, cyIcon, cxSm, cySm)
 
-	tmp := filepath.Join(os.TempDir(), "zen-gate-icon.ico")
+	tmp := filepath.Join(os.TempDir(), "loimo-icon.ico")
 	if err := os.WriteFile(tmp, windowIconICO, 0o644); err != nil {
 		dlogf("write ico: %v", err)
 		return

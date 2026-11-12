@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // A user-added provider is where a probe can take tens of seconds (a queued

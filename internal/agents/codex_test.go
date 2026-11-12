@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // Regression coverage for the Codex config.toml injection: a config that
@@ -61,20 +61,20 @@ func TestCodexEnableDedupesExistingCatalogKey(t *testing.T) {
 	c := newCodex()
 	o := codexOpts()
 	stash := map[string]string{}
-	out := c.applyEnable(codexUserConfig(), o, o.DefaultModel, "C:/Users/u/.codex/zen-gate-catalog.json", stash)
+	out := c.applyEnable(codexUserConfig(), o, o.DefaultModel, "C:/Users/u/.codex/loimo-catalog.json", stash)
 
 	keys := codexTopLevelKeys(t, out)
 	if n := len(keys["model_catalog_json"]); n != 1 {
 		t.Fatalf("model_catalog_json appears %d times, want 1\n%s", n, out)
 	}
-	if !strings.Contains(keys["model_catalog_json"][0], "zen-gate-catalog.json") {
-		t.Fatalf("active catalog key is not zen-gate's: %q", keys["model_catalog_json"][0])
+	if !strings.Contains(keys["model_catalog_json"][0], "loimo-catalog.json") {
+		t.Fatalf("active catalog key is not loimo's: %q", keys["model_catalog_json"][0])
 	}
 	if got := stash["model_catalog_json"]; got != codexUserCatalogLine {
 		t.Fatalf("stash lost the user's original line: got %q, want %q", got, codexUserCatalogLine)
 	}
 	// model_provider/model are rewritten in place — still exactly one each.
-	if n := len(keys["model_provider"]); n != 1 || !strings.Contains(keys["model_provider"][0], `"zen_gate"`) {
+	if n := len(keys["model_provider"]); n != 1 || !strings.Contains(keys["model_provider"][0], `"loimo"`) {
 		t.Fatalf("model_provider not rewritten in place: %q", keys["model_provider"])
 	}
 	// The managed catalog key must sit before the first [table] header.
@@ -88,13 +88,13 @@ func TestCodexEnableDedupesExistingCatalogKey(t *testing.T) {
 func TestCodexEnableIsIdempotent(t *testing.T) {
 	c := newCodex()
 	o := codexOpts()
-	catPath := "C:/Users/u/.codex/zen-gate-catalog.json"
+	catPath := "C:/Users/u/.codex/loimo-catalog.json"
 
 	stash := map[string]string{}
 	once := c.applyEnable(codexUserConfig(), o, o.DefaultModel, catPath, stash)
 
 	// Second enable seeds the stash from the persisted state file, exactly
-	// like Enable does — zen-gate's own rewritten lines must not be recorded
+	// like Enable does — loimo's own rewritten lines must not be recorded
 	// as the user's originals.
 	two := map[string]string{}
 	for k, v := range stash {
@@ -121,10 +121,10 @@ func TestCodexEnableRepairsAlreadyBrokenConfig(t *testing.T) {
 	c := newCodex()
 	o := codexOpts()
 	broken := strings.Replace(codexUserConfig(), codexUserCatalogLine,
-		codexUserCatalogLine+"\nmodel_catalog_json = 'C:/Users/u/.codex/zen-gate-catalog.json'", 1)
+		codexUserCatalogLine+"\nmodel_catalog_json = 'C:/Users/u/.codex/loimo-catalog.json'", 1)
 
 	stash := map[string]string{}
-	out := c.applyEnable(broken, o, o.DefaultModel, "C:/Users/u/.codex/zen-gate-catalog.json", stash)
+	out := c.applyEnable(broken, o, o.DefaultModel, "C:/Users/u/.codex/loimo-catalog.json", stash)
 
 	if n := len(codexTopLevelKeys(t, out)["model_catalog_json"]); n != 1 {
 		t.Fatalf("broken config still has %d model_catalog_json keys after enable\n%s", n, out)
@@ -138,7 +138,7 @@ func TestCodexEnableFreshConfig(t *testing.T) {
 	c := newCodex()
 	o := codexOpts()
 	stash := map[string]string{}
-	out := c.applyEnable("disable_response_storage = true\n", o, o.DefaultModel, "C:/Users/u/.codex/zen-gate-catalog.json", stash)
+	out := c.applyEnable("disable_response_storage = true\n", o, o.DefaultModel, "C:/Users/u/.codex/loimo-catalog.json", stash)
 
 	if n := len(codexTopLevelKeys(t, out)["model_catalog_json"]); n != 1 {
 		t.Fatalf("model_catalog_json appears %d times on a fresh config\n%s", n, out)
@@ -154,7 +154,7 @@ func TestCodexEnableInsertsKeyWhenConfigStartsWithTable(t *testing.T) {
 	c := newCodex()
 	o := codexOpts()
 	stash := map[string]string{}
-	out := c.applyEnable("[model_providers.custom]\nname = \"x\"\n", o, o.DefaultModel, "C:/Users/u/.codex/zen-gate-catalog.json", stash)
+	out := c.applyEnable("[model_providers.custom]\nname = \"x\"\n", o, o.DefaultModel, "C:/Users/u/.codex/loimo-catalog.json", stash)
 
 	keys := codexTopLevelKeys(t, out)
 	if n := len(keys["model_catalog_json"]); n != 1 {
@@ -168,7 +168,7 @@ func TestCodexEnableInsertsKeyWhenConfigStartsWithTable(t *testing.T) {
 func TestCodexDisableRestoresRemovedCatalogKey(t *testing.T) {
 	c := newCodex()
 	o := codexOpts()
-	catPath := "C:/Users/u/.codex/zen-gate-catalog.json"
+	catPath := "C:/Users/u/.codex/loimo-catalog.json"
 
 	stash := map[string]string{}
 	enabled := c.applyEnable(codexUserConfig(), o, o.DefaultModel, catPath, stash)
@@ -202,7 +202,7 @@ func TestCodexDisableRestoresRemovedCatalogKey(t *testing.T) {
 func TestCodexDisableRestoresKeyBeforeFirstTable(t *testing.T) {
 	c := newCodex()
 	o := codexOpts()
-	catPath := "C:/Users/u/.codex/zen-gate-catalog.json"
+	catPath := "C:/Users/u/.codex/loimo-catalog.json"
 
 	stash := map[string]string{}
 	enabled := c.applyEnable(codexUserConfig(), o, o.DefaultModel, catPath, stash)
@@ -213,5 +213,32 @@ func TestCodexDisableRestoresKeyBeforeFirstTable(t *testing.T) {
 	tblIdx := strings.Index(restored, "[model_providers.custom]")
 	if keyIdx < 0 || tblIdx < 0 || keyIdx > tblIdx {
 		t.Fatalf("restored catalog key must precede the first table (key at %d, table at %d)\n%s", keyIdx, tblIdx, restored)
+	}
+}
+
+func TestCodexEnableReplacesLegacyManagedBlock(t *testing.T) {
+	c := newCodex()
+	o := codexOpts()
+	src := strings.Join([]string{
+		`model_provider = "zen-gate"`,
+		`model = "old-model"`,
+		``,
+		legacyCodexMarkerBegin,
+		`[model_providers.zen_gate]`,
+		`name = "Zen Gate"`,
+		`base_url = "http://127.0.0.1:8787/v1"`,
+		`wire_api = "responses"`,
+		legacyCodexMarkerEnd,
+	}, "\n")
+	stash := map[string]string{}
+	out := c.applyEnable(src, o, o.DefaultModel, "C:/Users/u/.codex/loimo-catalog.json", stash)
+	if strings.Contains(out, "zen-gate") || strings.Contains(out, "zen_gate") {
+		t.Fatalf("legacy provider survived migration:\n%s", out)
+	}
+	if !strings.Contains(out, codexMarkerBegin) || !strings.Contains(out, "[model_providers.loimo]") {
+		t.Fatalf("current provider block missing after migration:\n%s", out)
+	}
+	if !strings.Contains(out, `model_provider = "loimo"`) {
+		t.Fatalf("active provider not rewritten:\n%s", out)
 	}
 }

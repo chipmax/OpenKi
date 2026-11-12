@@ -20,8 +20,8 @@ import (
 	"sync"
 	"time"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // providerStreamIdle bounds silence on a relayed stream — both the wait for

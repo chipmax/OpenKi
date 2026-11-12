@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 const dshSamplePatch = `# 用户注释必须原样保留
@@ -59,7 +59,7 @@ func TestDSHUpsertMergesIntoExistingEntry(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := string(body)
-	if !strings.Contains(s, "zen-gate") || !strings.Contains(s, "http://127.0.0.1:8321/v1") {
+	if !strings.Contains(s, "loimo") || !strings.Contains(s, "http://127.0.0.1:8321/v1") {
 		t.Fatalf("provider not merged:\n%s", s)
 	}
 	if !strings.Contains(s, "jiyuan") || !strings.Contains(s, "example.studio") || !strings.Contains(s, "用户注释必须原样保留") {
@@ -92,8 +92,8 @@ func TestDSHDisableKeepsUserContent(t *testing.T) {
 			t.Fatalf("user content lost (%q):\n%s", want, s)
 		}
 	}
-	if strings.Contains(s, "zen-gate") || strings.Contains(s, "Bearer k-123") {
-		t.Fatalf("zen-gate provider survived disable:\n%s", s)
+	if strings.Contains(s, "loimo") || strings.Contains(s, "Bearer k-123") {
+		t.Fatalf("loimo provider survived disable:\n%s", s)
 	}
 }
 
@@ -108,7 +108,7 @@ func TestDSHAppendCreatesEntryWhenAbsent(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := string(body)
-	if !strings.Contains(s, "id: llm-pi-ai") || !strings.Contains(s, "zen-gate") {
+	if !strings.Contains(s, "id: llm-pi-ai") || !strings.Contains(s, "loimo") {
 		t.Fatalf("entry not appended:\n%s", s)
 	}
 	if !strings.Contains(s, "仅注释的空层") {
@@ -142,7 +142,7 @@ func TestDSHStripLegacyPlugin(t *testing.T) {
 	}
 }
 
-func TestDSHIsEnabledRequiresZenGateKey(t *testing.T) {
+func TestDSHIsEnabledRequiresLoiMoKey(t *testing.T) {
 	d := newDSH()
 	// A hand-added jiyuan provider alone must not read as enabled.
 	dir := writeDSHFixture(t, dshSamplePatch)
@@ -152,11 +152,11 @@ func TestDSHIsEnabledRequiresZenGateKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if providers := d.findProviders(doc); providers != nil && mapValue(providers, "zen-gate") != nil {
+	if providers := d.findProviders(doc); providers != nil && mapValue(providers, "loimo") != nil {
 		enabled = true
 	}
 	if enabled {
-		t.Fatal("jiyuan-only patch must not read as zen-gate-enabled")
+		t.Fatal("jiyuan-only patch must not read as loimo-enabled")
 	}
 	if err := d.upsertProvider(dir, dshOptions()); err != nil {
 		t.Fatal(err)
@@ -166,7 +166,34 @@ func TestDSHIsEnabledRequiresZenGateKey(t *testing.T) {
 		t.Fatal(err)
 	}
 	providers := d.findProviders(doc)
-	if providers == nil || mapValue(providers, "zen-gate") == nil {
-		t.Fatal("zen-gate key missing after upsert")
+	if providers == nil || mapValue(providers, "loimo") == nil {
+		t.Fatal("loimo key missing after upsert")
+	}
+}
+
+func TestDSHUpsertReplacesLegacyProvider(t *testing.T) {
+	d := newDSH()
+	body := strings.Replace(dshSamplePatch, "      jiyuan:", "      zen-gate:\n        displayName: Zen Gate\n      jiyuan:", 1)
+	dir := writeDSHFixture(t, body)
+	if err := d.upsertProvider(dir, dshOptions()); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(filepath.Join(dir, "cordis.patch.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(data)
+	if strings.Contains(s, "zen-gate") {
+		t.Fatalf("legacy provider survived migration:\n%s", s)
+	}
+	if !strings.Contains(s, "loimo") || !strings.Contains(s, "jiyuan") {
+		t.Fatalf("migration lost a provider:\n%s", s)
+	}
+	if err := d.removeProvider(dir); err != nil {
+		t.Fatal(err)
+	}
+	data, _ = os.ReadFile(filepath.Join(dir, "cordis.patch.yml"))
+	if strings.Contains(string(data), "loimo") {
+		t.Fatalf("removeProvider left the current provider behind:\n%s", data)
 	}
 }

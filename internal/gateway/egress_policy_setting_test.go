@@ -4,7 +4,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // Both fields are process-wide policy switches. A panel save that only changed

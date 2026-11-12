@@ -2,17 +2,17 @@
 # on. The panel stays loopback-only, so the published port is the OpenAI /
 # Anthropic endpoint under /v1 and not the admin surface (issue #79).
 services:
-  zen-gate:
+  loimo:
     build: .
-    image: zen-gate:local
+    image: loimo:local
     ports:
       - "8787:8787"
     volumes:
-      - zen-gate-data:/data
+      - loimo-data:/data
     environment:
-      ZEN_GATE_HEADLESS: "1"
-      ZEN_GATE_HOME: /data
+      LOIMO_HEADLESS: "1"
+      LOIMO_HOME: /data
     restart: unless-stopped
 
 volumes:
-  zen-gate-data:
+  loimo-data:

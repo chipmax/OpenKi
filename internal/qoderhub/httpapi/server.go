@@ -18,10 +18,10 @@ import (
 	"strings"
 	"time"
 
-	"zen-gate/internal/qoderhub/remote"
-	"zen-gate/internal/qoderhub/service"
-	"zen-gate/internal/qoderhub/tooltypes"
-	"zen-gate/internal/qoderhub/version"
+	"github.com/chipmax/loimo/internal/qoderhub/remote"
+	"github.com/chipmax/loimo/internal/qoderhub/service"
+	"github.com/chipmax/loimo/internal/qoderhub/tooltypes"
+	"github.com/chipmax/loimo/internal/qoderhub/version"
 )
 
 type Server struct {
@@ -183,7 +183,7 @@ func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":      true,
-		"service": "zen-gate",
+		"service": "loimo",
 		"state":   s.svc.State(),
 	})
 }
@@ -377,7 +377,7 @@ func (s *Server) handleVersion(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"version": version.Version,
-		"service": "zen-gate",
+		"service": "loimo",
 	})
 }
 

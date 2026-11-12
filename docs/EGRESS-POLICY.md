@@ -11,11 +11,11 @@ Một request có thể đi qua hai lớp độc lập:
 
 1. **Exit của lane** — rotator chọn một node/IP cho request. Đây là đơn vị mà
    hạn mức miễn phí của upstream tính theo. Response mang
-   `x-zen-gate-exit`; với stream, header chỉ kịp gửi trước byte nội dung đầu
-   tiên, sau đó giá trị nằm trong chunk kết thúc (`x_zen_gate_exit`) hoặc
+   `x-loimo-exit`; với stream, header chỉ kịp gửi trước byte nội dung đầu
+   tiên, sau đó giá trị nằm trong chunk kết thúc (`x_loimo_exit`) hoặc
    `message_delta`.
 2. **Peer transport** — relay / WARP / sing-box bọc đường đi ra ngoài. Response
-   mang `X-Zen-Gate-Egress`; đây là peer đã phục vụ, không phải exit mà lane
+   mang `X-LoiMo-Egress`; đây là peer đã phục vụ, không phải exit mà lane
    chọn.
 
 Khi điều tra, đọc cả hai: một lỗi `429` trên peer `warp` và một `429` trên exit
@@ -115,13 +115,13 @@ hình.
 ```bash
 # Xem exit thật của một lượt (khi chưa mở stream):
 curl -sD - -o /dev/null http://127.0.0.1:8787/v1/chat/completions \
-  -H "Authorization: Bearer $ZEN_GATE_KEY" -H 'content-type: application/json' \
+  -H "Authorization: Bearer $LOIMO_KEY" -H 'content-type: application/json' \
   -d '{"model":"glm-5.3-flash-free","messages":[{"role":"user","content":"ping"}],"max_tokens":8}'
-# → x-zen-gate-exit, X-Zen-Gate-Egress, Retry-After (nếu 429)
+# → x-loimo-exit, X-LoiMo-Egress, Retry-After (nếu 429)
 
 # Bảng quản lý → yêu cầu gần đây: cột Exit + HTTP; rê chuột lên Exit để xem node id.
 ```
 
-Nếu `x-zen-gate-exit` trống nhưng `X-Zen-Gate-Egress` có giá trị, request đi
+Nếu `x-loimo-exit` trống nhưng `X-LoiMo-Egress` có giá trị, request đi
 qua peer transport mà không có rotator lane (ví dụ WARP thuần): `exitKind` sẽ
 là `warp` và không có IP lane riêng.

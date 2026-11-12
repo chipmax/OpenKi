@@ -161,7 +161,7 @@ func NewWithChatEndpoint(timeout time.Duration, endpoint string) *Client {
 }
 
 // NewWithTransport 用调用方提供的 transport 构造客户端，端点走生产默认。
-// zen-gate 的 lane 用它注入自己的代理/轮询栈，所以这个渠道和其它上游共用
+// loimo 的 lane 用它注入自己的代理/轮询栈，所以这个渠道和其它上游共用
 // 同一套出口策略，而不是自带一套 dial 设置。
 func NewWithTransport(tr http.RoundTripper) *Client {
 	return newWithTransportBases(tr, SnapEngineApiHost, BenefitHost, "")

@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // relayOneTurn posts one turn through a capturing upstream and returns the body

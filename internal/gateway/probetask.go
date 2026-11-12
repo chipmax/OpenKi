@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 const maxTaskRuns = 5

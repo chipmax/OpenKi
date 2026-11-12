@@ -32,7 +32,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"zen-gate/internal/warp"
+	"github.com/chipmax/loimo/internal/warp"
 )
 
 // useWarp is the pure mode decision, split out so it can be tested without

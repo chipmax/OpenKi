@@ -10,24 +10,25 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// dsh injects a zen-gate provider into DeepSeek Harness. The host's llm-pi-ai
+// dsh injects a loimo provider into DeepSeek Harness. The host's llm-pi-ai
 // plugin carries the providers dict every model picker reads from
 // (displayName, api, baseURL, models), and the supported way to set it is the
 // profile's own cordis.patch.yml — the same layer a hand-added provider lands
 // in. The edit is a targeted merge on the yaml node tree (comments, key order
 // and !!js expressions survive round-trip): an existing llm-pi-ai entry gains
-// a "zen-gate" key under config.providers, a profile without one gets the
+// a "loimo" key under config.providers, a profile without one gets the
 // entry appended.
 //
 // Profiles keep their own layer last in the composition order, so this never
 // fights bundle patches; and installs of the legacy dsh-our-free-model plugin
-// (wired by earlier zen-gate versions) are stripped on enable/disable so the
+// (wired by earlier loimo versions) are stripped on enable/disable so the
 // two routes never run at once.
 const (
-	dshPluginID   = "dsh-our-free-model"
-	dshProviderID = "zen-gate"
-	dshPatchID    = "llm-pi-ai"
-	dshPatchName  = "@deepseek-ai/dsh-llm-pi-ai"
+	dshPluginID         = "dsh-our-free-model"
+	dshProviderID       = "loimo"
+	legacyDSHProviderID = "zen-gate"
+	dshPatchID          = "llm-pi-ai"
+	dshPatchName        = "@deepseek-ai/dsh-llm-pi-ai"
 )
 
 type dsh struct {
@@ -111,7 +112,7 @@ func (d *dsh) Detect() (bool, string, string) {
 	return true, "", detail
 }
 
-// IsEnabled reports whether any profile's patch layer carries the zen-gate
+// IsEnabled reports whether any profile's patch layer carries the loimo
 // provider — the providers dict itself may well hold hand-added providers.
 func (d *dsh) IsEnabled() (bool, string, error) {
 	for _, dir := range d.profileDirs() {
@@ -126,8 +127,21 @@ func (d *dsh) IsEnabled() (bool, string, error) {
 	return false, "", nil
 }
 
+func (d *dsh) LegacyEnabled() bool {
+	for _, dir := range d.profileDirs() {
+		doc, err := d.readPatch(filepath.Join(dir, "cordis.patch.yml"))
+		if err != nil || doc == nil {
+			continue
+		}
+		if providers := d.findProviders(doc); providers != nil && mapValue(providers, legacyDSHProviderID) != nil {
+			return true
+		}
+	}
+	return false
+}
+
 // Enable wires every profile: strip the legacy plugin install, then merge the
-// zen-gate provider into the patch layer (backed up first).
+// loimo provider into the patch layer (backed up first).
 func (d *dsh) Enable(o Options) error {
 	profiles := d.profileDirs()
 	if len(profiles) == 0 {
@@ -144,7 +158,7 @@ func (d *dsh) Enable(o Options) error {
 	return nil
 }
 
-// Disable removes the zen-gate provider from every profile's patch layer and
+// Disable removes the loimo provider from every profile's patch layer and
 // strips any legacy plugin install. Hand-added providers are untouched.
 func (d *dsh) Disable() error {
 	for _, dir := range d.profileDirs() {
@@ -295,6 +309,7 @@ func (d *dsh) upsertProvider(dir string, o Options) error {
 				providers = &yaml.Node{Kind: yaml.MappingNode}
 				setMapKey(config, "providers", providers)
 			}
+			deleteMapKey(providers, legacyDSHProviderID)
 			setMapKey(providers, dshProviderID, provider)
 			return d.writePatch(path, doc)
 		}
@@ -345,8 +360,9 @@ func (d *dsh) removeProvider(dir string) error {
 		if providers == nil || providers.Kind != yaml.MappingNode {
 			continue
 		}
-		if mapValue(providers, dshProviderID) != nil {
+		if mapValue(providers, dshProviderID) != nil || mapValue(providers, legacyDSHProviderID) != nil {
 			deleteMapKey(providers, dshProviderID)
+			deleteMapKey(providers, legacyDSHProviderID)
 			changed = true
 			if len(providers.Content) == 0 {
 				deleteMapKey(config, "providers")
@@ -366,7 +382,7 @@ func (d *dsh) removeProvider(dir string) error {
 // apiKeyEnv reference would need a separately provisioned host credential.
 func (d *dsh) providerNode(o Options) *yaml.Node {
 	provider := &yaml.Node{Kind: yaml.MappingNode}
-	setMapKey(provider, "displayName", strNode("Zen Gate"))
+	setMapKey(provider, "displayName", strNode("Lối Mở"))
 	setMapKey(provider, "api", strNode("openai-completions"))
 	setMapKey(provider, "baseURL", strNode(o.BaseURL))
 	headers := &yaml.Node{Kind: yaml.MappingNode}
@@ -400,7 +416,7 @@ func (d *dsh) providerNode(o Options) *yaml.Node {
 
 // --- legacy plugin strip ----------------------------------------------------
 
-// stripLegacyPlugin removes an earlier zen-gate release's wiring of the
+// stripLegacyPlugin removes an earlier loimo release's wiring of the
 // dsh-our-free-model plugin (package.json deps + bundle registration +
 // node_modules copy) so the plugin route and the gateway provider never run
 // side by side. A plugin the user installed by other means carries a

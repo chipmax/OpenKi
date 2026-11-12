@@ -3,7 +3,7 @@ package gateway
 import (
 	"testing"
 
-	"zen-gate/internal/lane"
+	"github.com/chipmax/loimo/internal/lane"
 )
 
 // Issue #96: parallel tool calls must reach the client with distinct

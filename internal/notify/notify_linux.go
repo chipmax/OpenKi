@@ -14,7 +14,7 @@ func Toast(title, body string) {
 	if !ok {
 		return
 	}
-	args := []string{"-a", "zen-gate"}
+	args := []string{"-a", "loimo"}
 	if strings.TrimSpace(body) != "" {
 		args = append(args, title, body)
 	} else {

@@ -3,7 +3,7 @@ package lane
 import "testing"
 
 // The rows below are copied from this gateway's live channel files
-// (%APPDATA%/zen-gate/channels/*.json), so the tests assert against the catalog
+// (%APPDATA%/loimo/channels/*.json), so the tests assert against the catalog
 // that actually ships rather than invented fixtures.
 var aggregateTestCatalog = []ModelInfo{
 	// zen lane (blank channel)

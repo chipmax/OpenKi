@@ -16,6 +16,13 @@ type openCode struct {
 	name string
 }
 
+const (
+	openCodeProviderID       = "loimo"
+	openCodeProviderName     = "Lối Mở"
+	legacyOpenCodeProviderID = "zen-gate"
+	legacyOpenCodeName       = "Zen Gate"
+)
+
 func newOpenCode() *openCode { return newOpenCodeAt("", "opencode", "OpenCode") }
 
 func newOpenCodeAt(home, id, name string) *openCode {
@@ -61,7 +68,7 @@ func (o *openCode) Detect() (bool, string, string) {
 		return true, "", "Đã phát hiện opencode.json"
 	}
 	if p := o.defaultJSONC(); p != "" {
-		return true, "", "Đã phát hiện opencode.jsonc (cấu hình có chú thích); zen-gate sẽ không ghi thêm opencode.json song song, vui lòng kết nối thủ công"
+		return true, "", "Đã phát hiện opencode.jsonc (cấu hình có chú thích); loimo sẽ không ghi thêm opencode.json song song, vui lòng kết nối thủ công"
 	}
 	if _, err := os.Stat(o.p(".config", "opencode")); err == nil {
 		return true, "", "Đã phát hiện thư mục cấu hình opencode (chưa tạo opencode.json)"
@@ -75,7 +82,7 @@ func (o *openCode) IsEnabled() (bool, string, error) {
 		return false, "", nil
 	}
 	prov, _ := doc["provider"].(map[string]any)
-	zg, ok := prov["zen-gate"].(map[string]any)
+	zg, ok := prov[openCodeProviderID].(map[string]any)
 	if !ok {
 		return false, "", nil
 	}
@@ -86,6 +93,20 @@ func (o *openCode) IsEnabled() (bool, string, error) {
 		}
 	}
 	return enabled, "", nil
+}
+
+func (o *openCode) LegacyEnabled() bool {
+	doc, err := o.read()
+	if err != nil {
+		return false
+	}
+	prov, _ := doc["provider"].(map[string]any)
+	old, ok := prov[legacyOpenCodeProviderID].(map[string]any)
+	if !ok {
+		return false
+	}
+	name, _ := old["name"].(string)
+	return name == legacyOpenCodeName
 }
 
 func (o *openCode) read() (map[string]any, error) {
@@ -110,7 +131,7 @@ func (o *openCode) Enable(opts Options) error {
 			// OpenCode reads .jsonc too, so a plain .json written here becomes a
 			// second live config with no documented winner — and the .jsonc is the
 			// file the user maintains. Refuse rather than guess which one wins.
-			return fmt.Errorf("Đã phát hiện %s: OpenCode sẽ đọc nó, zen-gate không tạo thêm opencode.json song song nữa; vui lòng tự ghi khối provider vào file .jsonc đó", p)
+			return fmt.Errorf("Đã phát hiện %s: OpenCode sẽ đọc nó, loimo không tạo thêm opencode.json song song nữa; vui lòng tự ghi khối provider vào file .jsonc đó", p)
 		}
 	}
 	doc, err := o.read()
@@ -121,12 +142,17 @@ func (o *openCode) Enable(opts Options) error {
 	if prov == nil {
 		prov = map[string]any{}
 	}
+	if old, ok := prov[legacyOpenCodeProviderID].(map[string]any); ok {
+		if name, _ := old["name"].(string); name == legacyOpenCodeName {
+			delete(prov, legacyOpenCodeProviderID)
+		}
+	}
 	models := map[string]any{}
 	for _, m := range opts.Models {
 		models[m.ID] = map[string]any{"name": m.Name}
 	}
-	prov["zen-gate"] = map[string]any{
-		"name": "Zen Gate",
+	prov[openCodeProviderID] = map[string]any{
+		"name": openCodeProviderName,
 		"npm":  "@ai-sdk/openai-compatible",
 		"options": map[string]any{
 			"baseURL": opts.BaseURL,
@@ -154,16 +180,26 @@ func (o *openCode) Disable() error {
 	if prov == nil {
 		return nil
 	}
-	if zg, ok := prov["zen-gate"].(map[string]any); ok {
-		if name, _ := zg["name"].(string); name != "Zen Gate" {
-			return nil // not ours — leave it alone
+	removed := false
+	for id, legacyName := range map[string]string{
+		openCodeProviderID:       openCodeProviderName,
+		legacyOpenCodeProviderID: legacyOpenCodeName,
+	} {
+		entry, ok := prov[id].(map[string]any)
+		if !ok {
+			continue
 		}
-		delete(prov, "zen-gate")
-		if len(prov) == 0 {
-			delete(doc, "provider")
+		if name, _ := entry["name"].(string); name != legacyName {
+			continue // not ours — leave it alone
 		}
-	} else {
+		delete(prov, id)
+		removed = true
+	}
+	if !removed {
 		return nil
+	}
+	if len(prov) == 0 {
+		delete(doc, "provider")
 	}
 	data, err := json.MarshalIndent(doc, "", "  ")
 	if err != nil {

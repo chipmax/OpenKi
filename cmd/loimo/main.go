@@ -1,4 +1,4 @@
-// zen-gate: a local tray gateway that exposes the OpenCode Zen free lane as
+// loimo: a local tray gateway that exposes the OpenCode Zen free lane as
 // OpenAI/Anthropic-compatible APIs and auto-configures installed agents.
 // Usage of the free lane remains subject to the upstream provider's terms.
 package main
@@ -18,20 +18,20 @@ import (
 	"syscall"
 	"time"
 
-	"zen-gate/internal/agents"
-	"zen-gate/internal/announce"
-	"zen-gate/internal/autotag"
-	"zen-gate/internal/gateway"
-	"zen-gate/internal/lane"
-	"zen-gate/internal/logx"
-	"zen-gate/internal/notify"
-	"zen-gate/internal/qoderhub"
-	"zen-gate/internal/store"
-	"zen-gate/internal/subs"
-	"zen-gate/internal/tray"
-	"zen-gate/internal/unblock"
-	"zen-gate/internal/update"
-	"zen-gate/internal/window"
+	"github.com/chipmax/loimo/internal/agents"
+	"github.com/chipmax/loimo/internal/announce"
+	"github.com/chipmax/loimo/internal/autotag"
+	"github.com/chipmax/loimo/internal/gateway"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/logx"
+	"github.com/chipmax/loimo/internal/notify"
+	"github.com/chipmax/loimo/internal/qoderhub"
+	"github.com/chipmax/loimo/internal/store"
+	"github.com/chipmax/loimo/internal/subs"
+	"github.com/chipmax/loimo/internal/tray"
+	"github.com/chipmax/loimo/internal/unblock"
+	"github.com/chipmax/loimo/internal/update"
+	"github.com/chipmax/loimo/internal/window"
 )
 
 // zoneNames maps the Attachment Manager zone ids to something readable in a log
@@ -113,16 +113,16 @@ func main() {
 		fmt.Println("invalid -inject-scope:", *injectScope)
 		os.Exit(2)
 	}
-	// ZEN_GATE_HEADLESS: env-var form of -no-tray for supervisors that pass
+	// LOIMO_HEADLESS: env-var form of -no-tray for supervisors that pass
 	// environment, not argv (docker, systemd, launchd). Any non-empty value
 	// except "0"/"false" (case-insensitive) enables it. The -no-tray path
 	// below is the complete headless mode already — it never calls window.Run,
 	// so no tray and no window are created — one flag is the whole switch.
-	if v := os.Getenv("ZEN_GATE_HEADLESS"); v != "" && !strings.EqualFold(v, "0") && !strings.EqualFold(v, "false") {
+	if v := os.Getenv("LOIMO_HEADLESS"); v != "" && !strings.EqualFold(v, "0") && !strings.EqualFold(v, "false") {
 		*noTray = true
 	}
 	if *showVersion {
-		fmt.Println("zen-gate", gateway.Version)
+		fmt.Println("loimo", gateway.Version)
 		return
 	}
 	if *gateCheck {
@@ -154,9 +154,9 @@ func main() {
 		fmt.Println("open store:", err)
 		// Same silent-exit class as the bind failure (issue #44): a corrupt or
 		// unwritable data dir otherwise looks like a dead double-click.
-		window.FatalAlert("Zen Gate không thể khởi động",
+		window.FatalAlert("Lối Mở không thể khởi động",
 			fmt.Sprintf("Không đọc được thư mục dữ liệu: %v\n\n"+
-				"Nếu config.json trong %%APPDATA%%\\zen-gate (Windows) / ~/.config/zen-gate bị hỏng,\n"+
+				"Nếu config.json trong %%APPDATA%%\\loimo (Windows) / ~/.config/loimo bị hỏng,\n"+
 				"hãy sửa hoặc xoá thư mục đó rồi thử lại.", err))
 		os.Exit(1)
 	}
@@ -178,12 +178,12 @@ func main() {
 	// gateway must start regardless — so problems stay at debug level.
 	unblockStartup(logger)
 
-	window.SetAppUserModelID("zen-gate.gateway")
+	window.SetAppUserModelID("loimo.gateway")
 
-	// Headless second instances (dev/test against a separate ZEN_GATE_HOME)
-	// opt in via ZEN_GATE_ALLOW_MULTI; the tray app keeps the single-instance
+	// Headless second instances (dev/test against a separate LOIMO_HOME)
+	// opt in via LOIMO_ALLOW_MULTI; the tray app keeps the single-instance
 	// guarantee.
-	if os.Getenv("ZEN_GATE_ALLOW_MULTI") == "" && !window.AcquireSingleInstance(`Local\zen-gate-instance`, "Zen Gate · Cổng mô hình miễn phí cục bộ") {
+	if os.Getenv("LOIMO_ALLOW_MULTI") == "" && !window.AcquireSingleInstance(`Local\loimo-instance`, "Lối Mở · Cổng mô hình miễn phí cục bộ") {
 		logger.Infof("second launch: focused the running instance instead")
 		return
 	}
@@ -207,9 +207,9 @@ func main() {
 	// fail without, but a headless one silently has no window at all, so the log
 	// line names the flavour instead of leaving an operator to guess.
 	if headlessBuild {
-		logger.Infof("zen-gate %s đã khởi động (bản headless, cổng %d, proxy %s)", gateway.Version, cfg.Port, cfg.ProxyMode)
+		logger.Infof("loimo %s đã khởi động (bản headless, cổng %d, proxy %s)", gateway.Version, cfg.Port, cfg.ProxyMode)
 	} else {
-		logger.Infof("zen-gate %s đã khởi động (cổng %d, proxy %s)", gateway.Version, cfg.Port, cfg.ProxyMode)
+		logger.Infof("loimo %s đã khởi động (cổng %d, proxy %s)", gateway.Version, cfg.Port, cfg.ProxyMode)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -532,10 +532,10 @@ func main() {
 		// stale process — is "double-click does nothing" (issue #44). Block on a
 		// native error box so the user reads the port and the way out before the
 		// process exits.
-		window.FatalAlert("Zen Gate không thể khởi động",
+		window.FatalAlert("Lối Mở không thể khởi động",
 			fmt.Sprintf("Không gắn được cổng %d: %v\n\n"+
-				"Nguyên nhân thường gặp: cổng đang bị chương trình khác dùng, cổng đã được chuyển tiếp, hoặc còn sót tiến trình zen-gate.\n"+
-				"Hãy thử chạy zen-gate.exe --port 18787 trong dòng lệnh để đổi cổng khác, hoặc kết thúc tiến trình còn sót trong Trình quản lý tác vụ.",
+				"Nguyên nhân thường gặp: cổng đang bị chương trình khác dùng, cổng đã được chuyển tiếp, hoặc còn sót tiến trình loimo.\n"+
+				"Hãy thử chạy loimo.exe --port 18787 trong dòng lệnh để đổi cổng khác, hoặc kết thúc tiến trình còn sót trong Trình quản lý tác vụ.",
 				cfg.Port, err))
 		os.Exit(1)
 	}
@@ -590,7 +590,7 @@ func main() {
 		if has && cfg.LastVersion != ver {
 			logger.Infof("Có phiên bản mới %s (hiện tại %s)", ver, gateway.Version)
 			if windowHidden {
-				notify.Toast("Zen Gate có phiên bản mới "+ver, "hiện tại "+gateway.Version+" · mở trang quản lý để xem liên kết tải xuống")
+				notify.Toast("Lối Mở có phiên bản mới "+ver, "hiện tại "+gateway.Version+" · mở trang quản lý để xem liên kết tải xuống")
 			}
 			st.Mutate(func(c *store.Config) { c.LastVersion = ver })
 			_ = st.Save()
@@ -711,7 +711,7 @@ func main() {
 	// requires both objects on that one thread.
 
 	window.Run(window.Options{
-		Title:    "Zen Gate · Cổng mô hình miễn phí cục bộ",
+		Title:    "Lối Mở · Cổng mô hình miễn phí cục bộ",
 		URL:      dashURL,
 		DataPath: st.Home + string(os.PathSeparator) + "webview",
 		Width:    1160,
@@ -770,7 +770,7 @@ func main() {
 	mgr.Stop()
 	qoderHub.Stop()
 	_ = st.FlushStats()
-	logger.Infof("zen-gate đã thoát")
+	logger.Infof("loimo đã thoát")
 }
 
 // quotaNotesFromStore converts persisted quota notes back into the lane's

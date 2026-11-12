@@ -1,4 +1,4 @@
-module zen-gate
+module github.com/chipmax/loimo
 
 go 1.26.0
 

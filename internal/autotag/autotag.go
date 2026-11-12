@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/store"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/store"
 )
 
 // taggerModel is the classification workhorse. Failover (and the Exhausted

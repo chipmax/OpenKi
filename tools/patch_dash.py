@@ -1,6 +1,6 @@
 import re
 
-p = r'cmd\zenstats\main.go'
+p = r'cmd\loimostats\main.go'
 src = open(p, encoding='utf-8').read()
 
 start = src.index('const dashHTML = `')
@@ -9,9 +9,9 @@ assert m, 'dashHTML block not found'
 
 new_block = """const dashHTML = `<!doctype html>
 <html lang="zh"><head><meta charset="utf-8">
-<title>Zen Gate · 用户总览</title>
+<title>Lối Mở · 用户总览</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Zen Gate 本地免费模型网关 · 部署实例匿名心跳统计">
+<meta name="description" content="Lối Mở 本地免费模型网关 · 部署实例匿名心跳统计">
 <link rel="icon" type="image/png" href="/logo.png">
 <style>
 :root { --bg:#141414; --panel:#1c1c1c; --panel-2:#262626; --ink:#ececec; --ink-dim:#a8a8a8; --ink-mute:#787878;
@@ -55,8 +55,8 @@ tr:hover td { background:rgba(255,255,255,.02); }
 footer { margin-top:34px; display:flex; justify-content:space-between; color:var(--ink-mute); font-size:11.5px; }
 </style></head><body><div class="wrap">
 <header>
-  <img src="/logo.png" alt="Zen Gate">
-  <div class="tt"><h1>ZEN—GATE <b>用户总览</b></h1><div class="tag">本地免费模型网关 · 部署实例统计</div></div>
+  <img src="/logo.png" alt="Lối Mở">
+  <div class="tt"><h1>LỐI—MỞ <b>用户总览</b></h1><div class="tag">本地免费模型网关 · 部署实例统计</div></div>
   <div class="live"><span class="dot"></span><span id="live">实时</span></div>
 </header>
 <div class="sub">数据来自各部署实例的匿名心跳（仅 installId / 版本 / 国家），每 6 小时上报一次，仅存于本服务器。</div>
@@ -69,7 +69,7 @@ footer { margin-top:34px; display:flex; justify-content:space-between; color:var
 <div class="panel"><h3>版本分布</h3><div id="p-versions"><div class="empty">加载中…</div></div></div>
 <div class="panel"><h3>国家 / 地区分布</h3><div id="p-countries"><div class="empty">加载中…</div></div></div>
 <div class="panel"><h3>最近心跳</h3><table><thead><tr><th>实例</th><th>版本</th><th>国家 / 地区</th><th>首次上线</th><th>最近心跳</th><th>上报次数</th></tr></thead><tbody id="tb"><tr><td colspan="6" class="empty">加载中…</td></tr></tbody></table></div>
-<footer><span>Zen Gate · 心跳间隔 6 小时 · 数据仅存于本服务器</span><span>每 30 秒自动刷新 · 更新于 <span id="gen">—</span></span></footer>
+<footer><span>Lối Mở · 心跳间隔 6 小时 · 数据仅存于本服务器</span><span>每 30 秒自动刷新 · 更新于 <span id="gen">—</span></span></footer>
 </div>
 <script>
 const f = n => new Date(n).toLocaleString("zh-CN", {hour12:false});

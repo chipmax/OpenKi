@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"zen-gate/internal/logx"
+	"github.com/chipmax/loimo/internal/logx"
 )
 
 // logLines decodes just the entries array so a filter test can assert on order.

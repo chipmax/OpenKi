@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"zen-gate/internal/lane"
-	"zen-gate/internal/logx"
-	"zen-gate/internal/openref"
+	"github.com/chipmax/loimo/internal/lane"
+	"github.com/chipmax/loimo/internal/logx"
+	"github.com/chipmax/loimo/internal/openref"
 )
 
 // Public capacity reference (issue #28): a scheduled pull of two keyless

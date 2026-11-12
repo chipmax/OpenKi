@@ -3,8 +3,8 @@
 # attaches a black console window to every launch — which release builds never
 # show, because they link with -H=windowsgui.
 #
-# Usage:  powershell -File tools\dev.ps1 -Out "D:\opencode zen\out\newbin\zen-gate.exe"
-#         powershell -File tools\dev.ps1 -Version 1.9.0 -Out ..\tmp\zen-gate.exe
+# Usage:  powershell -File tools\dev.ps1 -Out "D:\opencode zen\out\newbin\loimo.exe"
+#         powershell -File tools\dev.ps1 -Version 1.9.0 -Out ..\tmp\loimo.exe
 param(
     [string]$Version,
     [Parameter(Mandatory = $true)]
@@ -18,10 +18,10 @@ $ld = "-H=windowsgui"
 if ($Version) {
     # Same two -X targets as the release build; without them the exe reports the
     # compiled-in default (1.1.0) and nags about an update that is already older.
-    $ld += " -X zen-gate/internal/gateway.Version=$Version -X zen-gate/internal/update.Current=$Version"
+    $ld += " -X github.com/chipmax/loimo/internal/gateway.Version=$Version -X github.com/chipmax/loimo/internal/update.Current=$Version"
 }
 
-go build -trimpath -ldflags $ld -o $Out ./cmd/zen-gate
+go build -trimpath -ldflags $ld -o $Out ./cmd/loimo
 if ($LASTEXITCODE -ne 0) { throw "build failed" }
 
 # Prove the subsystem instead of trusting the flags: 2 = GUI, 3 = console.

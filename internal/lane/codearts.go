@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"zen-gate/internal/codearts/auth"
-	"zen-gate/internal/codearts/upstream"
+	"github.com/chipmax/loimo/internal/codearts/auth"
+	"github.com/chipmax/loimo/internal/codearts/upstream"
 )
 
 // The CodeArts 账号渠道: a credential-bearing lane source for Huawei Cloud's

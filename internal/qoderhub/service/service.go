@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"zen-gate/internal/qoderhub/remote"
-	"zen-gate/internal/qoderhub/tooltypes"
+	"github.com/chipmax/loimo/internal/qoderhub/remote"
+	"github.com/chipmax/loimo/internal/qoderhub/tooltypes"
 )
 
 type SessionMode string

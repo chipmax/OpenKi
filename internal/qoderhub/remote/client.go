@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"zen-gate/internal/qoderhub/tooltypes"
+	"github.com/chipmax/loimo/internal/qoderhub/tooltypes"
 )
 
 const (

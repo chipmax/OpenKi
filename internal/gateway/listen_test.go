@@ -245,8 +245,18 @@ func TestRebindFallsBackToLoopbackWhenBindFails(t *testing.T) {
 	if s.Store.Config().AllowLan {
 		t.Fatalf("切换失败后 allowLan 应回退为 false")
 	}
-	if code, err := getHealth(fmt.Sprintf("http://127.0.0.1:%d/health", port)); err != nil || code != 200 {
-		t.Fatalf("回退后本机服务应可用: code=%d err=%v", code, err)
+	// Start launches Serve in a goroutine; on a slow or loaded runner the
+	// fallback listener is not accepting the instant Rebind returns.
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		code, err := getHealth(fmt.Sprintf("http://127.0.0.1:%d/health", port))
+		if err == nil && code == 200 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("回退后本机服务应可用: code=%d err=%v", code, err)
+		}
+		time.Sleep(20 * time.Millisecond)
 	}
 }
 

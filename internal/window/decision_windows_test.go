@@ -20,9 +20,9 @@ func TestEmbeddedDecision(t *testing.T) {
 		reason  string
 	}{
 		{"runtime installed", "139.0.3405.119", nil, false, true, ""},
-		{"runtime missing", "", nil, false, false, "WebView2 Runtime 未安装"},
-		{"forced off", "139.0.3405.119", nil, true, false, "LOIMO_NO_WEBVIEW2=1（手动跳过内嵌窗口）"},
-		{"forced off wins over installed", "", nil, true, false, "LOIMO_NO_WEBVIEW2=1（手动跳过内嵌窗口）"},
+		{"runtime missing", "", nil, false, "Chưa cài WebView2 Runtime"},
+		{"forced off", "139.0.3405.119", nil, true, false, "LOIMO_NO_WEBVIEW2=1 (bỏ qua cửa sổ nhúng theo cách thủ công)"},
+		{"forced off wins over installed", "", nil, true, false, "LOIMO_NO_WEBVIEW2=1 (bỏ qua cửa sổ nhúng theo cách thủ công)"},
 		{"preflight error stays open", "", errors.New("HRESULT 0x80004005"), false, true, ""},
 	}
 	for _, tt := range tests {

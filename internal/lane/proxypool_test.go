@@ -226,6 +226,17 @@ func TestProxyPoolDialHTTPConnectRejectsErrorStatus(t *testing.T) {
 			return
 		}
 		defer conn.Close()
+		// Consume the CONNECT request before closing. Windows turns a close
+		// with unread inbound bytes into RST, which can discard the 407 and
+		// surface as "connection aborted" instead of the status line.
+		_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+		tp := textproto.NewReader(bufio.NewReader(conn))
+		for {
+			line, err := tp.ReadLine()
+			if err != nil || line == "" {
+				break
+			}
+		}
 		_, _ = conn.Write([]byte("HTTP/1.1 407 Proxy Authentication Required\r\n\r\n"))
 	}()
 

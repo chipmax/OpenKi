@@ -168,6 +168,11 @@ Thêm từng relay vào `relayPool` với `id`, `url`, `token`, `enabled`:
 phải Vercel API token. OpenKi **không** lưu Vercel API token và không tự deploy
 relay; việc tạo/xóa deployment nằm ở Polygate hoặc opencode-relay.
 
+Trên dashboard, mở **Mạng → Relay**: tick **Bật Relay**, bấm **+ Thêm relay**,
+nhập URL/token, chọn **OpenKi native** hoặc **Polygate / Vercel**, rồi bấm
+**Lưu thay đổi** ở cuối trang. Có thể sửa/xóa từng dòng; token được giữ nguyên
+khi chỉ sửa URL.
+
 `url` phải là HTTPS. Bật/tắt từng mục bằng `enabled`; không cần xóa mục khi
 tạm ngưng. Token nhập tay trên từng máy, không đồng bộ qua file mẫu.
 

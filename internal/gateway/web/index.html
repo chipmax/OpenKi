@@ -4163,7 +4163,7 @@ function clearSettingsDirty(){ settingsDirty.clear(); }
 const netDirty = new Set();
 const NET_DIRTY_LABELS = {
   proxyMode: "chế độ proxy", proxyUrl: "URL proxy", proxyPool: "danh sách tĩnh",
-  egressModes: "peer đầu ra",
+  egressModes: "peer đầu ra", relayPool: "relay",
   exitTpm: "token/phút", fingerprint: "fingerprint",
 };
 let netf = { q: "", state: "" };
@@ -4352,6 +4352,54 @@ function networkHealth(s, configured){
   return {label:"Dữ liệu cũ", tone:"warn", detail:`Mẫu cuối ${maxRel(lastAt, checkedAt)} · bấm「Dò tất cả đầu ra」`};
 }
 
+function relayRowHTML(r){
+  const id = (r && r.id) || "";
+  const kind = r && r.kind === "polygate" ? "polygate" : "";
+  const enabled = r && r.enabled ? " checked" : "";
+  const url = (r && r.url) || "";
+  const token = (r && r.token) || "";
+  return `<div class="relay-row" data-id="${esc(id)}" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:9px 0;border-top:1px solid var(--hairline)">
+    <label class="dim" style="display:inline-flex;align-items:center;gap:6px;min-width:64px"><input type="checkbox" class="relay-enabled"${enabled}> Bật</label>
+    <select class="relay-kind" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 8px;min-width:150px">
+      <option value=""${kind === "" ? " selected" : ""}>OpenKi native</option>
+      <option value="polygate"${kind === "polygate" ? " selected" : ""}>Polygate / Vercel</option>
+    </select>
+    <input class="relay-url" type="url" value="${esc(url)}" placeholder="https://relay.example.com" autocomplete="off" spellcheck="false" style="flex:1;min-width:250px;background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;font-family:var(--mono);font-size:12px">
+    <input class="relay-token" type="password" value="${esc(token)}" placeholder="Token relay" autocomplete="new-password" spellcheck="false" style="flex:1;min-width:180px;background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;font-family:var(--mono);font-size:12px">
+    <button class="ghost relay-remove" type="button" title="Xóa relay này">Xóa</button>
+  </div>`;
+}
+function paintRelayCount(s){
+  const el = $("#page-network"); if(!el) return;
+  const rows = el.querySelector("#net-relay-rows");
+  const sub = el.querySelector("#net-relay-sub");
+  if(!rows || !sub) return;
+  const n = rows.querySelectorAll(".relay-row").length;
+  sub.textContent = `${n} relay đã cấu hình`;
+  const empty = el.querySelector("#net-relay-empty");
+  if(empty) empty.style.display = n ? "none" : "";
+}
+function paintRelayEditor(s){
+  const el = $("#page-network"); if(!el) return;
+  const rows = el.querySelector("#net-relay-rows");
+  if(!rows) return;
+  // A 10-second state refresh must not overwrite a relay the user is editing.
+  if(!netDirty.has("relayPool")){
+    rows.innerHTML = ((s.settings && s.settings.relayPool) || []).map(relayRowHTML).join("");
+  }
+  paintRelayCount(s);
+}
+function collectRelayRows(){
+  const el = $("#page-network"); if(!el) return [];
+  return [...el.querySelectorAll("#net-relay-rows .relay-row")].map(row => ({
+    id: row.dataset.id || "",
+    kind: (row.querySelector(".relay-kind") || {}).value || "",
+    url: ((row.querySelector(".relay-url") || {}).value || "").trim(),
+    token: ((row.querySelector(".relay-token") || {}).value || "").trim(),
+    enabled: !!(row.querySelector(".relay-enabled") || {}).checked,
+  })).filter(r => r.id || r.kind || r.url || r.token || r.enabled);
+}
+
 function paintNetworkExits(s){
   const el = $("#page-network"); if(!el) return;
   const rows = netExitRows(s);
@@ -4448,6 +4496,17 @@ function renderNetwork(s){
           <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="singbox"> sing-box</label>
           <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="warp"> WARP</label>
         </div>
+      </div>
+      <div class="card" id="net-relay-card">
+        <div class="row" style="align-items:center; gap:8px">
+          <h3 style="margin:0">Relay <span class="muted" id="net-relay-sub" style="font-size:11.5px;font-weight:400"></span></h3>
+          <label class="dim" style="display:inline-flex;align-items:center;gap:6px;margin-left:6px"><input type="checkbox" id="net-relay-enable"> Bật Relay</label>
+          <span style="flex:1"></span>
+          <button class="ghost" id="net-relay-add" type="button">+ Thêm relay</button>
+        </div>
+        <div class="muted" style="font-size:11.5px;margin:5px 0 4px">Tick「Relay」ở trên để dùng peer này. Token native gửi qua <code class="k">X-OpenKi-Relay-Token</code>; token Polygate/Vercel gửi qua <code class="k">X-Relay-Key</code>.</div>
+        <div id="net-relay-rows"></div>
+        <div class="muted" id="net-relay-empty" style="font-size:11.5px;padding:8px 0">Chưa có relay nào. Bấm「+ Thêm relay」để nhập URL và token.</div>
       </div>
       <div class="card" id="net-exits">
         <div class="row" style="margin-bottom:8px">
@@ -4556,9 +4615,40 @@ function renderNetwork(s){
     el.querySelector("#set-proxy-url").addEventListener("input", ()=>markNet("proxyUrl"));
     el.querySelector("#set-proxy-pool").addEventListener("input", ()=>markNet("proxyPool"));
     el.querySelectorAll("#set-egress-modes input").forEach(cb=>cb.addEventListener("change", ()=>{
+      if(cb.value === "relay"){
+        const en = el.querySelector("#net-relay-enable");
+        if(en) en.checked = cb.checked;
+      }
       markNet("egressModes");
       paintLegacyLayer({settings:{egressModes:selectedEgress()}, proxyPoolStatus:s.proxyPoolStatus});
     }));
+    const relayEnable = el.querySelector("#net-relay-enable");
+    relayEnable.addEventListener("change", ()=>{
+      const cb = el.querySelector('#set-egress-modes input[value="relay"]');
+      if(cb) cb.checked = relayEnable.checked;
+      markNet("egressModes");
+      paintLegacyLayer({settings:{egressModes:selectedEgress()}, proxyPoolStatus:s.proxyPoolStatus});
+    });
+    const relayRows = el.querySelector("#net-relay-rows");
+    relayRows.addEventListener("input", (e)=>{
+      if(e.target.closest(".relay-row")) markNet("relayPool");
+    });
+    relayRows.addEventListener("change", (e)=>{
+      if(e.target.closest(".relay-row")) markNet("relayPool");
+    });
+    relayRows.addEventListener("click", (e)=>{
+      const btn = e.target.closest(".relay-remove");
+      if(!btn) return;
+      const row = btn.closest(".relay-row");
+      if(row) row.remove();
+      markNet("relayPool");
+      paintRelayCount(s);
+    });
+    el.querySelector("#net-relay-add").onclick = ()=>{
+      relayRows.insertAdjacentHTML("beforeend", relayRowHTML({enabled:true, kind:"polygate"}));
+      markNet("relayPool");
+      paintRelayCount(s);
+    };
     el.querySelector("#set-exit-tpm").addEventListener("input", ()=>markNet("exitTpm"));
     el.querySelector("#set-fingerprint").addEventListener("change", ()=>markNet("fingerprint"));
     const subnetInputs = () => {
@@ -4579,6 +4669,7 @@ function renderNetwork(s){
       put("proxyUrl", "proxyURL", el.querySelector("#set-proxy-url").value.trim());
       put("proxyPool", "proxyPool", el.querySelector("#set-proxy-pool").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean));
       put("egressModes", "egressModes", [...el.querySelectorAll("#set-egress-modes input:checked")].map(x=>x.value));
+      put("relayPool", "relayPool", collectRelayRows());
       if(netDirty.has("exitTpm")){
         const raw = el.querySelector("#set-exit-tpm").value.trim();
         const n = raw === "" ? 0 : Number(raw);
@@ -4711,6 +4802,7 @@ function renderNetwork(s){
   }
   el.querySelector("#net-mode").textContent = egressLabel(s.settings);
   el.querySelector("#net-lan-line").textContent = `Cổng ${s.port} · ${s.lanBaseURL ? "LAN: " + s.lanBaseURL : "Chỉ loopback (127.0.0.1)"}`;
+  paintRelayEditor(s);
   paintNetworkExits(s);
   paintLegacyLayer(s);
   paintNetDirty();
@@ -4727,6 +4819,8 @@ function renderNetwork(s){
   if(!netDirty.has("egressModes")){
     const selected = new Set(s.settings.egressModes || []);
     el.querySelectorAll("#set-egress-modes input").forEach(cb => { cb.checked = selected.has(cb.value); });
+    const en = el.querySelector("#net-relay-enable");
+    if(en) en.checked = selected.has("relay");
   }
   const tpm = el.querySelector("#set-exit-tpm");
   if(!netDirty.has("exitTpm") && document.activeElement !== tpm) tpm.value = s.settings.exitTokensPerMinute ?? 300000;

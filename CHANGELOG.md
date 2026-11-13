@@ -12,6 +12,9 @@ phát triển (UTC+7).
   `X-OpenKi-Relay-*`. Một `relayPool` có thể trộn relay native và relay Vercel;
   admin chuẩn hóa `kind`, UI Mạng liệt kê endpoint relay kèm cổng 443 và đếm
   trong tổng số đầu ra.
+- Dashboard **Mạng → Relay** có nút tick bật peer và trình sửa `relayPool`:
+  thêm/sửa/xóa từng relay, nhập URL/token, chọn native hoặc Polygate/Vercel,
+  lưu chung nút cuối trang; không phải sửa `config.json` bằng tay.
 - Xóa egress **Proton VPN** khỏi repo: `egressModes` chỉ còn `relay`, `singbox`
   và `warp`; bỏ `protonSocks5`, thẻ pVPN cùng các test/UI liên quan. Cấu hình cũ
   còn `"proton"` sẽ bị từ chối (fail closed) thay vì lặng lẽ đi trực tiếp; sửa

@@ -55,7 +55,10 @@ func lanTestServer(t *testing.T, allowLan bool) (*Server, int) {
 }
 
 func getHealth(url string) (int, error) {
-	c := http.Client{Timeout: 2 * time.Second}
+	// These are loopback/LAN reachability probes, not internet requests: an
+	// HTTP_PROXY in the developer shell would otherwise relay them and make a
+	// closed loopback port look reachable.
+	c := http.Client{Timeout: 2 * time.Second, Transport: &http.Transport{Proxy: nil}}
 	resp, err := c.Get(url)
 	if err != nil {
 		return 0, err
@@ -114,7 +117,7 @@ func TestAdminFenceHoldsOverLan(t *testing.T) {
 		t.Skip("no LAN interface on this machine")
 	}
 	_, port := lanTestServer(t, true)
-	c := http.Client{Timeout: 2 * time.Second}
+	c := http.Client{Timeout: 2 * time.Second, Transport: &http.Transport{Proxy: nil}}
 	resp, err := c.Get(fmt.Sprintf("http://%s:%d/admin/api/state", ip, port))
 	if err != nil {
 		t.Fatalf("GET admin: %v", err)
@@ -292,7 +295,7 @@ func TestSettingsAllowLanRepliesOverLiveListener(t *testing.T) {
 	}
 	_, port := lanTestServer(t, false)
 	url := fmt.Sprintf("http://127.0.0.1:%d/admin/api/settings", port)
-	c := http.Client{Timeout: 5 * time.Second}
+	c := http.Client{Timeout: 5 * time.Second, Transport: &http.Transport{Proxy: nil}}
 	resp, err := c.Post(url, "application/json", strings.NewReader(`{"allowLan":true}`))
 	if err != nil {
 		t.Fatalf("开关请求失败: %v", err)

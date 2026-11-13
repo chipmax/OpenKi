@@ -200,7 +200,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf assets && mkdir assets
-          gh release download "${GITHUB_REF_NAME}" -D assets
+          gh release download "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" -D assets
           rm -f assets/SHA256SUMS
           (cd assets && sha256sum -- * > SHA256SUMS)
-          gh release upload "${GITHUB_REF_NAME}" assets/SHA256SUMS --clobber
+          gh release upload "${GITHUB_REF_NAME}" assets/SHA256SUMS --repo "${GITHUB_REPOSITORY}" --clobber

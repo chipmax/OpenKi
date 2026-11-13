@@ -82,6 +82,10 @@ type Server struct {
 	// a long queue (NVIDIA free lane can take 30s+) shows as 探测中 instead
 	// of looking dead.
 	customProbing atomic.Value // string
+	// relayProbe remembers dashboard-triggered relay tests keyed by canonical
+	// URL. It is evidence for the table, never an input to routing.
+	relayProbeMu sync.Mutex
+	relayProbe   map[string]relayProbeRecord
 	// announcements is the author's published notice list, refreshed by the
 	// feed loop in main; nil until the first pull succeeds.
 	announcements atomic.Value // []announce.Item

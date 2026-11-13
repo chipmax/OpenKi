@@ -110,6 +110,8 @@ func (s *Server) handleAdmin(w http.ResponseWriter, r *http.Request, rest string
 			return
 		}
 		writeJSON(w, 200, map[string]any{"ok": true, "egressIP": eg.IP, "egressCountry": eg.Country})
+	case rest == "egress/relay-test" && r.Method == http.MethodPost:
+		s.adminRelayTest(w, r)
 	case rest == "logs" && r.Method == http.MethodGet:
 		s.adminLogs(w, r)
 	case rest == "logs/download" && r.Method == http.MethodGet:
@@ -617,6 +619,7 @@ func (s *Server) adminState(w http.ResponseWriter) {
 		"mainKey":             cfg.MainKey,
 		"agentKeys":           cfg.AgentKeys,
 		"egress":              egressView,
+		"relayProbe":          s.relayProbeSnapshot(),
 		"system":              system,
 		"models":              models,
 		"agents":              agentsView,

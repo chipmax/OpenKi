@@ -43,7 +43,7 @@
     transition: background-color .18s ease, color .18s ease, border-color .18s ease,
       fill .18s ease, stroke .18s ease, box-shadow .18s ease; }
   html,body { height:100%; background:var(--bg); color:var(--ink);
-    font-family:var(--body); font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased; user-select:none; }
+    font-family:var(--body); font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased; user-select:none; }
   #app { display:flex; flex-direction:column; height:100vh; overflow:hidden; }
 
   /* ---- custom title bar ---- */
@@ -175,13 +175,13 @@
   .skel .sk-cols .sk-panel i:nth-child(3) { width:60%; }
   .skel .sk-cards { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
   .skel .sk-cards .sk-panel { height:104px; }
-  h2.pt { font-size:22px; margin:0 0 18px; font-weight:650; letter-spacing:-.02em; }
-  h2.pt .sub { font-size:12.5px; color:var(--ink-mute); font-weight:400; margin-left:10px; }
+  h2.pt { font-size:24px; margin:0 0 18px; font-weight:650; letter-spacing:-.02em; }
+  h2.pt .sub { font-size:13.5px; color:var(--ink-mute); font-weight:400; margin-left:10px; }
   .card { background:var(--panel); border:1px solid var(--hairline); border-radius:var(--r-lg);
     padding:16px 18px; margin-bottom:var(--gap-card);
     box-shadow:var(--card-shadow), inset 0 1px 0 rgba(255,255,255,.035);
     transition: background-color .16s ease, color .16s ease, border-color .16s ease; }
-  .card h3 { font-size:15px; color:var(--ink); font-weight:600; margin-bottom:11px; letter-spacing:.005em; }
+  .card h3 { font-size:16px; color:var(--ink); font-weight:600; margin-bottom:11px; letter-spacing:.005em; }
   /* Gấp gọn: một dòng tiêu đề thay cho cả thẻ. Dùng cho thông tin hệ thống và
      thư viện preset, để trang không phải xếp chồng mọi thứ cùng lúc. */
   details.fold > summary { list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px;
@@ -199,9 +199,9 @@
   code.k { background:var(--panel-2); border:1px solid var(--hairline-soft); border-radius:5px; padding:2px 7px; font-family:var(--mono); font-size:11.5px; user-select:all; }
   pre { background:var(--side); border:1px solid var(--hairline-soft); border-radius:var(--r-md); padding:10px 12px;
     overflow-x:auto; font-family:var(--mono); font-size:11.5px; color:var(--ink-dim); user-select:text; white-space:pre-wrap; margin:8px 0 0; }
-  table { width:100%; border-collapse:separate; border-spacing:0; font-size:12.5px; border:1px solid var(--hairline-soft); border-radius:10px; overflow:hidden; }
+  table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; border:1px solid var(--hairline-soft); border-radius:10px; overflow:hidden; }
   th,td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--hairline-soft); vertical-align:top; }
-  th { color:var(--ink-mute); font-weight:500; font-size:11.5px; letter-spacing:.04em; }
+  th { color:var(--ink-mute); font-weight:500; font-size:12px; letter-spacing:.04em; }
   tr:last-child td { border-bottom:0; }
   .exit-wrap { overflow-x:auto; border-radius:10px; }
   .exit-wrap .exit-table { min-width:940px; }
@@ -226,6 +226,40 @@
   #net-egress-meta { overflow-wrap:anywhere; }
   #net-summary .cell { min-width:0; }
   #net-summary .l { min-width:0; }
+  /* Nền tảng không chạy được một tính năng thì vẫn hiện để người dùng biết
+     nó tồn tại, nhưng làm mờ và chặn thao tác thay vì để bấm rồi lỗi. */
+  html[data-platform="wsl"] .os-windows,
+  html[data-platform="linux"] .os-windows,
+  html[data-platform="darwin"] .os-windows,
+  html[data-platform="windows"] .os-linux { opacity:.42; filter:grayscale(.65); }
+  html[data-platform="wsl"] .os-windows, html[data-platform="linux"] .os-windows,
+  html[data-platform="darwin"] .os-windows, html[data-platform="windows"] .os-linux,
+  .os-disabled { pointer-events:none !important; }
+  .os-disabled { opacity:.42; filter:grayscale(.65); }
+  /* Trang Mạng đọc nhiều số liệu và trạng thái; nâng hai cỡ so với thân trang
+     chung, đồng thời ghi đè các nhãn nhỏ đang đặt inline trong markup cũ. */
+  #page-network { font-size:15.5px; }
+  #page-network h2.pt { font-size:24px; }
+  #page-network h2.pt .sub { font-size:13.5px; }
+  #page-network details.fold > summary,
+  #page-network .card h3 { font-size:16.5px; }
+  #page-network [style*="font-size:11px"] { font-size:12.5px !important; }
+  #page-network [style*="font-size:11.5px"] { font-size:13px !important; }
+  #page-network [style*="font-size:12px"] { font-size:13.5px !important; }
+  #page-network .exit-wrap .exit-table { font-size:13.5px; }
+  #page-network .exit-wrap .exit-table th { font-size:12.5px; }
+  #page-network .exit-wrap .exit-table .ep { font-size:13px; }
+  #page-network .exit-wrap .exit-table .ep-sub,
+  #page-network .exit-wrap .exit-table .last,
+  #page-network .exit-wrap .exit-table .note { font-size:12.5px; }
+  #page-network .netnotice, #page-network .netsticky .txt { font-size:13px; }
+  #page-network .pill, #page-network .mchip { font-size:12.5px; }
+  #page-network .relay-row input, #page-network .relay-row select,
+  #page-network .relay-row button { font-size:13.5px; }
+  #page-network .relay-state { min-width:78px; text-align:center; }
+  .netsheets { display:flex; flex-direction:column; }
+  .netsheets details.card { margin-bottom:var(--gap-card); }
+  .netsheets details.card[open] { padding-bottom:14px; }
   /* One sticky save replaces the three page-local save buttons. It only
      appears when a network field is dirty, so it cannot cover content while
      the user is reading. */
@@ -248,7 +282,7 @@
   .pill.bad { background:var(--bad-bg); color:var(--bad); }
   /* Hệ thống nút chỉ giữ ba loại: nút chính nền đặc màu nhấn (nặng nhất, duy nhất trên trang) / nút phụ viền xám / thao tác nguy hiểm dạng chữ */
   button.act { background:var(--accent); color:var(--primary-fg); border:0; border-radius:var(--r-md);
-    padding:8px 17px; cursor:pointer; font-size:13px; font-weight:600; letter-spacing:.01em;
+    padding:8px 17px; cursor:pointer; font-size:13.5px; font-weight:600; letter-spacing:.01em;
     box-shadow:0 1px 2px rgba(0,0,0,.18);
     transition:filter .15s ease, transform .12s ease, background-color .15s ease; }
   button.act:hover:not(:disabled) { filter:brightness(1.1); }
@@ -261,7 +295,7 @@
   button.act[data-on="1"]::before { content:""; width:6px; height:6px; border-radius:50%; flex:none;
     background:var(--accent); box-shadow:0 0 8px var(--accent); }
   button.ghost { background:var(--panel-2); border:1px solid var(--hairline); color:var(--ink-dim);
-    border-radius:8px; padding:7px 14px; cursor:pointer; font-size:12.5px; }
+    border-radius:8px; padding:7px 14px; cursor:pointer; font-size:13px; }
   button.ghost:hover { color:var(--ink); border-color:var(--accent); background:var(--accent-soft); }
   button:disabled, input:disabled, textarea:disabled { opacity:.55; cursor:not-allowed; }
   button.act:focus-visible, button.ghost:focus-visible, .nav button:focus-visible,
@@ -1258,6 +1292,7 @@ function skeleton(){
 }
 
 function render(){ if(!STATE){ skeleton(); return; } const s=STATE;
+  document.documentElement.dataset.platform = (s.system && s.system.platform) || "";
   $("#svcdot").className = "dot";
   $("#svcstat").textContent = "Đang chạy";
   const todayKey0 = Object.keys(s.stats.days||{}).sort().pop();
@@ -4297,17 +4332,30 @@ function netExitRows(s){
       const u = new URL(r.url);
       endpoint = u.host + (u.port ? "" : ":443");
     } catch {}
+    const p = relayProbeFor(s, r.url);
+    let tone = "unknown", status = r.enabled ? "Chưa dò" : "Đang tắt";
+    let country = "—", latency = "—", last = "—";
+    let note = r.enabled
+      ? "Bấm Test cạnh relay hoặc「Test tất cả relay」để lấy IP đầu ra"
+      : "Đã tắt; bật trong relayPool để dùng";
+    if(r.enabled && p && p.checkedAt){
+      last = relMs(p.checkedAt);
+      country = p.country || "—";
+      latency = p.latencyMs ? p.latencyMs + " ms" : "—";
+      if(p.error){
+        tone = "bad"; status = "Lỗi"; note = p.error;
+      } else {
+        tone = "ok"; status = "Khả dụng";
+        note = `IP đầu ra ${p.ip || "?"}${p.country ? " · " + p.country : ""}`;
+      }
+    }
     rows.push({
       key: "relay:" + (r.id || r.url),
-      tone: "unknown",
-      status: r.enabled ? "Đã cấu hình" : "Đang tắt",
+      tone, status,
       endpoint,
       name: (r.kind === "polygate" ? "Vercel relay" : "Relay") + (r.id ? " · " + r.id : ""),
       source: "Relay", proto: "HTTPS",
-      country: "—", latency: "—", last: "—",
-      note: r.enabled
-        ? "Đang dùng trong peer Relay; bấm「Dò tất cả đầu ra」để lấy IP ra"
-        : "Đã tắt; bật trong relayPool để dùng",
+      country, latency, last, note,
     });
   }
   const rank = { "": -1, warn: 0, bad: 1, ok: 2, unknown: 3 };
@@ -4352,6 +4400,16 @@ function networkHealth(s, configured){
   return {label:"Dữ liệu cũ", tone:"warn", detail:`Mẫu cuối ${maxRel(lastAt, checkedAt)} · bấm「Dò tất cả đầu ra」`};
 }
 
+function relayProbeKey(raw){
+  let u = String(raw || "").trim();
+  if(!u) return "";
+  if(!u.includes("://")) u = "https://" + u;
+  return u.replace(/\/+$/, "");
+}
+function relayProbeFor(s, url){
+  const map = (s && s.relayProbe) || {};
+  return map[relayProbeKey(url)] || null;
+}
 function relayRowHTML(r){
   const id = (r && r.id) || "";
   const kind = r && r.kind === "polygate" ? "polygate" : "";
@@ -4364,8 +4422,10 @@ function relayRowHTML(r){
       <option value=""${kind === "" ? " selected" : ""}>OpenKi native</option>
       <option value="polygate"${kind === "polygate" ? " selected" : ""}>Polygate / Vercel</option>
     </select>
-    <input class="relay-url" type="url" value="${esc(url)}" placeholder="https://relay.example.com" autocomplete="off" spellcheck="false" style="flex:1;min-width:250px;background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;font-family:var(--mono);font-size:12px">
-    <input class="relay-token" type="password" value="${esc(token)}" placeholder="Token relay" autocomplete="new-password" spellcheck="false" style="flex:1;min-width:180px;background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;font-family:var(--mono);font-size:12px">
+    <input class="relay-url" type="url" value="${esc(url)}" placeholder="https://relay.example.com" autocomplete="off" spellcheck="false" style="flex:1;min-width:250px;background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;font-family:var(--mono);font-size:13.5px">
+    <input class="relay-token" type="password" value="${esc(token)}" placeholder="Token relay" autocomplete="new-password" spellcheck="false" style="flex:1;min-width:180px;background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;font-family:var(--mono);font-size:13.5px">
+    <span class="relay-state pill unknown" data-url="${esc(url)}">Chưa dò</span>
+    <button class="ghost relay-test" type="button" title="Dò IP công khai qua relay này">Test</button>
     <button class="ghost relay-remove" type="button" title="Xóa relay này">Xóa</button>
   </div>`;
 }
@@ -4388,6 +4448,41 @@ function paintRelayEditor(s){
     rows.innerHTML = ((s.settings && s.settings.relayPool) || []).map(relayRowHTML).join("");
   }
   paintRelayCount(s);
+  paintRelayStatuses(s);
+}
+function paintRelayStatuses(s){
+  const el = $("#page-network"); if(!el) return;
+  const rows = el.querySelectorAll("#net-relay-rows .relay-row");
+  rows.forEach(row => {
+    const urlEl = row.querySelector(".relay-url");
+    const stateEl = row.querySelector(".relay-state");
+    if(!urlEl || !stateEl) return;
+    const url = relayProbeKey(urlEl.value);
+    stateEl.dataset.url = url;
+    const enabled = !!(row.querySelector(".relay-enabled") || {}).checked;
+    if(!enabled){
+      stateEl.className = "relay-state pill unknown";
+      stateEl.textContent = "Đang tắt";
+      stateEl.title = "Relay đang tắt; bật để dùng trong peer Relay";
+      return;
+    }
+    const p = relayProbeFor(s, url);
+    if(!p || !p.checkedAt){
+      stateEl.className = "relay-state pill unknown";
+      stateEl.textContent = "Chưa dò";
+      stateEl.title = "Bấm Test để dò IP công khai qua relay này";
+      return;
+    }
+    if(p.error){
+      stateEl.className = "relay-state pill bad";
+      stateEl.textContent = "Lỗi";
+      stateEl.title = p.error;
+      return;
+    }
+    stateEl.className = "relay-state pill ok";
+    stateEl.textContent = "Khả dụng";
+    stateEl.title = [p.ip, p.country, p.latencyMs ? p.latencyMs + " ms" : ""].filter(Boolean).join(" · ");
+  });
 }
 function collectRelayRows(){
   const el = $("#page-network"); if(!el) return [];
@@ -4487,26 +4582,52 @@ function renderNetwork(s){
         <div class="cell"><div class="v" id="net-total">—</div><div class="l">Đầu ra đã cấu hình</div></div>
         <div class="cell"><div class="v" id="net-mode" style="font-size:14px;line-height:1.35">—</div><div class="l">Lớp egress đang dùng</div></div>
       </div>
-      <div class="card" id="net-egress-card">
-        <div class="row" style="align-items:center; gap:8px">
-          <h3 style="margin:0">Đường ra <span class="muted" style="font-size:11.5px;font-weight:400">Chọn peer rồi lưu một lần ở cuối trang</span></h3>
+      <div class="netsheets" id="net-routing">
+      <details class="card fold" id="net-egress-card" open>
+        <summary>Đường ra <span class="sub">Peer ngang hàng · xoay vòng, không ưu tiên</span></summary>
+        <div class="row" id="set-egress-modes" style="gap:16px; flex-wrap:wrap; margin-top:2px">
+          <label class="dim" style="display:inline-flex; align-items:center; gap:7px"><input type="checkbox" value="relay"> Relay</label>
+          <label class="dim" style="display:inline-flex; align-items:center; gap:7px"><input type="checkbox" value="singbox"> sing-box</label>
+          <label class="dim" style="display:inline-flex; align-items:center; gap:7px"><input type="checkbox" value="warp"> WARP</label>
         </div>
-        <div class="row" id="set-egress-modes" style="gap:14px; flex-wrap:wrap; margin-top:8px">
-          <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="relay"> Relay</label>
-          <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="singbox"> sing-box</label>
-          <label class="dim" style="display:inline-flex; align-items:center; gap:6px"><input type="checkbox" value="warp"> WARP</label>
-        </div>
-      </div>
-      <div class="card" id="net-relay-card">
-        <div class="row" style="align-items:center; gap:8px">
-          <h3 style="margin:0">Relay <span class="muted" id="net-relay-sub" style="font-size:11.5px;font-weight:400"></span></h3>
-          <label class="dim" style="display:inline-flex;align-items:center;gap:6px;margin-left:6px"><input type="checkbox" id="net-relay-enable"> Bật Relay</label>
+        <div class="muted" style="margin-top:9px;line-height:1.65">Ba peer ngang hàng, mỗi yêu cầu bắt đầu ở peer kế tiếp theo vòng tròn; lỗi kết nối, 429 hoặc 403 tự chuyển sang peer kế. Tích cả ba thì cả ba cùng chạy và chia đều lượt, <b>không có peer nào được ưu tiên trước</b>. Chỉ tích một peer thì mọi yêu cầu đi qua peer đó.</div>
+      </details>
+      <details class="card fold" id="net-relay-card" open>
+        <summary>Relay <span class="sub" id="net-relay-sub">0 relay đã cấu hình</span></summary>
+        <div class="row" style="align-items:center; gap:10px;flex-wrap:wrap;margin-top:2px">
+          <label class="dim" style="display:inline-flex;align-items:center;gap:7px"><input type="checkbox" id="net-relay-enable"> Bật Relay</label>
           <span style="flex:1"></span>
+          <button class="ghost" id="net-relay-test-all" type="button" title="Dò IP công khai qua từng relay đang cấu hình">Test tất cả relay</button>
           <button class="ghost" id="net-relay-add" type="button">+ Thêm relay</button>
         </div>
-        <div class="muted" style="font-size:11.5px;margin:5px 0 4px">Tick「Relay」ở trên để dùng peer này. Token native gửi qua <code class="k">X-OpenKi-Relay-Token</code>; token Polygate/Vercel gửi qua <code class="k">X-Relay-Key</code>.</div>
+        <div class="muted" style="margin:7px 0 4px;line-height:1.6">Mỗi relay là một đầu ra HTTPS. Token native gửi qua <code class="k">X-OpenKi-Relay-Token</code>; token Polygate/Vercel gửi qua <code class="k">X-Relay-Key</code>. Bấm <b>Test</b> để dò IP, quốc gia và độ trễ của từng relay.</div>
         <div id="net-relay-rows"></div>
-        <div class="muted" id="net-relay-empty" style="font-size:11.5px;padding:8px 0">Chưa có relay nào. Bấm「+ Thêm relay」để nhập URL và token.</div>
+        <div class="muted" id="net-relay-empty" style="font-size:13px;padding:8px 0">Chưa có relay nào. Bấm「+ Thêm relay」để nhập URL và token.</div>
+      </details>
+      <details class="card fold" id="net-subs" open>
+        <summary>Luân phiên đăng ký proxy <span class="sub" id="net-subs-sub">Sidecar sing-box · mỗi yêu cầu đổi một IP đầu ra</span></summary>
+        <div class="muted" style="line-height:1.65;margin:2px 0 10px">Đây là danh sách node lấy từ link subscription của nhà cung cấp proxy. Khi bật, mỗi yêu cầu chọn một node khoẻ mạnh khác để đổi IP đầu ra; hạn mức được tính theo từng IP nên nhiều node cho nhiều hạn mức độc lập. Node quay số lỗi sẽ tự chuyển node kế. Muốn dùng cùng Relay/WARP, tích thêm peer tương ứng ở 「Đường ra」. Các node đăng ký nằm chung trong bảng Đầu ra bên dưới.</div>
+        <div class="row" style="align-items:center; gap:10px; flex-wrap:wrap">
+          <span id="subs-status"></span>
+          <label class="dim" style="display:inline-flex; align-items:center; gap:7px">Đường dẫn sing-box
+            <input type="text" id="subs-path" placeholder="Để trống sẽ dùng bản chính thức được tải tự động" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:250px;font-family:var(--mono)">
+          </label>
+          <button class="ghost" id="btn-subs-path">Lưu đường dẫn</button>
+          <button class="ghost" id="btn-subs-download">Tải sing-box</button>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div style="flex:1">
+            <div class="dim" style="font-size:13px;margin-bottom:4px">URL đăng ký proxy (mỗi dòng một URL, hỗ trợ node vless / vmess / ss / trojan / anytls / hy2 / tuic)</div>
+            <textarea id="subs-urls" rows="3" style="width:100%;background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;font-family:var(--mono);font-size:13.5px" placeholder="https://example.com/api/v1/client/subscribe?token=..."></textarea>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px; gap:10px; flex-wrap:wrap">
+          <button class="act" id="btn-subs-apply">Lưu và bật luân phiên</button>
+          <button class="ghost" id="btn-subs-refresh">Làm mới đăng ký proxy</button>
+          <button class="ghost" id="btn-subs-probe">Dò kiểm tra lại node</button>
+          <button class="ghost" id="btn-subs-disable">Tắt</button>
+        </div>
+      </details>
       </div>
       <div class="card" id="net-exits">
         <div class="row" style="margin-bottom:8px">
@@ -4580,31 +4701,6 @@ function renderNetwork(s){
           <button class="act off" id="tg-lan">Đóng</button></div>
         <div id="net-lan-box" style="margin-top:8px"></div>
       </div>
-      <div class="card" id="net-subs">
-        <h3>Luân phiên đăng ký proxy <span class="muted" style="font-size:11px">Sidecar sing-box · mỗi yêu cầu đổi một IP đầu ra</span></h3>
-        <div class="row" style="align-items:center; gap:10px; flex-wrap:wrap">
-          <span id="subs-status"></span>
-          <label class="dim" style="display:inline-flex; align-items:center; gap:6px">Đường dẫn sing-box
-            <input type="text" id="subs-path" placeholder="Để trống sẽ dùng bản chính thức được tải tự động" style="background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;width:250px;font-family:var(--mono)">
-          </label>
-          <button class="ghost" id="btn-subs-path">Lưu đường dẫn</button>
-          <button class="ghost" id="btn-subs-download">Tải sing-box</button>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <div style="flex:1">
-            <div class="dim" style="font-size:12px;margin-bottom:4px">URL đăng ký proxy (mỗi dòng một URL, hỗ trợ node vless / vmess / ss / trojan / anytls / hy2 / tuic)</div>
-            <textarea id="subs-urls" rows="3" style="width:100%;background:var(--panel-2);border:1px solid var(--hairline);color:var(--ink);border-radius:6px;padding:6px 9px;font-family:var(--mono);font-size:12px" placeholder="https://example.com/api/v1/client/subscribe?token=..."></textarea>
-          </div>
-        </div>
-        <div class="row" style="margin-top:8px; gap:10px; flex-wrap:wrap">
-          <button class="act" id="btn-subs-apply">Lưu và bật luân phiên</button>
-          <button class="ghost" id="btn-subs-refresh">Làm mới đăng ký proxy</button>
-          <button class="ghost" id="btn-subs-probe">Dò kiểm tra lại node</button>
-          <button class="ghost" id="btn-subs-disable">Tắt</button>
-        </div>
-        <div id="subs-nodes" style="margin-top:10px"></div>
-        <div class="muted" style="font-size:11.5px;margin-top:6px">Luân phiên = mỗi yêu cầu đổi sang một đầu ra trong số các node khoẻ mạnh (hạn mức tính theo IP đầu ra, mỗi node là một hạn mức độc lập); node quay số thất bại sẽ tự đổi node tiếp theo. Bật sẽ chuyển chế độ proxy thượng nguồn sang 「Luân phiên đăng ký proxy」; tắt sẽ khôi phục 「Theo biến môi trường」.</div>
-      </div>
       <div class="netsticky" id="net-savebar" role="region" aria-label="Lưu cài đặt mạng">
         <span class="txt" id="net-dirty-text" aria-live="polite"></span>
         <button class="ghost" id="net-discard">Hoàn tác</button>
@@ -4630,13 +4726,58 @@ function renderNetwork(s){
       paintLegacyLayer({settings:{egressModes:selectedEgress()}, proxyPoolStatus:s.proxyPoolStatus});
     });
     const relayRows = el.querySelector("#net-relay-rows");
+    const rowPeer = (row) => ({
+      id: row.dataset.id || "",
+      kind: (row.querySelector(".relay-kind") || {}).value || "",
+      url: ((row.querySelector(".relay-url") || {}).value || "").trim(),
+      token: ((row.querySelector(".relay-token") || {}).value || "").trim(),
+      enabled: !!(row.querySelector(".relay-enabled") || {}).checked,
+    });
+    const applyRelayResults = (results) => {
+      if(!STATE) STATE = { settings:{}, relayProbe:{} };
+      STATE.relayProbe = Object.assign({}, STATE.relayProbe || {});
+      for(const rec of results || []) STATE.relayProbe[relayProbeKey(rec.url)] = rec;
+      paintRelayStatuses(STATE);
+      paintNetworkExits(STATE);
+    };
+    const runRelayTests = async (peers, trigger) => {
+      if(!peers.length){ toast("Chưa có relay nào để test"); return; }
+      const old = trigger ? trigger.textContent : "";
+      if(trigger){ trigger.disabled = true; trigger.textContent = "Đang test…"; }
+      try {
+        const j = await api("/egress/relay-test", { relays: peers });
+        if(!j || !j.ok){
+          toast((j && j.error) || "Không test được relay");
+          return;
+        }
+        const results = j.results || [];
+        applyRelayResults(results);
+        const ok = results.filter(r => !r.error).length;
+        toast(`Đã test relay: ${ok}/${results.length} khả dụng`);
+        refresh();
+      } finally {
+        if(trigger){ trigger.disabled = false; trigger.textContent = old; }
+      }
+    };
     relayRows.addEventListener("input", (e)=>{
-      if(e.target.closest(".relay-row")) markNet("relayPool");
+      if(e.target.closest(".relay-row")){
+        markNet("relayPool");
+        if(e.target.classList.contains("relay-url")) paintRelayStatuses(STATE || s);
+      }
     });
     relayRows.addEventListener("change", (e)=>{
-      if(e.target.closest(".relay-row")) markNet("relayPool");
+      if(e.target.closest(".relay-row")){
+        markNet("relayPool");
+        paintRelayStatuses(STATE || s);
+      }
     });
     relayRows.addEventListener("click", (e)=>{
+      const testBtn = e.target.closest(".relay-test");
+      if(testBtn){
+        const row = testBtn.closest(".relay-row");
+        if(row) runRelayTests([rowPeer(row)], testBtn);
+        return;
+      }
       const btn = e.target.closest(".relay-remove");
       if(!btn) return;
       const row = btn.closest(".relay-row");
@@ -4648,6 +4789,11 @@ function renderNetwork(s){
       relayRows.insertAdjacentHTML("beforeend", relayRowHTML({enabled:true, kind:"polygate"}));
       markNet("relayPool");
       paintRelayCount(s);
+      paintRelayStatuses(STATE || s);
+    };
+    const relayTestAll = el.querySelector("#net-relay-test-all");
+    relayTestAll.onclick = ()=>{
+      runRelayTests([...relayRows.querySelectorAll(".relay-row")].map(rowPeer), relayTestAll);
     };
     el.querySelector("#set-exit-tpm").addEventListener("input", ()=>markNet("exitTpm"));
     el.querySelector("#set-fingerprint").addEventListener("change", ()=>markNet("fingerprint"));
@@ -4781,6 +4927,12 @@ function renderNetwork(s){
       }
       jobs.push(api("/egress/sample", {}));
       if(subnetInputs() > 0) jobs.push(api("/subs/probe", {}));
+      const relayPeers = [...relayRows.querySelectorAll(".relay-row")].map(rowPeer);
+      if(relayPeers.length){
+        jobs.push(api("/egress/relay-test", { relays: relayPeers }).then(j=>{
+          if(j && j.ok) applyRelayResults(j.results || []);
+        }));
+      }
       if(!jobs.length){ toast("Chưa có đầu ra nào để dò"); }
       else {
         await Promise.allSettled(jobs);
@@ -4839,19 +4991,21 @@ function renderNetwork(s){
   const sp = el.querySelector("#subs-path");
   if(sp && document.activeElement !== sp) sp.value = sub.singbox?.path || "";
   const sb = sub.singbox || {};
+  const nodes = sb.nodes || [];
+  const subSub = el.querySelector("#net-subs-sub");
+  if (subSub) {
+    subSub.textContent = !sub.enabled
+      ? "Đang tắt"
+      : (sb.running ? `${sb.alive||0}/${nodes.length} node khoẻ mạnh · sidecar đang chạy` : "Sidecar chưa chạy");
+  }
   const stEl = el.querySelector("#subs-status");
   if (!sub.enabled) {
     stEl.innerHTML = `<span class="pill hidsync">Chưa bật</span>`;
   } else if (sb.running) {
-    stEl.innerHTML = `<span class="pill ok">Sidecar đang chạy${sb.version ? " · sing-box "+esc(sb.version) : ""}</span> <span class="muted" style="font-size:11px">${sb.alive||0}/${(sb.nodes||[]).length} Node khoẻ mạnh</span>${sb.lastErr?` <span class="muted" style="font-size:11px">Một số đăng ký proxy thất bại: ${esc(sb.lastErr)}</span>`:""}`;
+    stEl.innerHTML = `<span class="pill ok">Sidecar đang chạy${sb.version ? " · sing-box "+esc(sb.version) : ""}</span> <span class="muted" style="font-size:13px">${sb.alive||0}/${nodes.length} Node khoẻ mạnh</span>${sb.lastErr?` <span class="muted" style="font-size:13px">Một số đăng ký proxy thất bại: ${esc(sb.lastErr)}</span>`:""}`;
   } else {
-    stEl.innerHTML = `<span class="pill warn">Sidecar chưa chạy</span>${sb.lastErr?` <span class="muted" style="font-size:11px">${esc(sb.lastErr)}</span>`:""}`;
+    stEl.innerHTML = `<span class="pill warn">Sidecar chưa chạy</span>${sb.lastErr?` <span class="muted" style="font-size:13px">${esc(sb.lastErr)}</span>`:""}`;
   }
-  const ndEl = el.querySelector("#subs-nodes");
-  const nodes = sb.nodes || [];
-  ndEl.innerHTML = nodes.length ? `<div style="display:grid; grid-template-columns:1fr 60px 1fr 90px 70px; gap:4px 10px; font-size:12px">
-    ${nodes.map(n=>`<span>${esc(n.name||n.id)}</span><span class="muted">${esc(n.proto)}</span><span class="mono" style="font-size:11px">${esc(n.ip||"—")} ${esc(n.country||"")}</span><span class="muted">${n.latencyMs?n.latencyMs+"ms":"—"}</span><span>${n.alive?'<span class="pill ok">Khả dụng</span>':'<span class="pill bad">Thất bại</span>'}</span>`).join("")}
-  </div>` : `<div class="muted" style="font-size:12px">${sub.enabled?"Chưa kéo được node nào——hãy thử bấm 「Làm mới đăng ký proxy」.":"Đang tắt."}</div>`;
 }
 let sourceUpd = null, sourceUpdAt = 0, sourceUpdBusy = false;
 function shQuote(p){
@@ -4866,7 +5020,7 @@ function renderUpdate(s){
       <div class="two">
         <div>
           <div class="card" id="upd-running"><h3>Bản dựng đang chạy</h3><div class="sysinfo" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))" id="upd-running-box"><div class="muted">Đang đọc thông tin bản dựng…</div></div></div>
-          <div class="card" id="upd-windows" hidden>
+          <div class="card os-windows" id="upd-windows">
             <h3>Cập nhật một chạm (Windows)</h3>
             <div class="muted" id="upd-windows-note" style="font-size:12px"></div>
             <div class="row" style="align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
@@ -4876,7 +5030,7 @@ function renderUpdate(s){
             <div id="upd-apply-error" style="color:var(--bad);font-size:12px;margin-top:6px"></div>
           </div>
           <div class="card" id="upd-source"><h3>Mã nguồn GitHub</h3><div id="upd-source-box"><div class="muted">Đang kiểm tra…</div></div></div>
-          <div class="card"><h3>Cập nhật thủ công trên Linux</h3>
+          <div class="card os-linux"><h3>Cập nhật thủ công trên Linux</h3>
             <div class="muted" style="font-size:12px;margin-bottom:8px">Bản Linux không tự thay binary đang chạy. Chạy các lệnh dưới trong WSL, sau đó làm mới trang này.</div>
             <pre id="upd-cmd" style="background:var(--panel-2);border:1px solid var(--hairline);border-radius:8px;padding:10px 12px;overflow:auto;font-family:var(--mono);font-size:12px;line-height:1.55;margin:0 0 8px"></pre>
             <div class="row"><button class="ghost" id="upd-copy">Sao chép lệnh</button><span class="muted" id="upd-copy-note" style="font-size:11.5px"></span></div>
@@ -4991,7 +5145,10 @@ function paintUpdate(s){
   const set = (s && s.settings) || {};
   const selfUpd = !!set.updateSelfUpdate;
   const winCard = $("#upd-windows");
-  if(winCard) winCard.hidden = !selfUpd;
+  if(winCard){
+    winCard.hidden = false;
+    winCard.classList.toggle("os-disabled", !selfUpd);
+  }
   const apply = $("#upd-apply");
   const applyNote = $("#upd-apply-note");
   const applyErr = $("#upd-apply-error");
@@ -5012,7 +5169,7 @@ function paintUpdate(s){
   if(winNote){
     winNote.textContent = selfUpd
       ? "Bản Windows thay binary đang chạy sau khi kiểm tra SHA-256 và chữ ký manifest. Nếu thiếu một trong hai, cập nhật bị từ chối."
-      : "";
+      : "Không khả dụng trên nền tảng hiện tại hoặc bản dựng này không tự thay binary. Dùng mục cập nhật thủ công bên dưới.";
   }
 }
 function renderSettings(s){
@@ -5065,11 +5222,11 @@ function renderSettings(s){
 
       <div class="card" id="set-desktop">
         <h3>Hành vi desktop</h3>
-        <div class="switch"><div><span class="nm">Thu nhỏ xuống khay hệ thống khi đóng</span><div class="ds">Đóng cửa sổ chỉ là ẩn xuống khay hệ thống, khay hệ thống"Mở trang quản lý" khôi phục; khay hệ thống"Đăng xuất" mới thực sự thoát</div></div>
+        <div class="switch os-windows"><div><span class="nm">Thu nhỏ xuống khay hệ thống khi đóng</span><div class="ds">Đóng cửa sổ chỉ là ẩn xuống khay hệ thống, khay hệ thống"Mở trang quản lý" khôi phục; khay hệ thống"Đăng xuất" mới thực sự thoát</div></div>
           <button class="act off" id="tg-tray">Đóng</button></div>
-        <div class="switch"><div><span class="nm">Thông báo hệ thống</span><div class="ds">Khi cửa sổ bị ẩn, hiện thông báo Windows: mô hình không khả dụng/khôi phục, giới hạn lane, phiên bản mới</div></div>
+        <div class="switch os-windows"><div><span class="nm">Thông báo hệ thống</span><div class="ds">Khi cửa sổ bị ẩn, hiện thông báo Windows: mô hình không khả dụng/khôi phục, giới hạn lane, phiên bản mới</div></div>
           <button class="act off" id="tg-notify">Đóng</button></div>
-        <div class="switch"><div><span class="nm">Tự khởi động cùng hệ thống</span><div class="ds">Ghi khoá Run vào registry của người dùng hiện tại (HKCU), trỏ tới đường dẫn exe hiện tại</div></div>
+        <div class="switch"><div><span class="nm">Tự khởi động cùng hệ thống</span><div class="ds">Trên Windows ghi khoá Run vào HKCU; trên Linux dùng cơ chế autostart của phiên người dùng. Không áp dụng cho tiến trình chạy headless không có phiên desktop.</div></div>
           <button class="act off" id="tg-autostart">Đóng</button></div>
       </div>
 
@@ -5291,7 +5448,7 @@ async function refresh(){
       return null;
     }
     if(typeof j.uptimeSec === "number") bootAt = Date.now() - j.uptimeSec*1000;
-    const sig = JSON.stringify([j.models,j.agents,j.stats,j.settings,j.egress,j.mainKey,j.baseURL,j.port,j.providers,j.subscriptions,j.announcements,j.announcementArchive]);
+    const sig = JSON.stringify([j.models,j.agents,j.stats,j.settings,j.egress,j.relayProbe,j.mainKey,j.baseURL,j.port,j.providers,j.subscriptions,j.announcements,j.announcementArchive]);
     if (sig === lastSig){ tickUptime(); return j; }
     lastSig = sig; STATE = j; render();
     return j;

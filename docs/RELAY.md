@@ -173,6 +173,12 @@ nhập URL/token, chọn **OpenKi native** hoặc **Polygate / Vercel**, rồi b
 **Lưu thay đổi** ở cuối trang. Có thể sửa/xóa từng dòng; token được giữ nguyên
 khi chỉ sửa URL.
 
+Mỗi dòng có nút **Test** để dò IP công khai, quốc gia và độ trễ qua đúng relay
+đó; **Test tất cả relay** dò toàn bộ danh sách. Kết quả hiện ngay trong thẻ
+Relay và trong bảng **Đầu ra** (trạng thái Khả dụng/Lỗi, quốc gia, độ trễ), kể
+cả khi relay chưa được lưu. Nút **Dò tất cả đầu ra** cũng dò relay, node đăng
+ký và đường ra hiện tại trong một lượt.
+
 `url` phải là HTTPS. Bật/tắt từng mục bằng `enabled`; không cần xóa mục khi
 tạm ngưng. Token nhập tay trên từng máy, không đồng bộ qua file mẫu.
 

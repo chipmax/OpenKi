@@ -21,6 +21,7 @@ package lane
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -207,6 +208,31 @@ func usableRelays(in []RelayEndpoint) []RelayEndpoint {
 		out = append(out, r)
 	}
 	return out
+}
+
+// ProbeRelay sends one public-IP lookup through a single relay endpoint and
+// reports the exit it observed. It deliberately builds a one-off transport so
+// testing an unsaved row cannot disturb the live egress selector. The relay
+// base, token and kind are exactly the fields cloneRelayRequest uses for real
+// traffic; a probe therefore exercises the same relay protocol as the lane.
+func ProbeRelay(ctx context.Context, ep RelayEndpoint) (Egress, int64, error) {
+	relays := usableRelays([]RelayEndpoint{ep})
+	if len(relays) == 0 {
+		return Egress{}, 0, fmt.Errorf("URL relay không hợp lệ")
+	}
+	base := newPeerBaseTransport("direct", "")
+	defer base.CloseIdleConnections()
+	client := &http.Client{
+		Transport: &relayRoundTripper{base: base, peers: relays},
+		Timeout:   20 * time.Second,
+	}
+	start := time.Now()
+	eg := DetectEgressVia(ctx, client)
+	latency := time.Since(start).Milliseconds()
+	if eg.IP == "" {
+		return eg, latency, fmt.Errorf("relay không trả về IP công khai")
+	}
+	return eg, latency, nil
 }
 
 // newPeerBaseTransport is the plain path for relay/WARP. It mirrors the

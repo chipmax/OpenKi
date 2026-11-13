@@ -15,6 +15,14 @@ phát triển (UTC+7).
 - Dashboard **Mạng → Relay** có nút tick bật peer và trình sửa `relayPool`:
   thêm/sửa/xóa từng relay, nhập URL/token, chọn native hoặc Polygate/Vercel,
   lưu chung nút cuối trang; không phải sửa `config.json` bằng tay.
+- Relay có nút **Test** từng dòng và **Test tất cả relay**; kết quả IP/quốc
+  gia/độ trễ được lưu vào evidence của dashboard và hiện trong bảng **Đầu ra**
+  thay vì chỉ「Đã cấu hình」. **Dò tất cả đầu ra** cũng dò relay. Đường ra, Relay
+  và Luân phiên đăng ký proxy gộp thành các sheet gấp gọn; bỏ bảng node đăng ký
+  trùng lặp ở cuối trang.
+- Cỡ chữ dashboard và trang Mạng tăng khoảng hai cỡ; tính năng chỉ chạy trên
+  Windows/Linux được làm mờ và khóa thao tác khi nền tảng hiện tại không hỗ trợ
+  (ví dụ khay Windows trên WSL, cập nhật một chạm trên Linux).
 - Xóa egress **Proton VPN** khỏi repo: `egressModes` chỉ còn `relay`, `singbox`
   và `warp`; bỏ `protonSocks5`, thẻ pVPN cùng các test/UI liên quan. Cấu hình cũ
   còn `"proton"` sẽ bị từ chối (fail closed) thay vì lặng lẽ đi trực tiếp; sửa

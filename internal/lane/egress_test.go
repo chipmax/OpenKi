@@ -1,6 +1,7 @@
 package lane
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -8,6 +9,30 @@ import (
 	"sync/atomic"
 	"testing"
 )
+
+func TestProbeRelayReportsExit(t *testing.T) {
+	var gotToken string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotToken = r.Header.Get("X-OpenKi-Relay-Token")
+		w.Header().Set("content-type", "application/json")
+		_, _ = io.WriteString(w, `{"ip":"203.0.113.9","country":"ZZ"}`)
+	}))
+	defer srv.Close()
+
+	eg, latency, err := ProbeRelay(context.Background(), RelayEndpoint{URL: srv.URL, Token: "tok"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if eg.IP != "203.0.113.9" || eg.Country != "ZZ" {
+		t.Fatalf("probe egress = %+v", eg)
+	}
+	if gotToken != "tok" {
+		t.Errorf("relay token = %q", gotToken)
+	}
+	if latency < 0 {
+		t.Errorf("latency = %d", latency)
+	}
+}
 
 func TestEgressRelayRewritesAndLabels(t *testing.T) {
 	var gotPath, gotUpstream, gotToken string

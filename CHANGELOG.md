@@ -5,6 +5,17 @@ phát triển (UTC+7).
 
 ## 2026-11-13
 
+### Phát hành v2.0.2
+
+- Job `checksums` tải asset bằng `--repo "${GITHUB_REPOSITORY}"`, không còn phụ
+  thuộc checkout Git trong runner; release không còn fail ở bước tạo
+  `SHA256SUMS`.
+- Test loopback/LAN dùng HTTP transport không proxy, để `HTTP_PROXY` trong shell
+  phát triển không làm cổng đã đóng trông như đang mở.
+- `LICENSE` trở về đúng text GPL-3.0-only chuẩn để GitHub nhận diện; phần
+  copyright/attribution chuyển sang `NOTICE`. Metadata `relay-server` cũng
+  chuyển từ MIT sang GPL-3.0-only cho khớp repo.
+
 ### Thay đổi
 
 - Relay peer nhận thêm giao thức **Polygate/Vercel** (`kind: "polygate"` hoặc

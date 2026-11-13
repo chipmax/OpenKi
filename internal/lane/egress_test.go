@@ -54,6 +54,55 @@ func TestEgressRelayRewritesAndLabels(t *testing.T) {
 	}
 }
 
+func TestEgressPolygateRelayRewrites(t *testing.T) {
+	var gotPath, gotTarget, gotRelayPath, gotKey, gotOpenKi string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		gotTarget = r.Header.Get("X-Relay-Target")
+		gotRelayPath = r.Header.Get("X-Relay-Path")
+		gotKey = r.Header.Get("X-Relay-Key")
+		gotOpenKi = r.Header.Get("X-OpenKi-Relay-Upstream")
+		_, _ = io.WriteString(w, "vercel")
+	}))
+	defer srv.Close()
+
+	SetEgress(EgressOptions{
+		Modes:    []string{"relay"},
+		Relays:   []RelayEndpoint{{ID: "v1", URL: srv.URL, Token: "vtok", Kind: "polygate"}},
+		BaseMode: "direct",
+	})
+	defer SetEgress(EgressOptions{})
+
+	req, err := http.NewRequest(http.MethodPost, "https://upstream.example/v1/chat/completions?stream=1", strings.NewReader(`{"model":"m"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := laneHTTP.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if string(body) != "vercel" {
+		t.Fatalf("body = %q", body)
+	}
+	if gotPath != "/" {
+		t.Errorf("relay base path = %q, want / (target must travel in headers)", gotPath)
+	}
+	if gotTarget != "https://upstream.example" {
+		t.Errorf("target = %q", gotTarget)
+	}
+	if gotRelayPath != "/v1/chat/completions?stream=1" {
+		t.Errorf("relay path = %q", gotRelayPath)
+	}
+	if gotKey != "vtok" {
+		t.Errorf("relay key = %q", gotKey)
+	}
+	if gotOpenKi != "" {
+		t.Errorf("OpenKi relay header leaked: %q", gotOpenKi)
+	}
+}
+
 func TestEgressRelayFailsOverToNextPeer(t *testing.T) {
 	var hits atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -7,6 +7,11 @@ phát triển (UTC+7).
 
 ### Thay đổi
 
+- Relay peer nhận thêm giao thức **Polygate/Vercel** (`kind: "polygate"` hoặc
+  `"vercel"`): gửi `X-Relay-Target`, `X-Relay-Path`, `X-Relay-Key` thay cho bộ
+  `X-OpenKi-Relay-*`. Một `relayPool` có thể trộn relay native và relay Vercel;
+  admin chuẩn hóa `kind`, UI Mạng liệt kê endpoint relay kèm cổng 443 và đếm
+  trong tổng số đầu ra.
 - Xóa egress **Proton VPN** khỏi repo: `egressModes` chỉ còn `relay`, `singbox`
   và `warp`; bỏ `protonSocks5`, thẻ pVPN cùng các test/UI liên quan. Cấu hình cũ
   còn `"proton"` sẽ bị từ chối (fail closed) thay vì lặng lẽ đi trực tiếp; sửa

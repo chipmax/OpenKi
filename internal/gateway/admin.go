@@ -1596,6 +1596,14 @@ func normalizeRelayPool(in []store.RelayPeer) ([]store.RelayPeer, error) {
 		r.ID = strings.TrimSpace(r.ID)
 		r.URL = strings.TrimSpace(r.URL)
 		r.Token = strings.TrimSpace(r.Token)
+		switch strings.ToLower(strings.TrimSpace(r.Kind)) {
+		case "", "openki":
+			r.Kind = ""
+		case "polygate", "vercel":
+			r.Kind = "polygate"
+		default:
+			return nil, fmt.Errorf("relay thứ %d có giao thức không hợp lệ: %s", i+1, r.Kind)
+		}
 		if r.URL == "" {
 			continue
 		}

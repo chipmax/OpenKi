@@ -39,6 +39,7 @@ type RelayEndpoint struct {
 	ID    string
 	URL   string
 	Token string
+	Kind  string
 }
 
 // EgressOptions is the lane-facing egress configuration. BaseMode/BaseURL
@@ -333,9 +334,40 @@ func cloneRelayRequest(req *http.Request, peer RelayEndpoint, first bool) (*http
 			clone.Header.Del(k)
 		}
 	}
+	if isPolygateRelay(peer.Kind) {
+		// The Vercel Bun relay from B3hnamR/Polygate forwards one target per
+		// request: the base URL is the function, and these headers carry the
+		// real origin/path and its own access token. It never sees the OpenKi
+		// path convention, so do not append req.URL.Path here.
+		base, err := url.Parse(peer.URL)
+		if err != nil || base.Host == "" {
+			return nil, fmt.Errorf("relay Vercel không hợp lệ: %s", peer.URL)
+		}
+		clone.URL = base
+		clone.Host = ""
+		clone.RequestURI = ""
+		for k := range clone.Header {
+			if strings.HasPrefix(strings.ToLower(k), "x-relay-") {
+				clone.Header.Del(k)
+			}
+		}
+		clone.Header.Set("X-Relay-Target", req.URL.Scheme+"://"+req.URL.Host)
+		clone.Header.Set("X-Relay-Path", req.URL.RequestURI())
+		clone.Header.Set("X-Relay-Key", peer.Token)
+		return clone, nil
+	}
 	clone.Header.Set("X-OpenKi-Relay-Token", peer.Token)
 	clone.Header.Set("X-OpenKi-Relay-Upstream", req.URL.Scheme+"://"+req.URL.Host)
 	return clone, nil
+}
+
+func isPolygateRelay(kind string) bool {
+	switch strings.ToLower(strings.TrimSpace(kind)) {
+	case "polygate", "vercel":
+		return true
+	default:
+		return false
+	}
 }
 
 func relayTarget(base string, orig *url.URL) (*url.URL, error) {

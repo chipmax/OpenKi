@@ -74,9 +74,13 @@ type Manager struct {
 
 // NodeHealth is one node's live state for the rotation pool and the UI.
 type NodeHealth struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Proto     string `json:"proto"`
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Proto string `json:"proto"`
+	// Addr is the subscription node's remote server:port. Port below is the
+	// local sing-box SOCKS inbound, so it is not the endpoint the UI must show
+	// when the user asks which IP and port the tunnel is connected to.
+	Addr      string `json:"addr,omitempty"`
 	Port      int    `json:"port"`
 	Alive     bool   `json:"alive"`
 	IP        string `json:"ip,omitempty"`
@@ -242,7 +246,7 @@ func (m *Manager) Refresh(ctx context.Context) error {
 	m.nodes = nodes
 	m.health = map[string]*NodeHealth{}
 	for i, n := range nodes {
-		m.health[n.ID] = &NodeHealth{ID: n.ID, Name: n.Name, Proto: n.Proto, Port: PortBase + i, Alive: true}
+		m.health[n.ID] = &NodeHealth{ID: n.ID, Name: n.Name, Proto: n.Proto, Addr: nodeAddr(n), Port: PortBase + i, Alive: true}
 	}
 	m.lastSync = time.Now()
 	m.lastErr = strings.Join(errs, "; ")
@@ -324,6 +328,31 @@ func displayName(s store.Subscription) string {
 		return s.Name
 	}
 	return s.URL
+}
+
+// nodeAddr renders the remote endpoint the subscription points the tunnel at.
+// NodeHealth.Port is the local SOCKS inbound, so it cannot be used here.
+func nodeAddr(n Node) string {
+	server, _ := n.Outbound["server"].(string)
+	server = strings.TrimSpace(server)
+	if server == "" {
+		return ""
+	}
+	port := 0
+	switch v := n.Outbound["server_port"].(type) {
+	case int:
+		port = v
+	case int64:
+		port = int(v)
+	case float64:
+		port = int(v)
+	case string:
+		fmt.Sscanf(v, "%d", &port)
+	}
+	if port <= 0 {
+		return server
+	}
+	return net.JoinHostPort(server, fmt.Sprintf("%d", port))
 }
 
 // startProcess (re)launches sing-box; the supervisor goroutine restarts it on

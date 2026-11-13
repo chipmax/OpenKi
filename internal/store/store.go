@@ -135,6 +135,10 @@ type RelayPeer struct {
 	URL     string `json:"url"`
 	Token   string `json:"token,omitempty"`
 	Enabled bool   `json:"enabled"`
+	// Kind selects the relay wire protocol. Empty means the original OpenKi
+	// relay (path appended, X-OpenKi-Relay-Upstream); "polygate" is the Vercel
+	// Bun relay template from B3hnamR/Polygate (x-relay-target/path/key).
+	Kind string `json:"kind,omitempty"`
 }
 
 type Config struct {

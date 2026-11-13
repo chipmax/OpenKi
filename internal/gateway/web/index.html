@@ -4263,7 +4263,7 @@ function netExitRows(s){
       key: "sub:" + (n.id || n.name),
       tone,
       status: cooling ? "Đang làm mát" : (n.alive ? "Khả dụng" : "Lỗi"),
-      endpoint: n.ip || "Chưa dò IP",
+      endpoint: n.addr || n.ip || "Chưa dò IP",
       name: n.name || n.id || "Node đăng ký",
       source: "Đăng ký", proto: n.proto || "—",
       country: n.country || "—",
@@ -4289,6 +4289,25 @@ function netExitRows(s){
       note: parked
         ? "Tạm dừng đến " + new Date(Number(p.deadUntil)).toLocaleTimeString("vi-VN", {hour:"2-digit", minute:"2-digit"})
         : "Chưa có lưu lượng; IP công khai chỉ biết sau lần dò đầu tiên",
+    });
+  }
+  for(const r of (s.settings && s.settings.relayPool) || []){
+    let endpoint = r.url || "—";
+    try {
+      const u = new URL(r.url);
+      endpoint = u.host + (u.port ? "" : ":443");
+    } catch {}
+    rows.push({
+      key: "relay:" + (r.id || r.url),
+      tone: "unknown",
+      status: r.enabled ? "Đã cấu hình" : "Đang tắt",
+      endpoint,
+      name: (r.kind === "polygate" ? "Vercel relay" : "Relay") + (r.id ? " · " + r.id : ""),
+      source: "Relay", proto: "HTTPS",
+      country: "—", latency: "—", last: "—",
+      note: r.enabled
+        ? "Đang dùng trong peer Relay; bấm「Dò tất cả đầu ra」để lấy IP ra"
+        : "Đã tắt; bật trong relayPool để dùng",
     });
   }
   const rank = { "": -1, warn: 0, bad: 1, ok: 2, unknown: 3 };
@@ -4350,13 +4369,16 @@ function paintNetworkExits(s){
   $("#net-egress-ip").title = ip || "Chưa có mẫu IP công khai";
   const meta = [];
   meta.push(eg.country || "Chưa rõ quốc gia");
-  meta.push(eg.peer ? egressPeerName(eg.peer) : "chưa xác định peer");
+  const sampleModes = (s.settings && s.settings.egressModes) || [];
+  meta.push(eg.peer
+    ? egressPeerName(eg.peer)
+    : (sampleModes.length === 1 ? egressPeerName(sampleModes[0]) + " (suy ra)" : "chưa xác định peer"));
   if(fresh) meta.push(`mẫu ${relMs(Math.max(lastAt, checkedAt))}`);
   $("#net-egress-meta").textContent = meta.join(" · ");
   $("#net-health").textContent = health.label;
   $("#net-health").className = "v sm " + health.tone;
   $("#net-health-detail").textContent = health.detail;
-  $("#net-exit-sub").textContent = `${nodes.length} đăng ký · ${pools.length} tĩnh · ${(s.settings.egressModes||[]).length} peer`;
+  $("#net-exit-sub").textContent = `${nodes.length} đăng ký · ${pools.length} tĩnh · ${(s.settings.relayPool||[]).length} relay · ${(s.settings.egressModes||[]).length} peer`;
   const needle = netf.q.trim().toLowerCase();
   const shown = rows.filter(r => {
     if(netf.state && r.tone !== netf.state) return false;
@@ -4448,7 +4470,7 @@ function renderNetwork(s){
           <table class="exit-table" aria-label="Danh sách đầu ra">
             <thead><tr>
               <th scope="col" style="width:112px">Trạng thái</th>
-              <th scope="col">Đầu ra / IP</th>
+              <th scope="col">Đầu ra / IP:cổng</th>
               <th scope="col" style="width:82px">Nguồn</th>
               <th scope="col" style="width:112px">Peer / giao thức</th>
               <th scope="col" style="width:72px">Quốc gia</th>

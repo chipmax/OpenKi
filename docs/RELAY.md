@@ -1,7 +1,17 @@
 # relay (Bun) — triển khai, giao thức, vận hành
 
-Tài liệu này chỉ mô tả **giao thức mức cao** và các bước triển khai relay. Mã
-nguồn relay nằm ở `relay-server/`; tài liệu này không định nghĩa lại mã.
+Tài liệu này mô tả **giao thức mức cao** và các bước triển khai relay. Mã
+nguồn relay mẫu nằm ở `relay-server/`; tài liệu này không định nghĩa lại mã.
+
+OpenKi hiểu hai giao thức relay trên cùng một `relayPool`:
+
+| `kind` | Giao thức | Dùng khi |
+|---|---|---|
+| rỗng hoặc `openki` | `X-OpenKi-Relay-*` (native) | Relay Bun trong `relay-server/`, VPS tự dựng |
+| `polygate` hoặc `vercel` | `X-Relay-*` (Polygate/opencode-relay) | Relay Vercel đã triển khai bởi Polygate hoặc opencode-relay |
+
+`kind` chỉ chọn cách đóng gói request; cả hai vẫn là peer ngang hàng trong
+`egressModes` và cùng cơ chế xoay vòng, failover, giới hạn theo token.
 
 ## Vai trò
 
@@ -15,7 +25,7 @@ prompt, không cache nội dung, không thay đổi định dạng đường dâ
 
 ## Giao thức
 
-### Request từ gateway
+### Request từ gateway — native (`kind` rỗng/`openki`)
 
 | Thành phần | Giá trị |
 |---|---|
@@ -24,6 +34,22 @@ prompt, không cache nội dung, không thay đổi định dạng đường dâ
 | `X-OpenKi-Relay-Token` | Token của relay; **bắt buộc**, so sánh constant-time |
 | `X-OpenKi-Relay-Upstream` | `scheme://host` của upstream (thường `https://host`), **bắt buộc**; relay kiểm tra **host** theo allowlist |
 | Body | Giữ nguyên JSON; relay không parse/sửa nội dung |
+
+### Request từ gateway — Polygate/Vercel (`kind: "polygate"`)
+
+| Thành phần | Giá trị |
+|---|---|
+| Method | Giữ nguyên method của request gốc |
+| URL gọi relay | Chính `relayPool[].url` (thường `https://<project>.vercel.app`), **không** nối path upstream vào URL |
+| `X-Relay-Target` | `scheme://host` của upstream, ví dụ `https://api.example.com`; **bắt buộc** |
+| `X-Relay-Path` | Path + query của upstream, ví dụ `/v1/chat/completions?stream=1`; **bắt buộc** |
+| `X-Relay-Key` | Token relay; **bắt buộc**, relay so sánh constant-time |
+| Body | Giữ nguyên JSON; relay không parse/sửa nội dung |
+
+Gateway xóa mọi header `X-Relay-*` do client gửi trước khi đặt bộ header trên,
+để token/đích của client không thể ghi đè cấu hình. Relay Polygate trả thêm
+`x-relay-egress`, `x-relay-runtime`, `x-relay-instance`; các header này chỉ để
+chẩn đoán, gateway không dựa vào chúng để chọn peer.
 
 Relay trả về đúng status/header/body của upstream. Với phản hồi streaming, relay
 phải chuyển tiếp từng chunk ngay (không gom buffer) và giữ kết nối mở tới khi
@@ -40,28 +66,32 @@ VPS, Caddy/uptime monitor.
 
 | Status | Khi nào |
 |---|---|
-| `401` | Thiếu/sai `X-OpenKi-Relay-Token` |
-| `403` | `X-OpenKi-Relay-Upstream` không nằm trong allowlist, hoặc dùng `http://` khi chưa cho phép |
+| `401` | Thiếu/sai `X-OpenKi-Relay-Token` (native) hoặc `X-Relay-Key` (Polygate) |
+| `403` | Đích không nằm trong allowlist, hoặc dùng `http://` khi chưa cho phép |
 | `400` | Thiếu header bắt buộc hoặc đích không hợp lệ |
 | `413` | Body vượt `OPENKI_RELAY_MAX_BODY_BYTES` |
-| `503` | Relay chưa cấu hình `OPENKI_RELAY_TOKEN` (fail closed) |
+| `503` | Relay chưa cấu hình token (fail closed) |
 | `502`/`504` | Không kết nối được upstream hoặc upstream timeout |
 
 Không trả chi tiết nội bộ (stack, danh sách allowlist, token) trong body lỗi.
 
 ## Bảo mật
 
-- **Chỉ HTTPS.** Không chấp nhận `http://` cho `url` trong `relayPool` và
-  không chạy relay sau proxy không TLS. TLS kết thúc ở Vercel/VPS/Caddy.
+- **HTTPS cho relay công khai.** `relayPool[].url` phải là HTTPS khi relay nằm
+  ngoài máy; chỉ cho phép `http://` với loopback hoặc kiểm thử local. TLS kết
+  thúc ở Vercel/VPS/Caddy; không chạy relay sau proxy không TLS.
 - **Host allowlist.** Chỉ chuyển tiếp tới các host đã khai báo; từ chối IP
   literal, `localhost`, metadata endpoint và mọi đích ngoài allowlist. Kiểm tra
-  sau khi chuẩn hóa hostname, chống `@`, redirect và DNS rebinding.
+  sau khi chuẩn hóa hostname, chống `@`, redirect và DNS rebinding. Với relay
+  Polygate/opencode-relay, allowlist mặc định chỉ `opencode.ai`; mở thêm host
+  phải làm ở phía relay (`RELAY_ALLOWED_HOSTS`), không chỉ ở gateway.
 - **Token tách biệt.** Mỗi môi trường/máy dùng token riêng; token không nằm
   trong repo, không ghi log, không đưa vào query string.
 - **Giới hạn tài nguyên.** Đặt timeout kết nối/đọc hợp lý, giới hạn kích thước
   body và rate limit theo token nếu công khai.
 - **Không log nội dung.** Chỉ log method, path, status, thời lượng; không log
-  prompt, completion, `Authorization`, host đầy đủ hay `X-OpenKi-Relay-Token`.
+  prompt, completion, `Authorization`, host đầy đủ, `X-OpenKi-Relay-Token` hay
+  `X-Relay-Key`.
 
 ## Vị trí triển khai
 
@@ -127,10 +157,16 @@ Thêm từng relay vào `relayPool` với `id`, `url`, `token`, `enabled`:
   "relayPool": [
     { "id": "vercel-sin", "url": "https://relay-sin.example.com", "token": "<TOKEN>", "enabled": true },
     { "id": "vercel-fra", "url": "https://relay-fra.example.com", "token": "<TOKEN>", "enabled": true },
-    { "id": "vps-fallback", "url": "https://relay-vps.example.com", "token": "<TOKEN>", "enabled": true }
+    { "id": "vps-fallback", "url": "https://relay-vps.example.com", "token": "<TOKEN>", "enabled": true },
+    { "id": "polygate-sin", "kind": "polygate", "url": "https://polygate-relay-sin.vercel.app", "token": "<RELAY_KEY>", "enabled": true }
   ]
 }
 ```
+
+`kind` bỏ trống tương đương `openki`; `vercel` được chuẩn hóa thành
+`polygate`. Với relay Polygate, `token` là `X-Relay-Key` do relay sinh, không
+phải Vercel API token. OpenKi **không** lưu Vercel API token và không tự deploy
+relay; việc tạo/xóa deployment nằm ở Polygate hoặc opencode-relay.
 
 `url` phải là HTTPS. Bật/tắt từng mục bằng `enabled`; không cần xóa mục khi
 tạm ngưng. Token nhập tay trên từng máy, không đồng bộ qua file mẫu.
@@ -180,6 +216,18 @@ cửa sổ ngắn request bị `401`. Quy trình:
 Muốn tránh gián đoạn hoàn toàn, chạy tạm một bản relay chấp nhận cả hai token
 (hoặc một instance thứ hai), chuyển gateway sang token mới, rồi bỏ token cũ —
 việc hỗ trợ hai token phải được triển khai trong mã relay, không chỉ cấu hình.
+
+## Tham chiếu giao thức
+
+Giao thức `X-Relay-*` và cách triển khai relay Vercel được tham chiếu từ hai dự
+án sau; OpenKi chỉ triển khai phía client, không sao chép mã nguồn của họ:
+
+- [B3hnamR/Polygate](https://github.com/B3hnamR/Polygate) (MIT) — template
+  relay Bun trên Vercel và bộ header `x-relay-target`, `x-relay-path`,
+  `x-relay-key`.
+- [mahyartdb/opencode-relay](https://github.com/mahyartdb/opencode-relay) (MIT)
+  — bản relay kế thừa Polygate, giữ nguyên bộ header và thêm allowlist mặc
+  định `opencode.ai`; dùng để đối chiếu hành vi failover và probe.
 
 ## Liên quan
 

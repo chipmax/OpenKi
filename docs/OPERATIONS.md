@@ -197,8 +197,11 @@ hành vi cũ theo `proxyMode` (`env`, `system`, `direct`, `custom`, `rotate`,
 { "id": "vercel-1", "url": "https://<relay-primary>", "token": "<relay-token>", "enabled": true }
 ```
 
-- Token gửi qua header `X-OpenKi-Relay-Token`, bị che khi export cấu hình. `url`
-  là base HTTPS, không có dấu `/` cuối; không dùng `http://` trên mạng.
+- `kind` tùy chọn: bỏ trống là relay OpenKi native; `polygate`/`vercel` là relay
+  Polygate/opencode-relay dùng header `X-Relay-*`, token là `X-Relay-Key`.
+- Token gửi qua header `X-OpenKi-Relay-Token` (native) hoặc `X-Relay-Key`
+  (Polygate), bị che khi export cấu hình. `url` là base HTTPS, không có dấu `/`
+  cuối; không dùng `http://` trên mạng.
 - Chỉ peer `enabled: true` được dùng; request được trải trên các peer đang bật
   và thử peer kế tiếp khi tunnel chết.
 - Đổi `enabled` để cô lập một peer khi kiểm tra. Bật `relay` mà không có peer

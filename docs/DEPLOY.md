@@ -133,15 +133,19 @@ OPENKI_HEADLESS=1 OPENKI_HOME=/var/lib/openki \
 {
   "relayPool": [
     { "id": "vercel-sin", "url": "https://relay-sin.example.com", "token": "<RELAY_TOKEN>", "enabled": true },
-    { "id": "vps-fra",    "url": "https://relay-fra.example.com", "token": "<RELAY_TOKEN>", "enabled": true }
+    { "id": "vps-fra",    "url": "https://relay-fra.example.com", "token": "<RELAY_TOKEN>", "enabled": true },
+    { "id": "polygate-sin", "kind": "polygate", "url": "https://polygate-relay-sin.vercel.app", "token": "<RELAY_KEY>", "enabled": true }
   ]
 }
 ```
 
-Mỗi mục gồm `id`, `url`, `token`, `enabled`. `url` phải là HTTPS. `token`
-truyền qua header `X-OpenKi-Relay-Token`; đích upstream khai báo bằng
-`X-OpenKi-Relay-Upstream` và bị giới hạn bởi allowlist phía relay. Không đưa token
-vào file mẫu, log hay ảnh chụp màn hình.
+Mỗi mục gồm `id`, `url`, `token`, `enabled` và tùy chọn `kind`. `kind` bỏ
+trống = relay OpenKi native (`X-OpenKi-Relay-*`); `kind: "polygate"` (hoặc
+`"vercel"`) dùng giao thức `X-Relay-*` của relay Polygate/opencode-relay, với
+`token` là `X-Relay-Key`. `url` phải là HTTPS. Token native truyền qua header
+`X-OpenKi-Relay-Token`; đích upstream khai báo bằng `X-OpenKi-Relay-Upstream`
+và bị giới hạn bởi allowlist phía relay. Không đưa token vào file mẫu, log hay
+ảnh chụp màn hình.
 
 ### Vị trí relay
 

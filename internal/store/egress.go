@@ -11,7 +11,7 @@ func (c Config) RelayEndpoints() []lane.RelayEndpoint {
 		if !r.Enabled {
 			continue
 		}
-		out = append(out, lane.RelayEndpoint{ID: r.ID, URL: r.URL, Token: r.Token})
+		out = append(out, lane.RelayEndpoint{ID: r.ID, URL: r.URL, Token: r.Token, Kind: r.Kind})
 	}
 	return out
 }
